@@ -8,7 +8,7 @@
     "server": "cd backend && npm run dev",
     "client": "cd frontend && npm run dev",
     "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install",
-    "build-frontend": "cd backend && npm install && cd ../frontend && npm install && node node_modules/vite/bin/vite.js build"
+    "build-frontend": "cd frontend && npm install && npm run build"
   },
   "keywords": ["dsa", "coding", "platform", "elo", "matchmaking"],
   "author": "",
