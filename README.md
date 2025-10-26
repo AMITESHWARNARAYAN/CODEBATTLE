@@ -1,159 +1,146 @@
-# CodeBattle - DSA Coding Platform
+# CodeBattle - LeetCode Style DSA Competition Platform
 
-A professional, real-time DSA coding competition platform built with MERN stack, featuring ELO-based matchmaking, friend challenges, and solo practice modes.
+A real-time DSA (Data Structures & Algorithms) coding competition platform built with MERN stack, featuring LeetCode-style problems, real-time matchmaking, and AI-powered explanations.
 
 ## 🎯 Features
 
-### Game Modes
-- **Matchmaking**: Get matched with players of similar skill level in real-time
-- **Challenge Friend**: Send invitation links to friends for private matches
-- **Solo Practice**: Practice DSA problems at your own pace
-
-### Rating System
-- ELO-based rating system (like Chess.com)
-- Dynamic rating changes based on opponent strength
-- Track highest and lowest ratings
-- Win/loss/draw statistics
-
-### Code Execution
-- Real-time code execution with test cases
-- Time and space complexity analysis
-- Support for multiple languages (JavaScript, Python, Java, C++)
-- Detailed execution results and error handling
-
-### Social Features
-- Global leaderboard
-- Player profiles with statistics
-- Online/offline status
-- Match history
+- **Problem Categories**: Browse problems organized by categories
+- **LeetCode-Style Interface**: Modern UI with problem search, filtering, and acceptance rates
+- **Real-Time Matchmaking**: Find opponents and compete in real-time
+- **Code Editor**: Multi-language support with syntax highlighting
+- **Timer Toggle**: Control timer for solo practice mode
+- **Admin Panel**: Create categories and problems
+- **User Authentication**: Secure login and registration
+- **Leaderboard**: Track user rankings and statistics
+- **AI Explanations**: Get AI-powered hints using Groq API
+- **Dark/Light Theme**: Responsive design with theme support
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js (v16+)
-- MongoDB (local or Atlas)
-- npm or yarn
+- Node.js (v14+)
+- MongoDB Atlas account
+- Groq API key
+- Gemini API key
 
 ### Installation
 
-1. **Clone and setup**
-```bash
-cd c:\Users\amitu\Desktop\Projects
-```
-
-2. **Install dependencies**
-```bash
-npm run install-all
-```
-
-3. **Setup MongoDB**
-   - Install MongoDB locally OR
-   - Create a MongoDB Atlas cluster and get connection string
-
-4. **Configure environment**
-   - Backend: Create `backend/.env` (already created with defaults)
-   - Update `MONGODB_URI` if using MongoDB Atlas
-
-5. **Seed sample problems**
+**Backend Setup**
 ```bash
 cd backend
-node seeds/problems.js
+npm install
 ```
 
-6. **Start the application**
+Create `.env` file:
+```
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/codebattle
+JWT_SECRET=your_jwt_secret_min_32_chars
+GROQ_API_KEY=your_groq_api_key
+GEMINI_API_KEY=your_gemini_api_key
+PORT=5000
+```
+
+**Frontend Setup**
 ```bash
+cd frontend
+npm install
+```
+
+### Running Locally
+
+**Start Backend**
+```bash
+cd backend
 npm run dev
 ```
 
-This will start:
-- Backend: http://localhost:5000
+**Start Frontend**
+```bash
+cd frontend
+npm run dev
+```
+
 - Frontend: http://localhost:5173
+- Backend: http://localhost:5000
 
 ## 📁 Project Structure
 
 ```
-codebattle-platform/
+codebattle/
 ├── backend/
-│   ├── models/           # MongoDB schemas
-│   ├── routes/           # API endpoints
-│   ├── middleware/       # Auth & validation
-│   ├── utils/            # ELO, code execution
-│   ├── socket/           # WebSocket handlers
-│   ├── seeds/            # Database seeding
-│   └── server.js         # Main server
+│   ├── models/          # MongoDB schemas
+│   ├── routes/          # API endpoints
+│   ├── middleware/      # Auth middleware
+│   ├── socket/          # WebSocket handlers
+│   ├── utils/           # Helper functions
+│   └── server.js        # Express server
 ├── frontend/
 │   ├── src/
-│   │   ├── pages/        # React pages
-│   │   ├── store/        # Zustand stores
-│   │   ├── utils/        # Socket & API
-│   │   ├── App.jsx       # Main app
-│   │   └── index.css     # Tailwind styles
+│   │   ├── pages/       # React pages
+│   │   ├── store/       # Zustand stores
+│   │   ├── utils/       # Helper functions
+│   │   └── App.jsx      # Main component
 │   └── vite.config.js
-└── package.json
+└── vercel.json          # Vercel deployment config
 ```
 
-## 🔑 Key Technologies
+## 🔑 Tech Stack
 
 ### Backend
-- **Express.js**: Web framework
-- **MongoDB**: Database
-- **Socket.io**: Real-time communication
-- **JWT**: Authentication
-- **vm2**: Secure code execution
-- **bcryptjs**: Password hashing
+- Node.js & Express.js
+- MongoDB
+- Socket.io
+- JWT Authentication
+- Groq API (AI)
+- Gemini API (AI)
 
 ### Frontend
-- **React 18**: UI library
-- **Vite**: Build tool
-- **Tailwind CSS**: Styling
-- **Monaco Editor**: Code editor
-- **Zustand**: State management
-- **Socket.io Client**: Real-time updates
-- **Axios**: HTTP client
+- React 18
+- Vite
+- Tailwind CSS
+- Zustand (State Management)
+- Axios
+- Socket.io Client
 
-## 🎮 How to Use
+## 👤 Default Admin Account
 
-### Register & Login
-1. Go to http://localhost:5173
-2. Create an account or login
-3. You'll start with 1200 ELO rating
+- Email: `admin@codebattle.com`
+- Password: `admin123456`
 
-### Matchmaking
-1. Click "Matchmaking" on dashboard
-2. Click "Start Searching"
-3. Wait for opponent (rating-based matching)
-4. Solve the DSA problem
-5. Submit code and see results
+## 🌐 Deployment
 
-### Challenge Friend
-1. Click "Challenge Friend"
-2. Click "Create Challenge"
-3. Copy the invitation link
-4. Send to friend
-5. Friend clicks link to join
-6. Both solve the same problem
+Deploy to Vercel:
+1. Push code to GitHub
+2. Connect GitHub to Vercel
+3. Add environment variables
+4. Deploy
 
-### Solo Practice
-1. Click "Solo Practice"
-2. Solve the problem at your own pace
-3. No rating changes, just practice
+See `vercel.json` for configuration.
 
-### Leaderboard
-- View global rankings
-- Click on player to see their profile
-- Track your position
+## 📝 Environment Variables
 
-## 📊 ELO Rating System
+### Backend (.env)
+```
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret_min_32_chars
+GROQ_API_KEY=your_groq_api_key
+GEMINI_API_KEY=your_gemini_api_key
+PORT=5000
+NODE_ENV=development
+```
 
-The platform uses Chess.com-style ELO rating:
+### Frontend (.env)
+```
+VITE_API_URL=http://localhost:5000/api
+```
 
-- **Starting Rating**: 1200
-- **K-Factor**: 32 (determines rating change magnitude)
-- **Formula**: `newRating = currentRating + K * (actualScore - expectedScore)`
+## 📄 License
 
-### Winning Scenarios
-- Win against higher-rated player: +more points
-- Win against lower-rated player: +fewer points
+MIT License - feel free to use this project for learning and development.
+
+---
+
+**Built with ❤️ using MERN Stack**
 - Loss deducts points accordingly
 - Draws split the difference
 
