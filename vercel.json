@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "cd backend && npm install && cd ../frontend && npm install && npx vite build",
+  "buildCommand": "npm run build-frontend",
   "outputDirectory": "frontend/dist"
 }
 
