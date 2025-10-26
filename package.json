@@ -1,0 +1,19 @@
+{
+  "name": "codebattle-platform",
+  "version": "1.0.0",
+  "description": "DSA Coding Battle Platform with ELO Rating System",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd backend && npm run dev",
+    "client": "cd frontend && npm run dev",
+    "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+  },
+  "keywords": ["dsa", "coding", "platform", "elo", "matchmaking"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
+
