@@ -41,7 +41,9 @@ Before deploying, you need:
 - **Environment**: `Node`
 - **Build Command**: `cd backend && npm install`
 - **Start Command**: `cd backend && npm start`
+- **Root Directory**: Leave empty (Render will auto-detect from render.yaml)
 - **Region**: Choose closest to you
+- **Plan**: Free tier is fine for testing
 
 ### 1.4 Add Environment Variables
 Click "Environment" and add:

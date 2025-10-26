@@ -18,11 +18,13 @@
 2. Sign up with GitHub
 3. Click "New +" → "Web Service"
 4. Select `codebattle` repository
-5. Configure:
+5. Render will auto-detect `render.yaml` configuration
+6. If not auto-detected, configure manually:
    - **Name**: `codebattle-api`
    - **Build Command**: `cd backend && npm install`
    - **Start Command**: `cd backend && npm start`
-6. Add Environment Variables:
+   - **Root Directory**: Leave empty (or `/`)
+7. Add Environment Variables:
    ```
    MONGODB_URI=mongodb+srv://...
    JWT_SECRET=your-secret-key
@@ -30,8 +32,8 @@
    GEMINI_API_KEY=AIza...
    NODE_ENV=production
    ```
-7. Click "Create Web Service"
-8. **Copy the URL** (e.g., `https://codebattle-api.onrender.com`)
+8. Click "Create Web Service"
+9. **Copy the URL** (e.g., `https://codebattle-api.onrender.com`)
 
 ### Step 2: Deploy Frontend to Vercel (5 minutes)
 

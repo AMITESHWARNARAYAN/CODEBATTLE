@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
+    "build": "echo 'Backend build complete'",
     "seed:admin": "node seeds/admin.js",
     "seed:problems": "node seeds/problems.js"
   },
