@@ -8,7 +8,7 @@ import { Plus, Trash2, ArrowLeft, Tags, Check, X, Calendar, Trophy } from 'lucid
 export default function Admin() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { problems, categories, stats, loading, getProblems, createProblem, deleteProblem, getStats, createCategory, getCategories, deleteCategory, createChallenge, getChallenges, challenges, createContest, getContests, contests } = useAdminStore();
+  const { problems, categories, stats, loading, getProblems, createProblem, deleteProblem, getStats, createCategory, getCategories, deleteCategory, createChallenge, getChallenges, challenges, deleteChallenge, createContest, getContests, contests, deleteContest } = useAdminStore();
   const { token } = useAuthStore();
   const [activeTab, setActiveTab] = useState('problems');
   const [showForm, setShowForm] = useState(false);
@@ -50,7 +50,7 @@ export default function Admin() {
   const [contestFormData, setContestFormData] = useState({
     title: '',
     description: '',
-    type: 'individual',
+    type: 'weekly',
     problems: [],
     startTime: '',
     duration: 120,
@@ -294,7 +294,7 @@ export default function Admin() {
       setContestFormData({
         title: '',
         description: '',
-        type: 'individual',
+        type: 'weekly',
         problems: [],
         startTime: '',
         duration: 120,
@@ -303,7 +303,6 @@ export default function Admin() {
         isRated: true
       });
       setSelectedProblems([]);
-      getChallenges();
       getContests();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to create contest');
@@ -318,6 +317,30 @@ export default function Admin() {
         return [...prev, problemId];
       }
     });
+  };
+
+  const handleDeleteChallenge = async (challengeId) => {
+    if (window.confirm('Are you sure you want to delete this challenge?')) {
+      try {
+        await deleteChallenge(challengeId);
+        toast.success('Challenge deleted successfully');
+        getChallenges();
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Failed to delete challenge');
+      }
+    }
+  };
+
+  const handleDeleteContest = async (contestId) => {
+    if (window.confirm('Are you sure you want to delete this contest?')) {
+      try {
+        await deleteContest(contestId);
+        toast.success('Contest deleted successfully');
+        getContests();
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Failed to delete contest');
+      }
+    }
   };
 
   if (!user?.isAdmin) {
@@ -969,8 +992,20 @@ export default function Admin() {
                           <span className="px-2 py-1 bg-slate-800 rounded text-xs text-slate-300">
                             {challenge.status}
                           </span>
+                          {challenge.problem && (
+                            <span className="px-2 py-1 bg-indigo-900 text-indigo-300 rounded text-xs">
+                              {challenge.problem.title}
+                            </span>
+                          )}
                         </div>
                       </div>
+                      <button
+                        onClick={() => handleDeleteChallenge(challenge._id)}
+                        className="ml-4 p-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition"
+                        title="Delete Challenge"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 ))
@@ -1025,8 +1060,10 @@ export default function Admin() {
                       onChange={handleContestInputChange}
                       className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg"
                     >
-                      <option value="individual">Individual</option>
-                      <option value="team">Team</option>
+                      <option value="weekly">Weekly Contest</option>
+                      <option value="biweekly">Biweekly Contest</option>
+                      <option value="special">Special Contest</option>
+                      <option value="virtual">Virtual Contest</option>
                     </select>
                     <input
                       type="number"
@@ -1157,8 +1194,23 @@ export default function Admin() {
                           <span className="px-2 py-1 bg-slate-800 rounded text-xs text-slate-300">
                             {contest.duration} mins
                           </span>
+                          <span className="px-2 py-1 bg-purple-900 text-purple-300 rounded text-xs">
+                            {contest.problems?.length || 0} problems
+                          </span>
+                          {contest.isRated && (
+                            <span className="px-2 py-1 bg-yellow-900 text-yellow-300 rounded text-xs">
+                              Rated
+                            </span>
+                          )}
                         </div>
                       </div>
+                      <button
+                        onClick={() => handleDeleteContest(contest._id)}
+                        className="ml-4 p-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition"
+                        title="Delete Contest"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 ))
