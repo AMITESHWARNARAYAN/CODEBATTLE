@@ -23,10 +23,14 @@ export default function Contests() {
         getRunningContests(),
         getPastContests()
       ]);
+      console.log('Upcoming contests:', upcoming);
+      console.log('Running contests:', running);
+      console.log('Past contests:', past);
       setUpcomingContests(upcoming);
       setRunningContests(running);
       setPastContests(past);
     } catch (error) {
+      console.error('Failed to load contests:', error);
       toast.error('Failed to load contests');
     }
   };
@@ -47,7 +51,16 @@ export default function Contests() {
     return `${minutes}m`;
   };
 
-  const ContestCard = ({ contest, showRegister = false, showEnter = false }) => (
+  const ContestCard = ({ contest, showRegister = false, showEnter = false }) => {
+    console.log('Contest card:', {
+      title: contest.title,
+      isRegistered: contest.isRegistered,
+      showRegister,
+      showEnter,
+      status: contest.status
+    });
+
+    return (
     <div className="glass border border-slate-700 rounded-lg p-4 sm:p-6 hover:border-indigo-500 transition">
       <div className="flex flex-col sm:flex-row items-start justify-between mb-4 gap-3">
         <div className="flex-1 w-full">
@@ -138,7 +151,8 @@ export default function Contests() {
         </div>
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
