@@ -25,6 +25,18 @@ router.post('/', async (req, res) => {
       ratingCeiling
     } = req.body;
 
+    console.log('Creating contest with data:', { title, type, problems, startTime, duration, prizes });
+
+    // Validate required fields
+    if (!title || !description || !startTime || !duration) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Validate problems array
+    if (!problems || !Array.isArray(problems) || problems.length === 0) {
+      return res.status(400).json({ message: 'At least one problem is required' });
+    }
+
     // Validate problems exist
     const problemIds = problems.map(p => p.problemId);
     const existingProblems = await Problem.find({ _id: { $in: problemIds } });
@@ -36,6 +48,21 @@ router.post('/', async (req, res) => {
     // Calculate end time
     const start = new Date(startTime);
     const end = new Date(start.getTime() + duration * 60000);
+
+    // Format prizes - convert string array to object array if needed
+    let formattedPrizes = [];
+    if (prizes && Array.isArray(prizes)) {
+      formattedPrizes = prizes.map((prize, index) => {
+        if (typeof prize === 'string') {
+          return {
+            rank: index + 1,
+            description: prize,
+            badge: ''
+          };
+        }
+        return prize;
+      });
+    }
 
     const contest = new Contest({
       title,
@@ -49,11 +76,11 @@ router.post('/', async (req, res) => {
       startTime: start,
       endTime: end,
       duration,
-      rules,
-      prizes,
-      isRated,
-      ratingFloor,
-      ratingCeiling,
+      rules: rules || 'Standard ICPC rules apply. Wrong submissions incur 20-minute penalty.',
+      prizes: formattedPrizes,
+      isRated: isRated !== undefined ? isRated : true,
+      ratingFloor: ratingFloor || 0,
+      ratingCeiling: ratingCeiling || 3000,
       createdBy: req.user._id
     });
 
@@ -69,7 +96,8 @@ router.post('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Create contest error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error details:', error.message);
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 });
 

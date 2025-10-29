@@ -55,7 +55,7 @@ export default function Admin() {
     startTime: '',
     duration: 120,
     rules: '',
-    prizes: [],
+    prizes: '',
     isRated: true
   });
   const [selectedProblems, setSelectedProblems] = useState([]);
@@ -282,11 +282,24 @@ export default function Admin() {
         order: index + 1
       }));
 
+      // Format prizes - convert comma-separated string to array
+      const prizesArray = contestFormData.prizes
+        ? contestFormData.prizes.split(',').map(p => p.trim()).filter(p => p)
+        : [];
+
       const contestPayload = {
-        ...contestFormData,
+        title: contestFormData.title,
+        description: contestFormData.description,
+        type: contestFormData.type,
         problems: formattedProblems,
-        prizes: contestFormData.prizes ? contestFormData.prizes.split(',').map(p => p.trim()) : []
+        startTime: contestFormData.startTime,
+        duration: parseInt(contestFormData.duration),
+        rules: contestFormData.rules || '',
+        prizes: prizesArray,
+        isRated: contestFormData.isRated
       };
+
+      console.log('Submitting contest:', contestPayload);
 
       await createContest(contestPayload);
       toast.success('Contest created successfully!');
@@ -299,12 +312,13 @@ export default function Admin() {
         startTime: '',
         duration: 120,
         rules: '',
-        prizes: [],
+        prizes: '',
         isRated: true
       });
       setSelectedProblems([]);
       getContests();
     } catch (error) {
+      console.error('Contest creation error:', error);
       toast.error(error.response?.data?.message || 'Failed to create contest');
     }
   };
