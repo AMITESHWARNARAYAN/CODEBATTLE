@@ -121,6 +121,7 @@ export default function Contests() {
         )}
 
         <div className="flex gap-2">
+          {/* Register button for upcoming contests */}
           {showRegister && !contest.isRegistered && (
             <button
               onClick={() => navigate(`/contests/${contest._id}`)}
@@ -130,6 +131,15 @@ export default function Contests() {
               <ArrowRight className="w-4 h-4" />
             </button>
           )}
+
+          {/* Already registered for upcoming contest */}
+          {showRegister && contest.isRegistered && (
+            <div className="px-4 py-2 bg-green-900 text-green-300 rounded-lg font-semibold">
+              ✓ Registered
+            </div>
+          )}
+
+          {/* Enter button for running contests if registered */}
           {showEnter && contest.isRegistered && (
             <button
               onClick={() => navigate(`/contests/${contest._id}/live`)}
@@ -139,6 +149,19 @@ export default function Contests() {
               <ArrowRight className="w-4 h-4" />
             </button>
           )}
+
+          {/* Register button for running contests if not registered */}
+          {showEnter && !contest.isRegistered && (
+            <button
+              onClick={() => navigate(`/contests/${contest._id}`)}
+              className="btn-primary flex items-center gap-2"
+            >
+              Register & Enter
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* View details for past contests */}
           {!showRegister && !showEnter && (
             <button
               onClick={() => navigate(`/contests/${contest._id}`)}
@@ -249,4 +272,3 @@ export default function Contests() {
     </div>
   );
 }
-
