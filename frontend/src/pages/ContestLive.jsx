@@ -63,8 +63,11 @@ export default function ContestLive() {
     }
   };
 
-  const handleSolveProblem = (problemId) => {
-    navigate(`/code-editor/${problemId}?contest=${id}`);
+  const handleSolveProblem = (problem) => {
+    // Navigate to code editor with contest context and problem data
+    navigate(`/code-editor/contest-problem?contest=${id}&problem=${problem._id}`, {
+      state: { problem, contestId: id }
+    });
   };
 
   const formatTime = (ms) => {
@@ -225,7 +228,7 @@ export default function ContestLive() {
                       </div>
 
                       <button
-                        onClick={() => handleSolveProblem(cp.problem._id)}
+                        onClick={() => handleSolveProblem(cp.problem)}
                         className="btn-primary flex items-center gap-2"
                       >
                         <Code className="w-4 h-4" />

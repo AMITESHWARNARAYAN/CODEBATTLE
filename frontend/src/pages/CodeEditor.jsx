@@ -1,19 +1,25 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useMatchStore } from '../store/matchStore';
+import { useContestStore } from '../store/contestStore';
 import { useThemeStore } from '../store/themeStore';
 import { useExplanationStore } from '../store/explanationStore';
 import Editor from '@monaco-editor/react';
 import { submitCodeNotification, onOpponentSubmitted } from '../utils/socket';
 import { toast } from 'react-hot-toast';
-import { Play, Send, Clock, Flag, Moon, Sun, ExternalLink, Lightbulb, BookOpen, Zap, ChevronLeft, ChevronRight, Settings, Users, Share2, Award } from 'lucide-react';
+import { Play, Send, Clock, Flag, Moon, Sun, ExternalLink, Lightbulb, BookOpen, Zap, ChevronLeft, ChevronRight, Settings, Users, Share2, Award, Trophy } from 'lucide-react';
 
 export default function CodeEditor() {
   const { matchId } = useParams();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const contestId = searchParams.get('contest');
+  const problemId = searchParams.get('problem') || matchId;
   const navigate = useNavigate();
   const { user, token } = useAuthStore();
   const { currentMatch, submitCode, getMatch, giveUp } = useMatchStore();
+  const { submitSolution: submitContestSolution } = useContestStore();
   const { isDark, toggleTheme } = useThemeStore();
   const { explanation, guidance, solution, loading: explanationLoading, generateExplanation, generateGuidance, generateSolution, clearExplanations } = useExplanationStore();
   const [code, setCode] = useState('');
@@ -22,6 +28,7 @@ export default function CodeEditor() {
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes
   const [timerEnabled, setTimerEnabled] = useState(true);
   const [match, setMatch] = useState(currentMatch);
+  const [contestProblem, setContestProblem] = useState(location.state?.problem || null);
   const [opponentSubmitted, setOpponentSubmitted] = useState(false);
   const [testResults, setTestResults] = useState(null);
   const [givingUp, setGivingUp] = useState(false);
@@ -31,9 +38,15 @@ export default function CodeEditor() {
   const [activeTab, setActiveTab] = useState('description'); // description, editorial, solutions, submissions
   const [leftPanelWidth, setLeftPanelWidth] = useState(40);
   const [isDragging, setIsDragging] = useState(false);
+  const isContestMode = !!contestId;
 
-  // Fetch match if not in store
+  // Fetch match or problem data
   useEffect(() => {
+    // Skip if in contest mode (problem data loaded from ContestLive page)
+    if (isContestMode) {
+      return;
+    }
+
     if (!match) {
       const fetchMatch = async () => {
         try {
@@ -46,7 +59,7 @@ export default function CodeEditor() {
       };
       fetchMatch();
     }
-  }, [matchId, match, getMatch, navigate]);
+  }, [matchId, match, getMatch, navigate, isContestMode]);
 
   // Timer with auto-submit (only for solo practice with timer enabled)
   useEffect(() => {
@@ -95,22 +108,41 @@ export default function CodeEditor() {
 
     setSubmitting(true);
     try {
-      const result = await submitCode(matchId, code, language);
-      setTestResults(result.executionResult);
+      // Contest mode submission
+      if (isContestMode) {
+        const result = await submitContestSolution(contestId, problemId, code, language);
+        setTestResults(result);
 
-      // Notify opponent
-      submitCodeNotification(matchId, user._id, user.username);
+        if (result.status === 'accepted') {
+          toast.success(`✅ Accepted! +${result.score} points`);
+        } else {
+          toast.error(`❌ ${result.status}`);
+        }
 
-      toast.success('Code submitted!');
-
-      // If match is completed, redirect to results
-      if (result.match.status === 'completed') {
+        // Redirect back to contest after a delay
         setTimeout(() => {
-          navigate(`/results/${matchId}`);
+          navigate(`/contests/${contestId}/live`);
         }, 2000);
       }
+      // Match mode submission
+      else {
+        const result = await submitCode(matchId, code, language);
+        setTestResults(result.executionResult);
+
+        // Notify opponent
+        submitCodeNotification(matchId, user._id, user.username);
+
+        toast.success('Code submitted!');
+
+        // If match is completed, redirect to results
+        if (result.match.status === 'completed') {
+          setTimeout(() => {
+            navigate(`/results/${matchId}`);
+          }, 2000);
+        }
+      }
     } catch (error) {
-      toast.error('Failed to submit code');
+      toast.error(error.response?.data?.message || 'Failed to submit code');
     } finally {
       setSubmitting(false);
     }
@@ -174,7 +206,8 @@ export default function CodeEditor() {
     }
   };
 
-  if (!match) {
+  // In contest mode, we don't need match data
+  if (!isContestMode && !match) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -185,7 +218,7 @@ export default function CodeEditor() {
     );
   }
 
-  if (!match.problem) {
+  if (!isContestMode && !match?.problem) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -201,7 +234,25 @@ export default function CodeEditor() {
     );
   }
 
-  const problem = match.problem;
+  // Get problem data from either match or contest
+  const problem = isContestMode ? contestProblem : match?.problem;
+
+  // If in contest mode and no problem data, show error
+  if (isContestMode && !contestProblem) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 font-semibold">Error: Problem data not found</p>
+          <button
+            onClick={() => navigate(`/contests/${contestId}/live`)}
+            className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg"
+          >
+            Back to Contest
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const handleMouseDown = () => {
     setIsDragging(true);
@@ -236,14 +287,25 @@ export default function CodeEditor() {
           {/* Left: Problem List & Navigation */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={() => isContestMode ? navigate(`/contests/${contestId}/live`) : navigate('/dashboard')}
               className={`p-2 rounded-lg hover:${isDark ? 'bg-slate-800' : 'bg-slate-100'} transition`}
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <span className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Problem List</span>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-sm font-semibold">{problem?.title}</span>
+            {isContestMode ? (
+              <>
+                <Trophy className="w-4 h-4 text-yellow-400" />
+                <span className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Contest</span>
+                <ChevronRight className="w-4 h-4" />
+                <span className="text-sm font-semibold">{problem?.title}</span>
+              </>
+            ) : (
+              <>
+                <span className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Problem List</span>
+                <ChevronRight className="w-4 h-4" />
+                <span className="text-sm font-semibold">{problem?.title}</span>
+              </>
+            )}
           </div>
 
           {/* Center: Problem Number & Difficulty */}
@@ -271,7 +333,7 @@ export default function CodeEditor() {
             >
               {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
-            {match?.matchType === 'solo' && (
+            {!isContestMode && match?.matchType === 'solo' && (
               <div className="flex items-center gap-2">
                 <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`}>
                   <Clock className={`w-4 h-4 ${timerEnabled ? 'text-yellow-500' : 'text-slate-400'}`} />
@@ -543,13 +605,13 @@ export default function CodeEditor() {
           <div className={`border-t p-4 flex gap-3 transition-colors duration-300 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
             <button
               onClick={handleSubmit}
-              disabled={submitting || timeLeft === 0}
+              disabled={submitting || (!isContestMode && timeLeft === 0)}
               className="btn-primary flex items-center gap-2 flex-1"
             >
               <Play className="w-4 h-4" />
-              {submitting ? 'Submitting...' : 'Submit'}
+              {submitting ? 'Submitting...' : isContestMode ? 'Submit Solution' : 'Submit'}
             </button>
-            {match.matchType !== 'solo' && (
+            {!isContestMode && match.matchType !== 'solo' && (
               <button
                 onClick={handleGiveUp}
                 disabled={givingUp || match.status !== 'in-progress'}
