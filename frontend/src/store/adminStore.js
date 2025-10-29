@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const useAdminStore = create((set) => ({
   problems: [],
   categories: [],
+  challenges: [],
+  contests: [],
   stats: null,
   loading: false,
   error: null,
@@ -235,6 +237,224 @@ export const useAdminStore = create((set) => ({
       return response.data;
     } catch (error) {
       set({ error: 'Failed to fetch stats', loading: false });
+      throw error;
+    }
+  },
+
+  // Challenge Management
+  createChallenge: async (challengeData) => {
+    set({ loading: true, error: null });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API_URL}/admin/challenges`, challengeData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      set((state) => ({
+        challenges: [response.data.challenge, ...state.challenges],
+        loading: false
+      }));
+      return response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to create challenge';
+      set({ error: message, loading: false });
+      throw error;
+    }
+  },
+
+  getChallenges: async (filters = {}) => {
+    set({ loading: true, error: null });
+    try {
+      const token = localStorage.getItem('token');
+      const params = new URLSearchParams(filters);
+      const response = await axios.get(`${API_URL}/admin/challenges?${params}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      set({ challenges: response.data, loading: false });
+      return response.data;
+    } catch (error) {
+      set({ error: 'Failed to fetch challenges', loading: false });
+      throw error;
+    }
+  },
+
+  updateChallenge: async (challengeId, challengeData) => {
+    set({ loading: true, error: null });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(
+        `${API_URL}/admin/challenges/${challengeId}`,
+        challengeData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      set((state) => ({
+        challenges: state.challenges.map((c) =>
+          c._id === challengeId ? response.data.challenge : c
+        ),
+        loading: false
+      }));
+      return response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to update challenge';
+      set({ error: message, loading: false });
+      throw error;
+    }
+  },
+
+  deleteChallenge: async (challengeId) => {
+    set({ loading: true, error: null });
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/admin/challenges/${challengeId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      set((state) => ({
+        challenges: state.challenges.filter((c) => c._id !== challengeId),
+        loading: false
+      }));
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to delete challenge';
+      set({ error: message, loading: false });
+      throw error;
+    }
+  },
+
+  getChallengeStats: async (challengeId) => {
+    set({ loading: true, error: null });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/admin/challenges/${challengeId}/stats`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      set({ loading: false });
+      return response.data;
+    } catch (error) {
+      set({ error: 'Failed to fetch challenge stats', loading: false });
+      throw error;
+    }
+  },
+
+  // Contest Management
+  createContest: async (contestData) => {
+    try {
+      set({ loading: true, error: null });
+      const token = localStorage.getItem('token');
+
+      const response = await axios.post(`${API_URL}/admin/contests`, contestData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      set((state) => ({
+        contests: [response.data.contest, ...state.contests],
+        loading: false
+      }));
+
+      return response.data.contest;
+    } catch (error) {
+      set({ error: 'Failed to create contest', loading: false });
+      throw error;
+    }
+  },
+
+  getContests: async (filters = {}) => {
+    try {
+      set({ loading: true, error: null });
+      const token = localStorage.getItem('token');
+
+      const params = new URLSearchParams(filters);
+      const response = await axios.get(`${API_URL}/admin/contests?${params}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      set({ contests: response.data, loading: false });
+      return response.data;
+    } catch (error) {
+      set({ error: 'Failed to fetch contests', loading: false });
+      throw error;
+    }
+  },
+
+  updateContest: async (contestId, contestData) => {
+    try {
+      set({ loading: true, error: null });
+      const token = localStorage.getItem('token');
+
+      const response = await axios.put(
+        `${API_URL}/admin/contests/${contestId}`,
+        contestData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      set((state) => ({
+        contests: state.contests.map((c) =>
+          c._id === contestId ? response.data.contest : c
+        ),
+        loading: false
+      }));
+
+      return response.data.contest;
+    } catch (error) {
+      set({ error: 'Failed to update contest', loading: false });
+      throw error;
+    }
+  },
+
+  deleteContest: async (contestId) => {
+    try {
+      set({ loading: true, error: null });
+      const token = localStorage.getItem('token');
+
+      await axios.delete(`${API_URL}/admin/contests/${contestId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      set((state) => ({
+        contests: state.contests.filter((c) => c._id !== contestId),
+        loading: false
+      }));
+    } catch (error) {
+      set({ error: 'Failed to delete contest', loading: false });
+      throw error;
+    }
+  },
+
+  cancelContest: async (contestId) => {
+    try {
+      set({ loading: true, error: null });
+      const token = localStorage.getItem('token');
+
+      const response = await axios.post(
+        `${API_URL}/admin/contests/${contestId}/cancel`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      set((state) => ({
+        contests: state.contests.map((c) =>
+          c._id === contestId ? response.data.contest : c
+        ),
+        loading: false
+      }));
+
+      return response.data.contest;
+    } catch (error) {
+      set({ error: 'Failed to cancel contest', loading: false });
+      throw error;
+    }
+  },
+
+  getContestStats: async (contestId) => {
+    try {
+      set({ loading: true, error: null });
+      const token = localStorage.getItem('token');
+
+      const response = await axios.get(`${API_URL}/admin/contests/${contestId}/stats`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      set({ loading: false });
+      return response.data;
+    } catch (error) {
+      set({ error: 'Failed to fetch contest stats', loading: false });
       throw error;
     }
   },

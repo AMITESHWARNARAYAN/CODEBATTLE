@@ -6,6 +6,7 @@ import User from '../models/User.js';
 import { protect } from '../middleware/auth.js';
 import { executeCode, analyzeComplexity } from '../utils/codeExecutor.js';
 import { calculateMatchRatings, determineWinner } from '../utils/eloRating.js';
+import { createNotification } from './notifications.js';
 
 const router = express.Router();
 
@@ -24,7 +25,7 @@ router.post('/solo', protect, async (req, res) => {
         return res.status(404).json({ message: 'Problem not found' });
       }
     } else {
-      // Get a random problem
+      // Get random problem
       const count = await Problem.countDocuments();
       const random = Math.floor(Math.random() * count);
       problem = await Problem.findOne().skip(random);
@@ -432,6 +433,29 @@ router.post('/:matchId/submit', protect, async (req, res) => {
             change: ratingChanges.player2.change
           }
         ];
+
+        // Send notifications to both players
+        const winnerName = result === 'player1' ? player1.username : result === 'player2' ? player2.username : null;
+
+        await createNotification(
+          player1Id,
+          'match_result',
+          'Match Completed',
+          result === 'player1' ? `🎉 You won! Rating: ${ratingChanges.player1.change >= 0 ? '+' : ''}${ratingChanges.player1.change}` :
+          result === 'draw' ? `Match ended in a draw. Rating: ${ratingChanges.player1.change >= 0 ? '+' : ''}${ratingChanges.player1.change}` :
+          `You lost to ${player2.username}. Rating: ${ratingChanges.player1.change >= 0 ? '+' : ''}${ratingChanges.player1.change}`,
+          `/results/${match._id}`
+        );
+
+        await createNotification(
+          player2Id,
+          'match_result',
+          'Match Completed',
+          result === 'player2' ? `🎉 You won! Rating: ${ratingChanges.player2.change >= 0 ? '+' : ''}${ratingChanges.player2.change}` :
+          result === 'draw' ? `Match ended in a draw. Rating: ${ratingChanges.player2.change >= 0 ? '+' : ''}${ratingChanges.player2.change}` :
+          `You lost to ${player1.username}. Rating: ${ratingChanges.player2.change >= 0 ? '+' : ''}${ratingChanges.player2.change}`,
+          `/results/${match._id}`
+        );
       }
     }
 

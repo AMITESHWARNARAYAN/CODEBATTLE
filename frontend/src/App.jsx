@@ -20,7 +20,16 @@ import Results from './pages/Results';
 import Leaderboard from './pages/Leaderboard';
 import Profile from './pages/Profile';
 import Admin from './pages/Admin';
+import AdminProblemMetadata from './pages/AdminProblemMetadata';
 import Problems from './pages/Problems';
+import DailyChallenge from './pages/DailyChallenge';
+import Submissions from './pages/Submissions';
+import Discussions from './pages/Discussions';
+import Challenges from './pages/Challenges';
+import Contests from './pages/Contests';
+import ContestDetail from './pages/ContestDetail';
+import ContestLive from './pages/ContestLive';
+import Notifications from './pages/Notifications';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -88,16 +97,26 @@ function App() {
 
         <Route path="/" element={token ? <ProtectedRoute><Dashboard /></ProtectedRoute> : <Landing />} />
         <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+        <Route path="/admin/problem-metadata" element={<ProtectedRoute><AdminProblemMetadata /></ProtectedRoute>} />
         <Route path="/problems" element={<ProtectedRoute><Problems /></ProtectedRoute>} />
+        <Route path="/daily-challenge" element={<ProtectedRoute><DailyChallenge /></ProtectedRoute>} />
+        <Route path="/submissions" element={<ProtectedRoute><Submissions /></ProtectedRoute>} />
+        <Route path="/discussions" element={<ProtectedRoute><Discussions /></ProtectedRoute>} />
+        <Route path="/challenges" element={<ProtectedRoute><Challenges /></ProtectedRoute>} />
+        <Route path="/contests" element={<ProtectedRoute><Contests /></ProtectedRoute>} />
+        <Route path="/contests/:id" element={<ProtectedRoute><ContestDetail /></ProtectedRoute>} />
+        <Route path="/contests/:id/live" element={<ProtectedRoute><ContestLive /></ProtectedRoute>} />
         <Route path="/matchmaking" element={<ProtectedRoute><Matchmaking /></ProtectedRoute>} />
         <Route path="/friend-challenge" element={<ProtectedRoute><FriendChallenge /></ProtectedRoute>} />
         <Route path="/match/solo" element={<ProtectedRoute><SoloPractice /></ProtectedRoute>} />
         <Route path="/match/join/:inviteCode" element={<ProtectedRoute><JoinChallenge /></ProtectedRoute>} />
         <Route path="/match/:matchId" element={<ProtectedRoute><CodeEditor /></ProtectedRoute>} />
+        <Route path="/code-editor/:problemId" element={<ProtectedRoute><CodeEditor /></ProtectedRoute>} />
         <Route path="/results/:matchId" element={<ProtectedRoute><Results /></ProtectedRoute>} />
         <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
         <Route path="/profile/:username" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        
+        <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>

@@ -24,16 +24,40 @@ if (result.error) {
 
 const app = express();
 const httpServer = createServer(app);
+
+// CORS configuration
+const corsOrigin = process.env.CORS_ORIGIN || '*';
+console.log('CORS Origin:', corsOrigin);
+
 const io = new Server(httpServer, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
+    origin: corsOrigin,
+    methods: ['GET', 'POST'],
+    credentials: true
   }
+});
+
+// Make io globally accessible for notifications
+global.io = io;
+
+// Socket.io connection handling for notifications
+io.on('connection', (socket) => {
+  console.log('User connected:', socket.id);
+
+  // Join user to their own room for notifications
+  socket.on('join', (userId) => {
+    socket.join(userId);
+    console.log(`User ${userId} joined their notification room`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
 });
 
 // Middleware
 app.use(cors({
-  origin: '*',
+  origin: corsOrigin,
   credentials: true
 }));
 app.use(express.json());
@@ -54,6 +78,14 @@ async function setupRoutes() {
   const { default: adminRoutesModule } = await import('./routes/admin.js');
   const { default: explanationRoutesModule } = await import('./routes/explanations.js');
   const { default: categoryRoutesModule } = await import('./routes/categories.js');
+  const { default: dailyChallengeRoutesModule } = await import('./routes/dailyChallenge.js');
+  const { default: submissionRoutesModule } = await import('./routes/submissions.js');
+  const { default: discussionRoutesModule } = await import('./routes/discussions.js');
+  const { default: adminChallengeRoutesModule } = await import('./routes/adminChallenges.js');
+  const { default: challengeRoutesModule } = await import('./routes/challenges.js');
+  const { default: contestRoutesModule } = await import('./routes/contests.js');
+  const { default: adminContestRoutesModule } = await import('./routes/adminContests.js');
+  const { default: notificationRoutesModule } = await import('./routes/notifications.js');
 
   // Setup WebSocket
   setupMatchmakingModule(io);
@@ -66,9 +98,18 @@ async function setupRoutes() {
   app.use('/api/admin', adminRoutesModule);
   app.use('/api/explanations', explanationRoutesModule);
   app.use('/api/categories', categoryRoutesModule);
-}
+  app.use('/api/daily-challenge', dailyChallengeRoutesModule);
+  app.use('/api/submissions', submissionRoutesModule);
+  app.use('/api/discussions', discussionRoutesModule);
+  app.use('/api/admin/challenges', adminChallengeRoutesModule);
+  app.use('/api/challenges', challengeRoutesModule);
+  app.use('/api/contests', contestRoutesModule);
+  app.use('/api/admin/contests', adminContestRoutesModule);
+  app.use('/api/notifications', notificationRoutesModule);
 
-setupRoutes().catch(err => console.error('Error setting up routes:', err));
+  const { default: problemMetadataRoutesModule } = await import('./routes/problemMetadata.js');
+  app.use('/api/problem-metadata', problemMetadataRoutesModule);
+}
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -81,12 +122,21 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Internal server error' });
 });
 
-// Start server
+// Start server AFTER routes are set up
 const PORT = process.env.PORT || 5000;
-httpServer.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Frontend URL: ${process.env.FRONTEND_URL}`);
-});
+
+setupRoutes()
+  .then(() => {
+    httpServer.listen(PORT, () => {
+      console.log(`✅ Server running on port ${PORT}`);
+      console.log(`✅ Frontend URL: ${process.env.FRONTEND_URL}`);
+      console.log(`✅ All routes registered successfully`);
+    });
+  })
+  .catch(err => {
+    console.error('❌ Error setting up routes:', err);
+    process.exit(1);
+  });
 
 export default app;
 

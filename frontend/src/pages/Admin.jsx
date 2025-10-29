@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useAdminStore } from '../store/adminStore';
 import { toast } from 'react-hot-toast';
-import { Plus, Trash2, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Tags, Check, X } from 'lucide-react';
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -13,6 +13,8 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState('problems');
   const [showForm, setShowForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [pendingUsers, setPendingUsers] = useState([]);
+  const [approvedUsers, setApprovedUsers] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -48,8 +50,67 @@ export default function Admin() {
       getProblems();
       getCategories();
       getStats();
+      if (activeTab === 'users') {
+        fetchPendingUsers();
+        fetchApprovedUsers();
+      }
     }
-  }, [token, getProblems, getCategories, getStats]);
+  }, [token, getProblems, getCategories, getStats, activeTab]);
+
+  const fetchPendingUsers = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/pending-users`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setPendingUsers(data);
+    } catch (error) {
+      console.error('Failed to fetch pending users:', error);
+    }
+  };
+
+  const fetchApprovedUsers = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/approved-users`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setApprovedUsers(data);
+    } catch (error) {
+      console.error('Failed to fetch approved users:', error);
+    }
+  };
+
+  const handleApproveUser = async (userId) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/approve-user/${userId}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        toast.success('User approved successfully');
+        fetchPendingUsers();
+        fetchApprovedUsers();
+      }
+    } catch (error) {
+      toast.error('Failed to approve user');
+    }
+  };
+
+  const handleRejectUser = async (userId) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/admin/reject-user/${userId}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        toast.success('User rejected successfully');
+        fetchPendingUsers();
+      }
+    } catch (error) {
+      toast.error('Failed to reject user');
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -161,8 +222,17 @@ export default function Admin() {
             </button>
             <h1 className="text-2xl font-bold">Admin Panel</h1>
           </div>
-          <div className="text-sm text-slate-400">
-            Welcome, {user?.username}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate('/admin/problem-metadata')}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition"
+            >
+              <Tags className="w-4 h-4" />
+              Manage Metadata
+            </button>
+            <div className="text-sm text-slate-400">
+              Welcome, {user?.username}
+            </div>
           </div>
         </div>
       </header>
@@ -190,11 +260,111 @@ export default function Admin() {
           >
             Problems
           </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`py-4 px-2 font-semibold border-b-2 transition ${
+              activeTab === 'users'
+                ? 'border-indigo-500 text-indigo-400'
+                : 'border-transparent text-slate-400 hover:text-slate-300'
+            }`}
+          >
+            User Approvals
+            {pendingUsers.length > 0 && (
+              <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
+                {pendingUsers.length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => navigate('/challenges')}
+            className="py-4 px-2 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-300 transition"
+          >
+            Challenges
+          </button>
+          <button
+            onClick={() => navigate('/contests')}
+            className="py-4 px-2 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-300 transition"
+          >
+            Contests
+          </button>
         </div>
       </div>
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* User Approvals Section */}
+        {activeTab === 'users' && (
+          <div>
+            <h2 className="text-2xl font-bold mb-6">User Approvals</h2>
+
+            {/* Pending Users */}
+            <div className="mb-8">
+              <h3 className="text-xl font-semibold mb-4 text-yellow-400">
+                Pending Approvals ({pendingUsers.length})
+              </h3>
+              {pendingUsers.length === 0 ? (
+                <div className="card text-center text-slate-400 py-8">
+                  No pending user approvals
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {pendingUsers.map((user) => (
+                    <div key={user._id} className="card flex items-center justify-between">
+                      <div>
+                        <h4 className="font-semibold text-lg">{user.username}</h4>
+                        <p className="text-slate-400 text-sm">{user.email}</p>
+                        <p className="text-slate-500 text-xs mt-1">
+                          Registered: {new Date(user.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleApproveUser(user._id)}
+                          className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition"
+                        >
+                          <Check className="w-4 h-4" />
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleRejectUser(user._id)}
+                          className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition"
+                        >
+                          <X className="w-4 h-4" />
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Approved Users */}
+            <div>
+              <h3 className="text-xl font-semibold mb-4 text-green-400">
+                Approved Users ({approvedUsers.length})
+              </h3>
+              {approvedUsers.length === 0 ? (
+                <div className="card text-center text-slate-400 py-8">
+                  No approved users yet
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {approvedUsers.map((user) => (
+                    <div key={user._id} className="card">
+                      <h4 className="font-semibold">{user.username}</h4>
+                      <p className="text-slate-400 text-sm">{user.email}</p>
+                      <p className="text-slate-500 text-xs mt-2">
+                        Rating: {user.rating || 1200}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Categories Section */}
         {activeTab === 'categories' && (
           <div>

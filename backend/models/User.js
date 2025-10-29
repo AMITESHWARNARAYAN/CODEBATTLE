@@ -66,6 +66,54 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // Daily Challenge Streak
+  currentStreak: {
+    type: Number,
+    default: 0
+  },
+  longestStreak: {
+    type: Number,
+    default: 0
+  },
+  lastDailyChallengeDate: {
+    type: Date,
+    default: null
+  },
+  dailyChallengesCompleted: {
+    type: Number,
+    default: 0
+  },
+  // Problem Solving Stats
+  solvedProblems: [{
+    problem: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Problem'
+    },
+    solvedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  totalSolved: {
+    type: Number,
+    default: 0
+  },
+  easySolved: {
+    type: Number,
+    default: 0
+  },
+  mediumSolved: {
+    type: Number,
+    default: 0
+  },
+  hardSolved: {
+    type: Number,
+    default: 0
+  },
+  isApproved: {
+    type: Boolean,
+    default: true  // Changed to true to allow users to login without admin approval
+  },
   createdAt: {
     type: Date,
     default: Date.now

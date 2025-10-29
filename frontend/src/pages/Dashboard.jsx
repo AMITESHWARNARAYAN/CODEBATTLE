@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useUserStore } from '../store/userStore';
 import { useMatchStore } from '../store/matchStore';
-import { LogOut, Trophy, Zap, Users, Check, X, Settings } from 'lucide-react';
+import { LogOut, Trophy, Zap, Users, Check, X, Settings, Calendar, Target, Brain } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getSocket, acceptChallenge as emitAcceptChallenge, rejectChallenge as emitRejectChallenge } from '../utils/socket';
+import NotificationBell from '../components/NotificationBell';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -15,12 +16,15 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [pendingChallenges, setPendingChallenges] = useState([]);
   const [challengeLoading, setChallengeLoading] = useState({});
+  const [activeChallengesCount, setActiveChallengesCount] = useState(0);
+  const [runningContestsCount, setRunningContestsCount] = useState(0);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         await getUserStats();
         await fetchPendingChallenges();
+        await fetchRunningContests();
       } catch (error) {
         console.error('Failed to fetch stats:', error);
       } finally {
@@ -30,6 +34,18 @@ export default function Dashboard() {
 
     fetchStats();
   }, [getUserStats]);
+
+  const fetchRunningContests = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/contests/running`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      const contests = await response.json();
+      setRunningContestsCount(contests.length);
+    } catch (error) {
+      console.error('Failed to fetch running contests:', error);
+    }
+  };
 
   const fetchPendingChallenges = async () => {
     try {
@@ -97,6 +113,7 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-slate-300">{user?.username}</span>
+            <NotificationBell />
             {user?.isAdmin && (
               <button
                 onClick={() => navigate('/admin')}
@@ -188,6 +205,69 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Daily Challenge & Admin Challenges Banners */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+          {/* Daily Challenge Banner */}
+          <div
+            onClick={() => navigate('/daily-challenge')}
+            className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-6 cursor-pointer hover:shadow-lg hover:shadow-orange-500/30 transition-all group"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Calendar className="w-12 h-12 text-white" />
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-1">Daily Challenge</h3>
+                  <p className="text-white/90 text-sm">Maintain your streak! 🔥</p>
+                </div>
+              </div>
+              <div className="text-white font-bold text-lg group-hover:translate-x-2 transition-transform">
+                →
+              </div>
+            </div>
+          </div>
+
+          {/* Admin Challenges Banner */}
+          <div
+            onClick={() => navigate('/challenges')}
+            className="bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl p-6 cursor-pointer hover:shadow-lg hover:shadow-purple-500/30 transition-all group"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Target className="w-12 h-12 text-white" />
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-1">Challenges</h3>
+                  <p className="text-white/90 text-sm">Complete & earn rewards! 🏆</p>
+                </div>
+              </div>
+              <div className="text-white font-bold text-lg group-hover:translate-x-2 transition-transform">
+                →
+              </div>
+            </div>
+          </div>
+
+          {/* Contests Banner */}
+          <div
+            onClick={() => navigate('/contests')}
+            className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl p-6 cursor-pointer hover:shadow-lg hover:shadow-yellow-500/30 transition-all group"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Trophy className="w-12 h-12 text-white" />
+                <div>
+                  <h3 className="text-xl font-bold text-white mb-1">Contests</h3>
+                  <p className="text-white/90 text-sm">
+                    {runningContestsCount > 0 ? `🔴 ${runningContestsCount} Live Now!` : 'Compete & climb the leaderboard!'}
+                  </p>
+                </div>
+              </div>
+              <div className="text-white font-bold text-lg group-hover:translate-x-2 transition-transform">
+                →
+              </div>
+            </div>
+          </div>
+
+        </div>
+
         {/* Game Modes */}
         <div className="mb-12">
           <h3 className="text-2xl font-bold mb-6">Choose Your Battle Mode</h3>
@@ -263,6 +343,14 @@ export default function Dashboard() {
           >
             <h4 className="text-lg font-bold mb-2 group-hover:text-cyan-400">📊 Your Profile</h4>
             <p className="text-slate-400">View your detailed statistics and match history</p>
+          </div>
+
+          <div
+            onClick={() => navigate('/submissions')}
+            className="card cursor-pointer hover:border-green-500 transition-all group"
+          >
+            <h4 className="text-lg font-bold mb-2 group-hover:text-green-400">📝 Submissions</h4>
+            <p className="text-slate-400">View all your code submissions and statistics</p>
           </div>
         </div>
       </main>

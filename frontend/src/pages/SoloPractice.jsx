@@ -9,12 +9,19 @@ export default function SoloPractice() {
   const { startSoloMatch } = useMatchStore();
   const [loading, setLoading] = useState(true);
   const problemId = searchParams.get('problemId');
+  const isDailyChallenge = searchParams.get('dailyChallenge') === 'true';
 
   useEffect(() => {
     const initiateSoloMatch = async () => {
       try {
         setLoading(true);
         const match = await startSoloMatch(problemId);
+
+        // Store daily challenge flag in session storage
+        if (isDailyChallenge) {
+          sessionStorage.setItem('isDailyChallenge', 'true');
+        }
+
         toast.success('Match started! Loading code editor...');
         // Navigate to the code editor with the match ID
         navigate(`/match/${match._id}`);
@@ -31,7 +38,7 @@ export default function SoloPractice() {
     };
 
     initiateSoloMatch();
-  }, [startSoloMatch, navigate, problemId]);
+  }, [startSoloMatch, navigate, problemId, isDailyChallenge]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">

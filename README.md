@@ -12,8 +12,15 @@ A real-time DSA (Data Structures & Algorithms) coding competition platform built
 - **Admin Panel**: Create categories and problems
 - **User Authentication**: Secure login and registration
 - **Leaderboard**: Track user rankings and statistics
-- **AI Explanations**: Get AI-powered hints using Groq API
-- **Dark/Light Theme**: Responsive design with theme support
+- **AI Explanations**: Get AI-powered hints using Groq & Gemini APIs
+- **Dark Theme**: Responsive design with modern UI
+
+## 📦 Repository Structure
+
+This project is organized as a monorepo with separate frontend and backend directories. For deployment, you should push them to separate GitHub repositories:
+
+- **Frontend** → Deploy to **Vercel**
+- **Backend** → Deploy to **Render**
 
 ## 🚀 Quick Start
 
@@ -23,43 +30,27 @@ A real-time DSA (Data Structures & Algorithms) coding competition platform built
 - Groq API key
 - Gemini API key
 
-### Installation
+### Local Development
 
-**Backend Setup**
+**1. Backend Setup**
 ```bash
 cd backend
 npm install
+cp .env.example .env
+# Edit .env with your credentials
+npm run dev
 ```
 
-Create `.env` file:
-```
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/codebattle
-JWT_SECRET=your_jwt_secret_min_32_chars
-GROQ_API_KEY=your_groq_api_key
-GEMINI_API_KEY=your_gemini_api_key
-PORT=5000
-```
-
-**Frontend Setup**
+**2. Frontend Setup**
 ```bash
 cd frontend
 npm install
-```
-
-### Running Locally
-
-**Start Backend**
-```bash
-cd backend
+cp .env.example .env
+# Edit .env with your backend URL
 npm run dev
 ```
 
-**Start Frontend**
-```bash
-cd frontend
-npm run dev
-```
-
+**3. Access the Application**
 - Frontend: http://localhost:5173
 - Backend: http://localhost:5000
 
@@ -67,21 +58,27 @@ npm run dev
 
 ```
 codebattle/
-├── backend/
+├── backend/             # Backend API (Deploy to Render)
 │   ├── models/          # MongoDB schemas
 │   ├── routes/          # API endpoints
 │   ├── middleware/      # Auth middleware
 │   ├── socket/          # WebSocket handlers
 │   ├── utils/           # Helper functions
-│   └── server.js        # Express server
-├── frontend/
-│   ├── src/
-│   │   ├── pages/       # React pages
-│   │   ├── store/       # Zustand stores
-│   │   ├── utils/       # Helper functions
-│   │   └── App.jsx      # Main component
-│   └── vite.config.js
-└── vercel.json          # Vercel deployment config
+│   ├── seeds/           # Database seeders
+│   ├── server.js        # Express server
+│   ├── .env.example     # Environment template
+│   └── README.md        # Backend deployment guide
+│
+└── frontend/            # Frontend App (Deploy to Vercel)
+    ├── src/
+    │   ├── pages/       # React pages
+    │   ├── store/       # Zustand stores
+    │   ├── utils/       # Helper functions
+    │   └── App.jsx      # Main component
+    ├── vite.config.js   # Vite configuration
+    ├── vercel.json      # Vercel configuration
+    ├── .env.example     # Environment template
+    └── README.md        # Frontend deployment guide
 ```
 
 ## 🔑 Tech Stack
@@ -104,134 +101,90 @@ codebattle/
 
 ## 👤 Default Admin Account
 
+After seeding the database:
 - Email: `admin@codebattle.com`
 - Password: `admin123456`
 
 ## 🌐 Deployment
 
-Deploy to Vercel:
-1. Push code to GitHub
-2. Connect GitHub to Vercel
-3. Add environment variables
-4. Deploy
+### Deploy Frontend to Vercel
 
-See `vercel.json` for configuration.
+1. **Create a new GitHub repository for frontend**
+   ```bash
+   cd frontend
+   git init
+   git add .
+   git commit -m "Initial frontend commit"
+   git remote add origin https://github.com/YOUR_USERNAME/codebattle-frontend.git
+   git push -u origin main
+   ```
+
+2. **Deploy on Vercel**
+   - Go to [Vercel](https://vercel.com)
+   - Click "New Project"
+   - Import your frontend repository
+   - Add environment variable: `VITE_API_URL` = Your backend URL
+   - Deploy!
+
+See `frontend/README.md` for detailed instructions.
+
+### Deploy Backend to Render
+
+1. **Create a new GitHub repository for backend**
+   ```bash
+   cd backend
+   git init
+   git add .
+   git commit -m "Initial backend commit"
+   git remote add origin https://github.com/YOUR_USERNAME/codebattle-backend.git
+   git push -u origin main
+   ```
+
+2. **Deploy on Render**
+   - Go to [Render](https://render.com)
+   - Click "New +" → "Web Service"
+   - Connect your backend repository
+   - Add environment variables (MongoDB URI, JWT Secret, API Keys, etc.)
+   - Deploy!
+
+See `backend/README.md` for detailed instructions.
 
 ## 📝 Environment Variables
 
 ### Backend (.env)
-```
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret_min_32_chars
-GROQ_API_KEY=your_groq_api_key
-GEMINI_API_KEY=your_gemini_api_key
+```env
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/codebattle
+JWT_SECRET=your_jwt_secret_key_minimum_32_characters_long
+GROQ_API_KEY=your_groq_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
 PORT=5000
 NODE_ENV=development
+CORS_ORIGIN=http://localhost:5173
 ```
 
 ### Frontend (.env)
-```
+```env
 VITE_API_URL=http://localhost:5000/api
 ```
 
-## 📄 License
+For production, update `VITE_API_URL` to your deployed backend URL.
 
-MIT License - feel free to use this project for learning and development.
+## 🎨 Key Features
 
----
+### For Users
+- ✅ Browse problems by category (Arrays, Strings, Trees, etc.)
+- ✅ Solo practice mode with optional timer
+- ✅ Real-time 1v1 matchmaking
+- ✅ Friend challenge system with invite codes
+- ✅ AI-powered code explanations
+- ✅ Leaderboard and user rankings
+- ✅ Profile statistics and match history
 
-**Built with ❤️ using MERN Stack**
-- Loss deducts points accordingly
-- Draws split the difference
-
-## 🔐 Authentication
-
-- JWT-based authentication
-- Passwords hashed with bcryptjs
-- Token stored in localStorage
-- Auto-logout on token expiration
-
-## 🧪 Testing
-
-### Test Accounts
-```
-Email: test@example.com
-Password: password123
-```
-
-### Sample Problems
-5 DSA problems pre-loaded:
-- Two Sum (Easy)
-- Reverse String (Easy)
-- Palindrome Number (Easy)
-- Valid Parentheses (Easy)
-- Merge Sorted Array (Easy)
-
-## 🚀 Deployment
-
-### Backend (Heroku/Railway)
-```bash
-cd backend
-git push heroku main
-```
-
-### Frontend (Vercel/Netlify)
-```bash
-cd frontend
-npm run build
-# Deploy the dist folder
-```
-
-## 📝 API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - Register user
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/me` - Get current user
-- `POST /api/auth/logout` - Logout user
-
-### Problems
-- `GET /api/problems` - Get all problems
-- `GET /api/problems/random` - Get random problem
-- `GET /api/problems/:id` - Get problem by ID
-
-### Matches
-- `POST /api/matches/solo` - Start solo match
-- `POST /api/matches/friend/create` - Create friend challenge
-- `POST /api/matches/friend/join/:inviteCode` - Join friend challenge
-- `POST /api/matches/:matchId/submit` - Submit code
-- `GET /api/matches/:matchId` - Get match details
-- `GET /api/matches/user/history` - Get match history
-
-### Users
-- `GET /api/users/leaderboard` - Get leaderboard
-- `GET /api/users/stats` - Get user stats
-- `GET /api/users/search` - Search users
-- `GET /api/users/:username` - Get user profile
-
-## 🐛 Troubleshooting
-
-### MongoDB Connection Error
-- Ensure MongoDB is running locally OR
-- Update `MONGODB_URI` in `.env` with Atlas connection string
-
-### Port Already in Use
-- Backend: Change `PORT` in `.env`
-- Frontend: Change port in `vite.config.js`
-
-### Socket Connection Issues
-- Ensure backend is running
-- Check CORS settings in `server.js`
-- Verify `FRONTEND_URL` in `.env`
-
-## 🎨 UI/UX Features
-
-- Dark theme with gradient accents
-- Responsive design (mobile, tablet, desktop)
-- Real-time animations and transitions
-- Toast notifications for user feedback
-- Loading states and error handling
-- Professional color scheme (Indigo, Purple, Pink)
+### For Admins
+- ✅ Create and manage problem categories
+- ✅ Add/edit/delete coding problems
+- ✅ View platform statistics
+- ✅ Manage users
 
 ## 🔮 Future Enhancements
 
@@ -243,8 +196,21 @@ npm run build
 - [ ] Problem editorial and solutions
 - [ ] Code replay and analysis
 - [ ] Mobile app (React Native)
-- [ ] Advanced analytics dashboard
-- [ ] Streaming integration
+
+## 🐛 Troubleshooting
+
+### MongoDB Connection Error
+- Ensure MongoDB Atlas connection string is correct
+- Whitelist your IP address in MongoDB Atlas
+
+### CORS Issues
+- Update `CORS_ORIGIN` in backend `.env` with your frontend URL
+- For local development: `http://localhost:5173`
+- For production: Your Vercel URL
+
+### Socket Connection Issues
+- Ensure backend is running and accessible
+- Check that frontend `VITE_API_URL` points to correct backend URL
 
 ## 📄 License
 
@@ -253,10 +219,6 @@ MIT License - feel free to use this project for learning and development.
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📧 Support
-
-For issues and questions, please create an issue in the repository.
 
 ---
 

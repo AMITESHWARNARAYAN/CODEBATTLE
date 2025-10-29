@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/explanations';
+const BASE_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = `${BASE_API_URL}/explanations`;
 
 export const useExplanationStore = create((set) => ({
   explanation: null,

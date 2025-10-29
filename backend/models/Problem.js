@@ -34,6 +34,21 @@ const problemSchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
+  companyTags: [{
+    type: String,
+    trim: true
+  }],
+  lists: [{
+    type: String,
+    enum: ['Top 100 Liked', 'Blind 75', 'NeetCode 150', 'Top Interview Questions', 'Beginner Friendly'],
+    trim: true
+  }],
+  frequency: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100
+  },
   constraints: {
     type: String,
     default: ''
