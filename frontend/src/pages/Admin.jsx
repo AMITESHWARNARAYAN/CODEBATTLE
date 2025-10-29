@@ -50,14 +50,15 @@ export default function Admin() {
   const [contestFormData, setContestFormData] = useState({
     title: '',
     description: '',
-    type: 'rated',
+    type: 'individual',
     problems: [],
     startTime: '',
     duration: 120,
     rules: '',
-    prizes: '',
+    prizes: [],
     isRated: true
   });
+  const [selectedProblems, setSelectedProblems] = useState([]);
 
   // Check if user is admin
   useEffect(() => {
@@ -267,31 +268,56 @@ export default function Admin() {
     const { name, value } = e.target;
     setContestFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: name === 'duration' ? parseInt(value) || 0 : value
     }));
   };
 
   const handleContestSubmit = async (e) => {
     e.preventDefault();
     try {
-      await createContest(contestFormData);
+      // Format problems array for backend
+      const formattedProblems = selectedProblems.map((problemId, index) => ({
+        problemId,
+        points: 100,
+        order: index + 1
+      }));
+
+      const contestPayload = {
+        ...contestFormData,
+        problems: formattedProblems,
+        prizes: contestFormData.prizes ? contestFormData.prizes.split(',').map(p => p.trim()) : []
+      };
+
+      await createContest(contestPayload);
       toast.success('Contest created successfully!');
       setShowContestForm(false);
       setContestFormData({
         title: '',
         description: '',
-        type: 'rated',
+        type: 'individual',
         problems: [],
         startTime: '',
         duration: 120,
         rules: '',
-        prizes: '',
+        prizes: [],
         isRated: true
       });
+      setSelectedProblems([]);
+      getChallenges();
       getContests();
     } catch (error) {
-      toast.error('Failed to create contest');
+      toast.error(error.response?.data?.message || 'Failed to create contest');
     }
+  };
+
+  const handleProblemSelection = (problemId) => {
+    setSelectedProblems(prev => {
+      if (prev.includes(problemId)) {
+        return prev.filter(id => id !== problemId);
+      } else {
+        return [...prev, problemId];
+      }
+    });
   };
 
   if (!user?.isAdmin) {
@@ -999,9 +1025,8 @@ export default function Admin() {
                       onChange={handleContestInputChange}
                       className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg"
                     >
-                      <option value="rated">Rated</option>
-                      <option value="unrated">Unrated</option>
-                      <option value="educational">Educational</option>
+                      <option value="individual">Individual</option>
+                      <option value="team">Team</option>
                     </select>
                     <input
                       type="number"
@@ -1026,9 +1051,40 @@ export default function Admin() {
                     />
                   </div>
 
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-2">Select Problems (at least 1 required)</label>
+                    <div className="max-h-48 overflow-y-auto border border-slate-700 rounded-lg p-3 bg-slate-800/50">
+                      {problems.length === 0 ? (
+                        <p className="text-slate-500 text-sm">No problems available</p>
+                      ) : (
+                        problems.map((problem) => (
+                          <label key={problem._id} className="flex items-center gap-2 p-2 hover:bg-slate-700/50 rounded cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={selectedProblems.includes(problem._id)}
+                              onChange={() => handleProblemSelection(problem._id)}
+                              className="w-4 h-4"
+                            />
+                            <span className="text-sm">{problem.title}</span>
+                            <span className={`ml-auto text-xs px-2 py-0.5 rounded ${
+                              problem.difficulty === 'Easy' ? 'bg-green-900 text-green-300' :
+                              problem.difficulty === 'Medium' ? 'bg-yellow-900 text-yellow-300' :
+                              'bg-red-900 text-red-300'
+                            }`}>
+                              {problem.difficulty}
+                            </span>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                    {selectedProblems.length > 0 && (
+                      <p className="text-xs text-slate-400 mt-1">{selectedProblems.length} problem(s) selected</p>
+                    )}
+                  </div>
+
                   <textarea
                     name="rules"
-                    placeholder="Contest Rules"
+                    placeholder="Contest Rules (optional)"
                     value={contestFormData.rules}
                     onChange={handleContestInputChange}
                     rows="2"
@@ -1038,28 +1094,45 @@ export default function Admin() {
                   <input
                     type="text"
                     name="prizes"
-                    placeholder="Prizes (optional)"
+                    placeholder="Prizes (comma-separated, optional)"
                     value={contestFormData.prizes}
                     onChange={handleContestInputChange}
                     className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg"
                   />
 
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      name="isRated"
+                      checked={contestFormData.isRated}
+                      onChange={(e) => setContestFormData(prev => ({ ...prev, isRated: e.target.checked }))}
+                      className="w-4 h-4"
+                    />
+                    <label className="text-sm text-slate-300">Rated Contest</label>
+                  </div>
+
                   <div className="flex gap-3">
                     <button
                       type="submit"
-                      disabled={loading}
-                      className="btn-primary flex-1"
+                      disabled={loading || selectedProblems.length === 0}
+                      className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {loading ? 'Creating...' : 'Create Contest'}
                     </button>
                     <button
                       type="button"
-                      onClick={() => setShowContestForm(false)}
+                      onClick={() => {
+                        setShowContestForm(false);
+                        setSelectedProblems([]);
+                      }}
                       className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition"
                     >
                       Cancel
                     </button>
                   </div>
+                  {selectedProblems.length === 0 && (
+                    <p className="text-xs text-red-400">Please select at least one problem</p>
+                  )}
                 </form>
               </div>
             )}
