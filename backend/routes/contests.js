@@ -50,7 +50,15 @@ router.get('/upcoming', protect, async (req, res) => {
       .sort({ startTime: 1 })
       .lean();
 
-    res.json(contests);
+    // Add user registration status
+    const contestsWithUserData = contests.map(contest => ({
+      ...contest,
+      isRegistered: contest.participants.some(
+        p => p.user.toString() === req.user._id.toString()
+      )
+    }));
+
+    res.json(contestsWithUserData);
   } catch (error) {
     console.error('Get upcoming contests error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -68,7 +76,15 @@ router.get('/running', protect, async (req, res) => {
       .sort({ startTime: -1 })
       .lean();
 
-    res.json(contests);
+    // Add user registration status
+    const contestsWithUserData = contests.map(contest => ({
+      ...contest,
+      isRegistered: contest.participants.some(
+        p => p.user.toString() === req.user._id.toString()
+      )
+    }));
+
+    res.json(contestsWithUserData);
   } catch (error) {
     console.error('Get running contests error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -87,7 +103,15 @@ router.get('/past', protect, async (req, res) => {
       .limit(20)
       .lean();
 
-    res.json(contests);
+    // Add user registration status
+    const contestsWithUserData = contests.map(contest => ({
+      ...contest,
+      isRegistered: contest.participants.some(
+        p => p.user.toString() === req.user._id.toString()
+      )
+    }));
+
+    res.json(contestsWithUserData);
   } catch (error) {
     console.error('Get past contests error:', error);
     res.status(500).json({ message: 'Server error' });
