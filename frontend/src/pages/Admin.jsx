@@ -276,14 +276,22 @@ export default function Admin() {
             )}
           </button>
           <button
-            onClick={() => navigate('/challenges')}
-            className="py-4 px-2 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-300 transition"
+            onClick={() => setActiveTab('challenges')}
+            className={`py-4 px-2 font-semibold border-b-2 transition ${
+              activeTab === 'challenges'
+                ? 'border-indigo-500 text-indigo-400'
+                : 'border-transparent text-slate-400 hover:text-slate-300'
+            }`}
           >
             Challenges
           </button>
           <button
-            onClick={() => navigate('/contests')}
-            className="py-4 px-2 font-semibold border-b-2 border-transparent text-slate-400 hover:text-slate-300 transition"
+            onClick={() => setActiveTab('contests')}
+            className={`py-4 px-2 font-semibold border-b-2 transition ${
+              activeTab === 'contests'
+                ? 'border-indigo-500 text-indigo-400'
+                : 'border-transparent text-slate-400 hover:text-slate-300'
+            }`}
           >
             Contests
           </button>
@@ -697,7 +705,47 @@ export default function Admin() {
                 ))
               )}
             </div>
-        </div>
+          </div>
+        )}
+
+        {/* Challenges Section */}
+        {activeTab === 'challenges' && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold">Manage Challenges</h2>
+              <button
+                onClick={() => navigate('/admin/challenges')}
+                className="btn-primary flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Create Challenge
+              </button>
+            </div>
+            <div className="card text-center text-slate-400 py-8">
+              <p className="mb-4">Click "Create Challenge" to add a new challenge</p>
+              <p className="text-sm">Challenges are time-limited coding problems that users can participate in</p>
+            </div>
+          </div>
+        )}
+
+        {/* Contests Section */}
+        {activeTab === 'contests' && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold">Manage Contests</h2>
+              <button
+                onClick={() => navigate('/admin/contests')}
+                className="btn-primary flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Create Contest
+              </button>
+            </div>
+            <div className="card text-center text-slate-400 py-8">
+              <p className="mb-4">Click "Create Contest" to add a new contest</p>
+              <p className="text-sm">Contests are competitive events with multiple problems and leaderboards</p>
+            </div>
+          </div>
         )}
       </div>
     </div>
