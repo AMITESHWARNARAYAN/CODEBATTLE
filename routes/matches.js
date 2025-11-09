@@ -7,6 +7,7 @@ import { protect } from '../middleware/auth.js';
 import { executeCodeWithJudge0, analyzeComplexity } from '../utils/codeExecutor.js';
 import { calculateMatchRatings, determineWinner } from '../utils/eloRating.js';
 import { createNotification } from './notifications.js';
+import { getOnlineUsers } from '../socket/matchmaking.js';
 
 const router = express.Router();
 
@@ -204,6 +205,32 @@ router.post('/friend/accept-challenge/:matchId', protect, async (req, res) => {
     await match.save();
 
     await match.populate('players');
+
+    // Emit socket event to notify the challenger that challenge was accepted
+    const io = global.io;
+    if (io && match.challengerEmail) {
+      const onlineUsers = getOnlineUsers();
+      
+      // Find challenger's socket
+      let challengerSocket = null;
+      for (const [userId, userInfo] of onlineUsers.entries()) {
+        if (userInfo.email === match.challengerEmail) {
+          challengerSocket = userInfo.socketId;
+          break;
+        }
+      }
+
+      if (challengerSocket) {
+        io.to(challengerSocket).emit('challenge-accepted', {
+          matchId: match._id.toString(),
+          message: 'Your challenge was accepted!',
+          timestamp: Date.now()
+        });
+        console.log(`Notified challenger ${match.challengerEmail} that challenge was accepted`);
+      } else {
+        console.log(`Challenger ${match.challengerEmail} is not currently online`);
+      }
+    }
 
     // Return match data without all test cases
     const matchData = match.toObject();
