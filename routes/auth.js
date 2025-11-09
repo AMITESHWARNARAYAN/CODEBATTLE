@@ -11,13 +11,11 @@ const router = express.Router();
 router.get('/registration-status', async (req, res) => {
   try {
     const userCount = await User.countDocuments();
-    const availableSlots = Math.max(0, 100 - userCount);
 
     res.json({
-      isAvailable: userCount < 100,
+      isAvailable: true,
       totalUsers: userCount,
-      maxUsers: 100,
-      availableSlots
+      message: 'Registration is open for all users'
     });
   } catch (error) {
     console.error('Registration status error:', error);
@@ -40,15 +38,6 @@ router.post('/register', [
     }
 
     const { username, email, password } = req.body;
-
-    // Check if registration limit (100 users) has been reached
-    const userCount = await User.countDocuments();
-    if (userCount >= 100) {
-      return res.status(403).json({
-        message: 'Registration limit reached. Maximum 100 users allowed.',
-        limitReached: true
-      });
-    }
 
     // Check if user already exists
     const userExists = await User.findOne({ $or: [{ email }, { username }] });
