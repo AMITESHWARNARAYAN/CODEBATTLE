@@ -5,8 +5,8 @@ import crypto from 'crypto';
 const createTransporter = () => {
   return nodemailer.createTransport({
     host: 'smtp.sendgrid.net',
-    port: 587,
-    secure: false, // Use STARTTLS
+    port: 465, // Use SSL instead of TLS for better compatibility
+    secure: true, // Use SSL
     auth: {
       user: 'apikey', // This is literally the string 'apikey'
       pass: process.env.SENDGRID_API_KEY // Your SendGrid API key
@@ -16,12 +16,11 @@ const createTransporter = () => {
     maxMessages: 10,
     rateDelta: 1000,
     rateLimit: 5,
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 10000,
-    socketTimeout: 30000, // 30 seconds
-    tls: {
-      rejectUnauthorized: false // Allow self-signed certificates
-    }
+    connectionTimeout: 15000, // 15 seconds
+    greetingTimeout: 15000,
+    socketTimeout: 45000, // 45 seconds
+    logger: true, // Enable logging for debugging
+    debug: false // Disable detailed debug logs
   });
 };
 
