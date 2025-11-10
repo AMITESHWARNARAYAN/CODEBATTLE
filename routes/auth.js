@@ -119,9 +119,7 @@ router.post('/login', [
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // Check email verification (temporarily disabled for Gmail SMTP issues)
-    // TODO: Re-enable after fixing Gmail SMTP or switching to SendGrid
-    /*
+    // Check email verification
     if (!user.isEmailVerified) {
       return res.status(403).json({ 
         message: 'Please verify your email before logging in. Check your inbox for verification link.',
@@ -129,7 +127,6 @@ router.post('/login', [
         email: user.email
       });
     }
-    */
 
     // Update online status
     user.isOnline = true;

@@ -1,22 +1,16 @@
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 
-// Create reusable transporter with better timeout and connection settings
+// Create reusable transporter with SendGrid SMTP
 const createTransporter = () => {
   return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
+    host: 'smtp.sendgrid.net',
     port: 587,
     secure: false, // Use STARTTLS
     auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD
-    },
-    tls: {
-      rejectUnauthorized: false
-    },
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 10000,
-    socketTimeout: 10000
+      user: 'apikey', // This is literally the string 'apikey'
+      pass: process.env.SENDGRID_API_KEY // Your SendGrid API key
+    }
   });
 };
 
@@ -34,7 +28,7 @@ export const sendVerificationEmail = async (email, username, token) => {
   const mailOptions = {
     from: {
       name: 'CodeBattle',
-      address: process.env.EMAIL_USER
+      address: 'noreply@codebattle.com' // Will be overridden by SendGrid verified sender
     },
     to: email,
     subject: 'Verify Your CodeBattle Account',
@@ -185,7 +179,7 @@ export const sendWelcomeEmail = async (email, username) => {
   const mailOptions = {
     from: {
       name: 'CodeBattle',
-      address: process.env.EMAIL_USER
+      address: 'noreply@codebattle.com' // Will be overridden by SendGrid verified sender
     },
     to: email,
     subject: 'Welcome to CodeBattle! 🎉',
