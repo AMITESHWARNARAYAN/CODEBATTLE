@@ -25,7 +25,7 @@ console.log('Environment Check:');
 console.log('- GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? '✅ Set' : '❌ Not set');
 console.log('- GROQ_API_KEY:', process.env.GROQ_API_KEY ? '✅ Set' : '❌ Not set');
 console.log('- SENDGRID_API_KEY:', process.env.SENDGRID_API_KEY ? '✅ Set' : '❌ Not set');
-console.log('- MONGO_URI:', process.env.MONGO_URI ? '✅ Set' : '❌ Not set');
+console.log('- MONGODB_URI:', process.env.MONGODB_URI ? '✅ Set' : '❌ Not set');
 console.log('- JWT_SECRET:', process.env.JWT_SECRET ? '✅ Set' : '❌ Not set');
 
 const app = express();
@@ -70,15 +70,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Connect to MongoDB
-const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+const mongoUri = process.env.MONGODB_URI;
 if (!mongoUri) {
-  console.error('❌ MONGODB_URI or MONGO_URI not set!');
+  console.error('❌ MONGODB_URI environment variable not set!');
+  console.error('Please add MONGODB_URI to your Render environment variables.');
   process.exit(1);
 }
+console.log('📡 Connecting to MongoDB...');
 mongoose.connect(mongoUri)
-  .then(() => console.log('✅ MongoDB connected'))
+  .then(() => console.log('✅ MongoDB connected successfully'))
   .catch(err => {
-    console.error('❌ MongoDB connection error:', err);
+    console.error('❌ MongoDB connection error:', err.message);
     process.exit(1);
   });
 
