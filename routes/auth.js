@@ -119,14 +119,14 @@ router.post('/login', [
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // TEMPORARILY DISABLED: Email verification (testing production deployment)
-    // if (!user.isEmailVerified) {
-    //   return res.status(403).json({ 
-    //     message: 'Please verify your email before logging in. Check your inbox for verification link.',
-    //     emailNotVerified: true,
-    //     email: user.email
-    //   });
-    // }
+    // Check email verification
+    if (!user.isEmailVerified) {
+      return res.status(403).json({ 
+        message: 'Please verify your email before logging in. Check your inbox for verification link.',
+        emailNotVerified: true,
+        email: user.email
+      });
+    }
 
     // Update online status
     user.isOnline = true;
