@@ -11,16 +11,22 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Try to load .env file (for local development), but don't fail if it doesn't exist (production uses Render env vars)
 const envPath = `${__dirname}/.env`;
-console.log('Loading .env from:', envPath);
 const result = dotenv.config({ path: envPath });
 if (result.error) {
-  console.error('Error loading .env:', result.error);
+  console.log('ℹ️ No .env file found (using environment variables from hosting platform)');
 } else {
-  console.log('✅ .env loaded successfully');
-  console.log('GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? '✅ Set' : '❌ Not set');
-  console.log('GROQ_API_KEY:', process.env.GROQ_API_KEY ? '✅ Set' : '❌ Not set');
+  console.log('✅ .env loaded successfully from file');
 }
+
+// Log critical environment variables status
+console.log('Environment Check:');
+console.log('- GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? '✅ Set' : '❌ Not set');
+console.log('- GROQ_API_KEY:', process.env.GROQ_API_KEY ? '✅ Set' : '❌ Not set');
+console.log('- SENDGRID_API_KEY:', process.env.SENDGRID_API_KEY ? '✅ Set' : '❌ Not set');
+console.log('- MONGO_URI:', process.env.MONGO_URI ? '✅ Set' : '❌ Not set');
+console.log('- JWT_SECRET:', process.env.JWT_SECRET ? '✅ Set' : '❌ Not set');
 
 const app = express();
 const httpServer = createServer(app);
