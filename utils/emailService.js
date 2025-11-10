@@ -28,7 +28,7 @@ export const sendVerificationEmail = async (email, username, token) => {
   const mailOptions = {
     from: {
       name: 'CodeBattle',
-      address: 'noreply@codebattle.com' // Will be overridden by SendGrid verified sender
+      address: 'amiteshwarnarayan@gmail.com' // Your verified SendGrid sender
     },
     to: email,
     subject: 'Verify Your CodeBattle Account',
@@ -179,7 +179,7 @@ export const sendWelcomeEmail = async (email, username) => {
   const mailOptions = {
     from: {
       name: 'CodeBattle',
-      address: 'noreply@codebattle.com' // Will be overridden by SendGrid verified sender
+      address: 'amiteshwarnarayan@gmail.com' // Your verified SendGrid sender
     },
     to: email,
     subject: 'Welcome to CodeBattle! 🎉',
