@@ -21,12 +21,14 @@ if (result.error) {
 }
 
 // Log critical environment variables status
+console.log('='.repeat(50));
 console.log('Environment Check:');
 console.log('- GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? '✅ Set' : '❌ Not set');
 console.log('- GROQ_API_KEY:', process.env.GROQ_API_KEY ? '✅ Set' : '❌ Not set');
 console.log('- SENDGRID_API_KEY:', process.env.SENDGRID_API_KEY ? '✅ Set' : '❌ Not set');
 console.log('- MONGODB_URI:', process.env.MONGODB_URI ? '✅ Set' : '❌ Not set');
 console.log('- JWT_SECRET:', process.env.JWT_SECRET ? '✅ Set' : '❌ Not set');
+console.log('='.repeat(50));
 
 const app = express();
 const httpServer = createServer(app);
