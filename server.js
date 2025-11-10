@@ -106,6 +106,7 @@ async function setupRoutes() {
   const { default: notificationRoutesModule } = await import('./routes/notifications.js');
   const { default: judgeRoutesModule } = await import('./routes/judge.js');
   const { default: verificationRoutesModule } = await import('./routes/verification.js');
+  const { default: testEmailRoutesModule } = await import('./routes/test-email.js');
 
   // Setup WebSocket
   setupMatchmakingModule(io);
@@ -113,6 +114,7 @@ async function setupRoutes() {
   // Routes
   app.use('/api/auth', authRoutesModule);
   app.use('/api/verification', verificationRoutesModule);
+  app.use('/api/test-email', testEmailRoutesModule); // Test email endpoint
   app.use('/api/problems', problemRoutesModule);
   app.use('/api/matches', matchRoutesModule);
   app.use('/api/users', userRoutesModule);
