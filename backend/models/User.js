@@ -119,49 +119,6 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  // Problem Interaction Tracking
-  likedProblems: [{
-    problem: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Problem'
-    },
-    likedAt: {
-      type: Date,
-      default: Date.now
-    }
-  }],
-  dislikedProblems: [{
-    problem: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Problem'
-    },
-    dislikedAt: {
-      type: Date,
-      default: Date.now
-    }
-  }],
-  bookmarkedProblems: [{
-    problem: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Problem'
-    },
-    bookmarkedAt: {
-      type: Date,
-      default: Date.now
-    }
-  }],
-  // Unlocked hints per problem
-  unlockedHints: [{
-    problem: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Problem'
-    },
-    hintIndices: [Number], // Array of hint indices unlocked
-    unlockedAt: {
-      type: Date,
-      default: Date.now
-    }
-  }],
   createdAt: {
     type: Date,
     default: Date.now

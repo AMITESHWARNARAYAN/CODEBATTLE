@@ -36,8 +36,16 @@ const problems = [
       }
     ],
     functionSignature: {
-      cpp: 'vector<int> twoSum(vector<int>& nums, int target) {\n    \n}'
+      cpp: 'vector<int> twoSum(vector<int>& nums, int target) {\n    \n}',
+      java: 'class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        \n    }\n}',
+      python: 'class Solution:\n    def twoSum(self, nums: List[int], target: int) -> List[int]:\n        ',
+      javascript: 'var twoSum = function(nums, target) {\n    \n};'
     },
+    hints: [
+      { title: 'Use a Hash Map', content: 'Store each number and its index in a hash map. For each number, check if target - number exists in the map.' },
+      { title: 'Two Pass Approach', content: 'First pass: store all numbers in the map. Second pass: check for complements.' },
+      { title: 'Time Complexity', content: 'The optimal solution has O(n) time complexity using a hash map.' }
+    ],
     timeLimit: 2000,
     memoryLimit: 256
   },
@@ -67,8 +75,15 @@ const problems = [
       }
     ],
     functionSignature: {
-      cpp: 'void reverseString(vector<char>& s) {\n    \n}'
+      cpp: 'void reverseString(vector<char>& s) {\n    \n}',
+      java: 'class Solution {\n    public void reverseString(char[] s) {\n        \n    }\n}',
+      python: 'class Solution:\n    def reverseString(self, s: List[str]) -> None:\n        ',
+      javascript: 'var reverseString = function(s) {\n    \n};'
     },
+    hints: [
+      { title: 'Two Pointers', content: 'Use two pointers from the start and end, swapping elements as you move towards the center.' },
+      { title: 'Space Optimization', content: 'Do it in-place to achieve O(1) extra space.' }
+    ],
     timeLimit: 2000,
     memoryLimit: 256
   },
@@ -103,8 +118,15 @@ const problems = [
       }
     ],
     functionSignature: {
-      cpp: 'bool isPalindrome(int x) {\n    \n}'
+      cpp: 'bool isPalindrome(int x) {\n    \n}',
+      java: 'class Solution {\n    public boolean isPalindrome(int x) {\n        \n    }\n}',
+      python: 'class Solution:\n    def isPalindrome(self, x: int) -> bool:\n        ',
+      javascript: 'var isPalindrome = function(x) {\n    \n};'
     },
+    hints: [
+      { title: 'String Conversion', content: 'Convert the number to a string and check if it reads the same forwards and backwards.' },
+      { title: 'Mathematical Approach', content: 'Reverse the number mathematically without converting to string.' }
+    ],
     timeLimit: 2000,
     memoryLimit: 256
   },
@@ -139,8 +161,15 @@ const problems = [
       }
     ],
     functionSignature: {
-      cpp: 'bool isValid(string s) {\n    \n}'
+      cpp: 'bool isValid(string s) {\n    \n}',
+      java: 'class Solution {\n    public boolean isValid(String s) {\n        \n    }\n}',
+      python: 'class Solution:\n    def isValid(self, s: str) -> bool:\n        ',
+      javascript: 'var isValid = function(s) {\n    \n};'
     },
+    hints: [
+      { title: 'Use a Stack', content: 'Push opening brackets onto a stack. When you see a closing bracket, check if it matches the most recent opening bracket.' },
+      { title: 'Matching Pairs', content: 'Each type of bracket must be closed by the same type in the correct order.' }
+    ],
     timeLimit: 2000,
     memoryLimit: 256
   },
@@ -165,8 +194,15 @@ const problems = [
       }
     ],
     functionSignature: {
-      cpp: 'void merge(vector<int>& nums1, int m, vector<int>& nums2, int n) {\n    \n}'
+      cpp: 'void merge(vector<int>& nums1, int m, vector<int>& nums2, int n) {\n    \n}',
+      java: 'class Solution {\n    public void merge(int[] nums1, int m, int[] nums2, int n) {\n        \n    }\n}',
+      python: 'class Solution:\n    def merge(self, nums1: List[int], m: int, nums2: List[int], n: int) -> None:\n        ',
+      javascript: 'var merge = function(nums1, m, nums2, n) {\n    \n};'
     },
+    hints: [
+      { title: 'Two Pointers from End', content: 'Use two pointers starting from the end of both arrays, filling nums1 from the back to avoid overwriting.' },
+      { title: 'Why from the end?', content: 'nums1 has extra space at the end, so merge backwards to avoid shifting elements.' }
+    ],
     timeLimit: 2000,
     memoryLimit: 256
   }

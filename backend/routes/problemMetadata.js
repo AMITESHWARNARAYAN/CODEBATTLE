@@ -284,96 +284,172 @@ router.get('/company/:companyName', async (req, res) => {
   }
 });
 
-// @route   GET /api/problem-metadata/:problemId/hints
-// @desc    Get hints for a problem (user only gets unlocked hints)
+// @route   POST /api/problem-metadata/:problemId/like
+// @desc    Like a problem
 // @access  Private
-router.get('/:problemId/hints', protect, async (req, res) => {
+router.post('/:problemId/like', protect, async (req, res) => {
   try {
-    const metadata = await ProblemMetadata.findOne({ problem: req.params.problemId })
-      .select('hints');
-
-    if (!metadata || !metadata.hints) {
-      return res.json({ hints: [], totalHints: 0 });
+    let metadata = await ProblemMetadata.findOne({ problem: req.params.problemId });
+    
+    // Create metadata if it doesn't exist
+    if (!metadata) {
+      metadata = await ProblemMetadata.create({
+        problem: req.params.problemId,
+        likedBy: [],
+        dislikedBy: [],
+        commentCount: 0
+      });
     }
 
-    // Get user's unlocked hints for this problem
-    const user = req.user;
-    const unlockedData = user.unlockedHints.find(
-      (h) => h.problem.toString() === req.params.problemId
-    );
+    const userId = req.user._id;
+    const userIdStr = userId.toString();
+    
+    // Check if user already liked (using toString for comparison)
+    const likeIndex = metadata.likedBy.findIndex(id => id.toString() === userIdStr);
+    const dislikeIndex = metadata.dislikedBy.findIndex(id => id.toString() === userIdStr);
 
-    const unlockedIndices = unlockedData?.hintIndices || [];
+    if (likeIndex > -1) {
+      // User already liked, remove like
+      metadata.likedBy.splice(likeIndex, 1);
+    } else {
+      // Add like
+      metadata.likedBy.push(userId);
+      // Remove dislike if exists
+      if (dislikeIndex > -1) {
+        metadata.dislikedBy.splice(dislikeIndex, 1);
+      }
+    }
 
-    // Return hints with locked status
-    const hintsWithStatus = metadata.hints.map((hint, idx) => ({
-      index: idx,
-      hint: unlockedIndices.includes(idx) ? hint : `Hint ${idx + 1} (Locked)`,
-      isLocked: !unlockedIndices.includes(idx)
-    }));
-
+    await metadata.save();
     res.json({
-      hints: hintsWithStatus,
-      totalHints: metadata.hints.length,
-      unlockedCount: unlockedIndices.length
+      likes: metadata.likedBy?.length || 0,
+      dislikes: metadata.dislikedBy?.length || 0,
+      liked: likeIndex === -1, // true if we just added a like
+      comments: metadata.commentCount || 0
     });
   } catch (error) {
-    console.error('Get hints error:', error);
+    console.error('Like problem error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// @route   POST /api/problem-metadata/:problemId/hints/:hintIndex/unlock
-// @desc    Unlock a hint for a problem (costs coins)
+// @route   POST /api/problem-metadata/:problemId/dislike
+// @desc    Dislike a problem
 // @access  Private
-router.post('/:problemId/hints/:hintIndex/unlock', protect, async (req, res) => {
+router.post('/:problemId/dislike', protect, async (req, res) => {
   try {
-    const { problemId } = req.params;
-    const hintIndex = parseInt(req.params.hintIndex);
-    const costPerHint = 1; // 1 coin per hint (can be configurable)
-
-    // Verify problem exists
-    const metadata = await ProblemMetadata.findOne({ problem: problemId });
-    if (!metadata || !metadata.hints || hintIndex >= metadata.hints.length) {
-      return res.status(404).json({ message: 'Hint not found' });
-    }
-
-    const user = req.user;
+    let metadata = await ProblemMetadata.findOne({ problem: req.params.problemId });
     
-    // Check if hint already unlocked
-    const unlockedData = user.unlockedHints.find(
-      (h) => h.problem.toString() === problemId
-    );
-
-    if (unlockedData && unlockedData.hintIndices.includes(hintIndex)) {
-      return res.json({
-        message: 'Hint already unlocked',
-        hint: metadata.hints[hintIndex]
+    // Create metadata if it doesn't exist
+    if (!metadata) {
+      metadata = await ProblemMetadata.create({
+        problem: req.params.problemId,
+        likedBy: [],
+        dislikedBy: [],
+        commentCount: 0
       });
     }
 
-    // For now, automatically unlock (can add coin cost later)
-    // In future: check user.coins >= costPerHint
+    const userId = req.user._id;
+    const userIdStr = userId.toString();
     
-    if (unlockedData) {
-      unlockedData.hintIndices.push(hintIndex);
-      unlockedData.unlockedAt = new Date();
+    // Check if user already disliked (using toString for comparison)
+    const dislikeIndex = metadata.dislikedBy.findIndex(id => id.toString() === userIdStr);
+    const likeIndex = metadata.likedBy.findIndex(id => id.toString() === userIdStr);
+
+    if (dislikeIndex > -1) {
+      // User already disliked, remove dislike
+      metadata.dislikedBy.splice(dislikeIndex, 1);
     } else {
-      user.unlockedHints.push({
-        problem: problemId,
-        hintIndices: [hintIndex]
-      });
+      // Add dislike
+      metadata.dislikedBy.push(userId);
+      // Remove like if exists
+      if (likeIndex > -1) {
+        metadata.likedBy.splice(likeIndex, 1);
+      }
+    }
+
+    await metadata.save();
+    res.json({
+      likes: metadata.likedBy?.length || 0,
+      dislikes: metadata.dislikedBy?.length || 0,
+      disliked: dislikeIndex === -1, // true if we just added a dislike
+      comments: metadata.commentCount || 0
+    });
+  } catch (error) {
+    console.error('Dislike problem error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/problem-metadata/:problemId/bookmark
+// @desc    Bookmark a problem
+// @access  Private
+router.post('/:problemId/bookmark', protect, async (req, res) => {
+  try {
+    const User = require('../models/User.js').default || require('../models/User.js');
+    const user = await User.findById(req.user._id);
+
+    if (!user.bookmarkedProblems) {
+      user.bookmarkedProblems = [];
+    }
+
+    const problemIdStr = req.params.problemId;
+    const bookmarkIndex = user.bookmarkedProblems.indexOf(problemIdStr);
+
+    if (bookmarkIndex > -1) {
+      // Remove bookmark
+      user.bookmarkedProblems.splice(bookmarkIndex, 1);
+    } else {
+      // Add bookmark
+      user.bookmarkedProblems.push(problemIdStr);
     }
 
     await user.save();
-
     res.json({
-      message: 'Hint unlocked',
-      hint: metadata.hints[hintIndex],
-      hintIndex: hintIndex,
-      costPerHint: costPerHint
+      bookmarked: user.bookmarkedProblems.includes(problemIdStr),
+      count: user.bookmarkedProblems.length
     });
   } catch (error) {
-    console.error('Unlock hint error:', error);
+    console.error('Bookmark problem error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   GET /api/problem-metadata/:problemId/user-preferences
+// @desc    Get current user's preferences for a problem
+// @access  Private
+router.get('/:problemId/user-preferences', protect, async (req, res) => {
+  try {
+    const User = require('../models/User.js').default || require('../models/User.js');
+    let metadata = await ProblemMetadata.findOne({ problem: req.params.problemId });
+
+    const user = await User.findById(req.user._id);
+    const userIdStr = req.user._id.toString();
+    const problemIdStr = req.params.problemId;
+
+    // If metadata doesn't exist, create it with default values
+    if (!metadata) {
+      metadata = await ProblemMetadata.create({
+        problem: req.params.problemId,
+        likedBy: [],
+        dislikedBy: [],
+        commentCount: 0
+      });
+    }
+
+    const preferences = {
+      liked: metadata?.likedBy?.some(id => id.toString() === userIdStr) || false,
+      disliked: metadata?.dislikedBy?.some(id => id.toString() === userIdStr) || false,
+      bookmarked: user?.bookmarkedProblems?.includes(problemIdStr) || false,
+      likes: metadata?.likedBy?.length || 0,
+      dislikes: metadata?.dislikedBy?.length || 0,
+      comments: metadata?.commentCount || 0
+    };
+
+    res.json(preferences);
+  } catch (error) {
+    console.error('Get user preferences error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

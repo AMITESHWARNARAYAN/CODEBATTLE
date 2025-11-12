@@ -101,23 +101,22 @@ router.post('/run', protect, async (req, res) => {
     }
 
     let testCases;
-    let timeLimit = 5; // Default 5 seconds
 
-    // If problemId and testCaseIndex provided, use specific test case
-    if (problemId && typeof testCaseIndex === 'number') {
+    // If problemId and testCaseIndex provided, use problem's test cases
+    if (problemId && testCaseIndex !== undefined) {
       const problem = await Problem.findById(problemId);
       if (!problem) {
         return res.status(404).json({ message: 'Problem not found' });
       }
 
-      if (testCaseIndex >= 0 && testCaseIndex < problem.testCases.length) {
-        testCases = [problem.testCases[testCaseIndex]];
-        timeLimit = problem.timeLimit / 1000; // Convert ms to seconds
-      } else {
+      const selectedTestCase = problem.testCases[testCaseIndex];
+      if (!selectedTestCase) {
         return res.status(400).json({ message: 'Invalid test case index' });
       }
+
+      testCases = [selectedTestCase];
     } else {
-      // Create a single test case with custom input
+      // Use custom input
       testCases = [{
         input: input || '',
         expectedOutput: '' // No expected output for custom run
@@ -129,19 +128,16 @@ router.post('/run', protect, async (req, res) => {
       code,
       testCases,
       language,
-      timeLimit
+      5 // 5 second timeout for custom runs
     );
 
-    const result = executionResult.outputs[0] || {};
-
+    // Return detailed results
     res.json({
-      output: result.actualOutput || '',
-      expectedOutput: testCases[0].expectedOutput || '',
+      status: executionResult.status === 'Accepted' ? 'Accepted' : 'Wrong Answer',
+      output: executionResult.outputs[0]?.actualOutput || '',
       error: executionResult.errors[0] || '',
       executionTime: executionResult.executionTime,
       memoryUsed: executionResult.memoryUsed,
-      status: executionResult.status,
-      passed: result.passed,
       testCasesPassed: executionResult.testCasesPassed,
       totalTestCases: executionResult.totalTestCases
     });
@@ -178,6 +174,38 @@ router.get('/languages', protect, async (req, res) => {
     res.json(languages);
   } catch (error) {
     console.error('Get languages error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   GET /api/judge/hints/:problemId
+// @desc    Get hints for a problem
+// @access  Private
+router.get('/hints/:problemId', protect, async (req, res) => {
+  try {
+    const { problemId } = req.params;
+
+    // Get problem with hints
+    const problem = await Problem.findById(problemId);
+    if (!problem) {
+      return res.status(404).json({ message: 'Problem not found' });
+    }
+
+    // Return hints with progressive unlock levels
+    const hints = problem.hints || [];
+    
+    res.json({
+      total: hints.length,
+      hints: hints.map((hint, idx) => ({
+        id: idx + 1,
+        title: hint.title || `Hint ${idx + 1}`,
+        content: hint.content || hint,
+        unlocked: false, // User can unlock by solving or viewing solution
+        unlockedAt: null
+      }))
+    });
+  } catch (error) {
+    console.error('Get hints error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

@@ -81,6 +81,21 @@ const problemMetadataSchema = new mongoose.Schema({
   }],
   hints: [String],
   realWorldApplications: [String],
+  
+  // User engagement
+  likedBy: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  dislikedBy: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  commentCount: {
+    type: Number,
+    default: 0
+  },
+  
   updatedAt: {
     type: Date,
     default: Date.now

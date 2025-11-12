@@ -107,7 +107,6 @@ async function setupRoutes() {
   const { default: judgeRoutesModule } = await import('./routes/judge.js');
   const { default: verificationRoutesModule } = await import('./routes/verification.js');
   const { default: testEmailRoutesModule } = await import('./routes/test-email.js');
-  const { default: resourceRoutesModule } = await import('./routes/resources.js');
 
   // Setup WebSocket
   setupMatchmakingModule(io);
@@ -131,7 +130,6 @@ async function setupRoutes() {
   app.use('/api/admin/contests', adminContestRoutesModule);
   app.use('/api/notifications', notificationRoutesModule);
   app.use('/api/judge', judgeRoutesModule);
-  app.use('/api/resources', resourceRoutesModule);
 
   const { default: problemMetadataRoutesModule } = await import('./routes/problemMetadata.js');
   app.use('/api/problem-metadata', problemMetadataRoutesModule);

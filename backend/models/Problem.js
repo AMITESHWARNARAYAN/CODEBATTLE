@@ -59,8 +59,24 @@ const problemSchema = new mongoose.Schema({
     explanation: String
   }],
   testCases: [testCaseSchema],
+  hints: [{
+    title: String,
+    content: String
+  }],
   functionSignature: {
     cpp: {
+      type: String,
+      default: ''
+    },
+    java: {
+      type: String,
+      default: ''
+    },
+    python: {
+      type: String,
+      default: ''
+    },
+    javascript: {
       type: String,
       default: ''
     }
@@ -84,17 +100,6 @@ const problemSchema = new mongoose.Schema({
   successfulSubmissions: {
     type: Number,
     default: 0
-  },
-  // Like/Dislike tracking
-  likes: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
-  dislikes: {
-    type: Number,
-    default: 0,
-    min: 0
   },
   solutionLink: {
     type: String,

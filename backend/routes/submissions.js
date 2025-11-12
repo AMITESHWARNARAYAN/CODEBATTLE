@@ -248,49 +248,5 @@ router.get('/calendar/heatmap', protect, async (req, res) => {
   }
 });
 
-// @route   GET /api/submissions/community/:problemId
-// @desc    Get accepted solutions from other users for a problem (community solutions)
-// @access  Private
-router.get('/community/:problemId', protect, async (req, res) => {
-  try {
-    const { limit = 5 } = req.query;
-
-    const solutions = await Submission.find({
-      problem: req.params.problemId,
-      status: 'Accepted',
-      user: { $ne: req.user._id } // Exclude user's own solutions
-    })
-      .populate('user', 'username')
-      .select('-code -errorMessage') // Exclude code and errors
-      .sort({ runtime: 1, memory: 1 }) // Sort by performance
-      .limit(parseInt(limit));
-
-    res.json(solutions);
-  } catch (error) {
-    console.error('Get community solutions error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// @route   GET /api/submissions/community/:problemId/code/:submissionId
-// @desc    Get code from a specific community solution
-// @access  Private
-router.get('/community/:problemId/code/:submissionId', protect, async (req, res) => {
-  try {
-    const submission = await Submission.findById(req.params.submissionId)
-      .populate('user', 'username')
-      .select('code language runtime memory');
-
-    if (!submission || submission.status !== 'Accepted') {
-      return res.status(404).json({ message: 'Solution not found' });
-    }
-
-    res.json(submission);
-  } catch (error) {
-    console.error('Get solution code error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
 export default router;
 

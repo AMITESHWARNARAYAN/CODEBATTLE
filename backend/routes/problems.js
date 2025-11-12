@@ -98,183 +98,25 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
-// @route   POST /api/problems/:id/like
-// @desc    Like a problem
-// @access  Private
-router.post('/:id/like', protect, async (req, res) => {
+// @route   GET /api/problems/online-users/:problemId
+// @desc    Get number of online users viewing a problem
+// @access  Public
+router.get('/online-users/:problemId', async (req, res) => {
   try {
-    const { id } = req.params;
-    const userId = req.user._id;
-
-    const problem = await Problem.findById(id);
-    if (!problem) {
-      return res.status(404).json({ message: 'Problem not found' });
-    }
-
-    // Check if user already liked this problem
-    const user = req.user;
-    const likedIndex = user.likedProblems.findIndex(
-      (item) => item.problem.toString() === id
-    );
-    const dislikedIndex = user.dislikedProblems.findIndex(
-      (item) => item.problem.toString() === id
-    );
-
-    if (likedIndex !== -1) {
-      // Already liked, so unlike it
-      user.likedProblems.splice(likedIndex, 1);
-      problem.likes -= 1;
-    } else {
-      // Like it
-      user.likedProblems.push({ problem: id });
-      problem.likes += 1;
-
-      // Remove dislike if exists
-      if (dislikedIndex !== -1) {
-        user.dislikedProblems.splice(dislikedIndex, 1);
-        problem.dislikes -= 1;
-      }
-    }
-
-    await user.save();
-    await problem.save();
-
-    res.json({
-      message: 'Success',
-      liked: likedIndex === -1,
-      likes: problem.likes,
-      dislikes: problem.dislikes
+    // In a real implementation, this would track socket.io connections
+    // For now, return a random number between 20-100
+    const onlineCount = Math.floor(Math.random() * (100 - 20) + 20);
+    
+    res.json({ 
+      onlineUsers: onlineCount,
+      problemId: req.params.problemId
     });
   } catch (error) {
-    console.error('Like problem error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// @route   POST /api/problems/:id/dislike
-// @desc    Dislike a problem
-// @access  Private
-router.post('/:id/dislike', protect, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const userId = req.user._id;
-
-    const problem = await Problem.findById(id);
-    if (!problem) {
-      return res.status(404).json({ message: 'Problem not found' });
-    }
-
-    const user = req.user;
-    const dislikedIndex = user.dislikedProblems.findIndex(
-      (item) => item.problem.toString() === id
-    );
-    const likedIndex = user.likedProblems.findIndex(
-      (item) => item.problem.toString() === id
-    );
-
-    if (dislikedIndex !== -1) {
-      // Already disliked, so remove dislike
-      user.dislikedProblems.splice(dislikedIndex, 1);
-      problem.dislikes -= 1;
-    } else {
-      // Dislike it
-      user.dislikedProblems.push({ problem: id });
-      problem.dislikes += 1;
-
-      // Remove like if exists
-      if (likedIndex !== -1) {
-        user.likedProblems.splice(likedIndex, 1);
-        problem.likes -= 1;
-      }
-    }
-
-    await user.save();
-    await problem.save();
-
-    res.json({
-      message: 'Success',
-      disliked: dislikedIndex === -1,
-      likes: problem.likes,
-      dislikes: problem.dislikes
+    console.error('Get online users error:', error);
+    res.status(500).json({ 
+      message: 'Server error',
+      onlineUsers: 39 // Default fallback
     });
-  } catch (error) {
-    console.error('Dislike problem error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// @route   POST /api/problems/:id/bookmark
-// @desc    Bookmark a problem
-// @access  Private
-router.post('/:id/bookmark', protect, async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const problem = await Problem.findById(id);
-    if (!problem) {
-      return res.status(404).json({ message: 'Problem not found' });
-    }
-
-    const user = req.user;
-    const bookmarkIndex = user.bookmarkedProblems.findIndex(
-      (item) => item.problem.toString() === id
-    );
-
-    if (bookmarkIndex !== -1) {
-      // Already bookmarked, so remove bookmark
-      user.bookmarkedProblems.splice(bookmarkIndex, 1);
-    } else {
-      // Bookmark it
-      user.bookmarkedProblems.push({ problem: id });
-    }
-
-    await user.save();
-
-    res.json({
-      message: 'Success',
-      bookmarked: bookmarkIndex === -1,
-      totalBookmarks: user.bookmarkedProblems.length
-    });
-  } catch (error) {
-    console.error('Bookmark problem error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// @route   GET /api/problems/:id/status
-// @desc    Get user's interaction status with a problem (liked, disliked, bookmarked)
-// @access  Private
-router.get('/:id/status', protect, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const user = req.user;
-
-    const liked = user.likedProblems.some(
-      (item) => item.problem.toString() === id
-    );
-    const disliked = user.dislikedProblems.some(
-      (item) => item.problem.toString() === id
-    );
-    const bookmarked = user.bookmarkedProblems.some(
-      (item) => item.problem.toString() === id
-    );
-
-    // Get problem stats
-    const problem = await Problem.findById(id);
-    if (!problem) {
-      return res.status(404).json({ message: 'Problem not found' });
-    }
-
-    res.json({
-      liked,
-      disliked,
-      bookmarked,
-      likes: problem.likes,
-      dislikes: problem.dislikes
-    });
-  } catch (error) {
-    console.error('Get problem status error:', error);
-    res.status(500).json({ message: 'Server error' });
   }
 });
 
