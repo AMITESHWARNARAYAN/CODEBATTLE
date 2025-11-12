@@ -314,6 +314,41 @@ export const setupMatchmaking = (io) => {
         console.error('Reject challenge error:', error);
       }
     });
+
+    // Problem-specific user tracking for online counter
+    socket.on('join-problem', (data) => {
+      const { problemId, userId, username } = data;
+      
+      // Store user in problem room
+      socket.join(`problem-${problemId}`);
+      
+      // Broadcast updated user count to problem room
+      const room = io.sockets.adapter.rooms.get(`problem-${problemId}`);
+      const usersCount = room ? room.size : 0;
+      
+      io.to(`problem-${problemId}`).emit('problem-users', usersCount);
+      
+      console.log(`User ${username} joined problem ${problemId}. Total online: ${usersCount}`);
+    });
+
+    socket.on('leave-problem', (data) => {
+      const { problemId, userId } = data;
+      
+      socket.leave(`problem-${problemId}`);
+      
+      // Broadcast updated user count
+      const room = io.sockets.adapter.rooms.get(`problem-${problemId}`);
+      const usersCount = room ? room.size : 0;
+      
+      io.to(`problem-${problemId}`).emit('problem-users', usersCount);
+      
+      console.log(`User left problem ${problemId}. Total online: ${usersCount}`);
+    });
+
+    // Cleanup on disconnect
+    socket.on('disconnect', () => {
+      console.log('Client disconnected:', socket.id);
+    });
   });
 
   // Periodic queue status broadcast

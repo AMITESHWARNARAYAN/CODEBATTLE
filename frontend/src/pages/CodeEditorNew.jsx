@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import Editor from '@monaco-editor/react';
 import { toast } from 'react-hot-toast';
+import { getSocket } from '../utils/socket';
 import { 
   Play, Send, ChevronLeft, ChevronRight, ChevronDown, Settings, 
   Clock, CheckCircle2, XCircle, Loader2, Code2, FileText, 
@@ -60,6 +61,9 @@ export default function CodeEditorNew() {
   const [lastSaved, setLastSaved] = useState('Saved');
   const [userSubmissions, setUserSubmissions] = useState([]);
   const [communitySolutions, setCommunitySolutions] = useState([]);
+  const [discussions, setDiscussions] = useState([]);
+  const [newCommentText, setNewCommentText] = useState('');
+  const [onlineUsers, setOnlineUsers] = useState(0);
 
   // Layout
   const [leftWidth, setLeftWidth] = useState(50);
@@ -70,6 +74,7 @@ export default function CodeEditorNew() {
     fetchProblem();
     fetchProblemStatus();
     fetchHints();
+    fetchDiscussions();
   }, [problemId]);
 
   // Set initial code template
@@ -111,6 +116,24 @@ export default function CodeEditorNew() {
 
     return () => clearTimeout(timer);
   }, [code, autoSave, problemId, language, token]);
+
+  // Socket.io for online users
+  useEffect(() => {
+    const socket = getSocket();
+    
+    // Join problem room
+    socket.emit('join-problem', { problemId, userId: user?._id, username: user?.username });
+    
+    // Listen for online users count
+    socket.on('problem-users', (count) => {
+      setOnlineUsers(count);
+    });
+
+    return () => {
+      socket.emit('leave-problem', { problemId, userId: user?._id });
+      socket.off('problem-users');
+    };
+  }, [problemId, user]);
 
   const fetchProblem = async () => {
     try {
@@ -175,6 +198,52 @@ export default function CodeEditorNew() {
     } catch (error) {
       toast.error('Failed to unlock hint');
       console.error('Unlock hint error:', error);
+    }
+  };
+
+  const fetchDiscussions = async () => {
+    try {
+      const response = await fetch(`${API_URL}/discussions/problem/${problemId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setDiscussions(data);
+    } catch (error) {
+      console.error('Failed to fetch discussions:', error);
+    }
+  };
+
+  const postComment = async () => {
+    if (!newCommentText.trim()) {
+      toast.error('Comment cannot be empty');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/discussions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          problem: problemId,
+          title: `Comment on ${problem?.title}`,
+          content: newCommentText,
+          tags: ['comment']
+        })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        toast.success('Comment posted!');
+        setNewCommentText('');
+        fetchDiscussions();
+      } else {
+        toast.error('Failed to post comment');
+      }
+    } catch (error) {
+      toast.error('Failed to post comment');
+      console.error('Post comment error:', error);
     }
   };
 
@@ -550,7 +619,8 @@ export default function CodeEditorNew() {
               { id: 'description', label: 'Description', icon: FileText },
               { id: 'editorial', label: 'Editorial', icon: BookOpen },
               { id: 'solutions', label: 'Solutions', icon: Users },
-              { id: 'submissions', label: 'Submissions', icon: ListOrdered }
+              { id: 'submissions', label: 'Submissions', icon: ListOrdered },
+              { id: 'discussions', label: 'Discussions', icon: MessageSquare }
             ].map((tab) => {
               const Icon = tab.icon;
               return (
@@ -802,6 +872,65 @@ export default function CodeEditorNew() {
                 )}
               </div>
             )}
+
+            {leftPanelTab === 'discussions' && (
+              <div className="p-4 space-y-4 flex flex-col h-full">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-bold">Discussions</h2>
+                  <button
+                    onClick={fetchDiscussions}
+                    className={`px-3 py-1 text-xs rounded border ${borderColor} ${bgColor} hover:${bgSecondary} transition`}
+                  >
+                    Reload
+                  </button>
+                </div>
+
+                {/* New Comment Input */}
+                <div className="space-y-2">
+                  <textarea
+                    value={newCommentText}
+                    onChange={(e) => setNewCommentText(e.target.value)}
+                    placeholder="Share your thoughts about this problem..."
+                    className={`w-full h-20 ${bgSecondary} rounded p-2 text-sm border ${borderColor} focus:outline-none focus:border-blue-500 resize-none`}
+                  />
+                  <button
+                    onClick={postComment}
+                    className="w-full px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm font-medium transition"
+                  >
+                    Post Comment
+                  </button>
+                </div>
+
+                {/* Discussions List */}
+                <div className="flex-1 overflow-y-auto space-y-2">
+                  {discussions && discussions.length > 0 ? (
+                    discussions.map((discussion, idx) => (
+                      <div key={idx} className={`${bgSecondary} rounded-lg p-3 border ${borderColor}`}>
+                        <div className="flex items-start gap-2">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{discussion.user?.username}</p>
+                            <p className="text-sm mt-1">{discussion.content}</p>
+                            <div className="flex items-center gap-3 mt-2 text-xs">
+                              <span className={mutedText}>{new Date(discussion.createdAt).toLocaleDateString()}</span>
+                              <span className={mutedText}>
+                                {discussion.upvotes?.length || 0} Votes
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className={`${bgSecondary} rounded-lg p-6 text-center`}>
+                      <MessageSquare className="w-12 h-12 mx-auto mb-3 text-blue-500" />
+                      <p className={`text-sm ${mutedText}`}>
+                        No discussions yet. Be the first to comment!
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Bottom Actions Bar */}
@@ -829,9 +958,14 @@ export default function CodeEditorNew() {
               </button>
 
               {/* Comments */}
-              <button className={`flex items-center gap-1.5 ${hoverBg} px-2 py-1 rounded transition ${mutedText}`}>
+              <button 
+                onClick={() => setLeftPanelTab('discussions')}
+                className={`flex items-center gap-1.5 ${hoverBg} px-2 py-1 rounded transition ${
+                  leftPanelTab === 'discussions' ? 'text-blue-500' : mutedText
+                }`}
+              >
                 <MessageSquare className="w-4 h-4" />
-                <span className="font-medium">{commentCount}</span>
+                <span className="font-medium">{discussions.length}</span>
               </button>
 
               {/* Bookmark */}
@@ -866,7 +1000,7 @@ export default function CodeEditorNew() {
             {/* Online Count */}
             <div className="flex items-center gap-1.5 text-xs">
               <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <span className={mutedText}>39 Online</span>
+              <span className={mutedText}>{onlineUsers} {onlineUsers === 1 ? 'User' : 'Users'} Online</span>
             </div>
           </div>
         </div>
