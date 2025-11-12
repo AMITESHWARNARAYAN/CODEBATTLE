@@ -60,18 +60,6 @@ const problemSchema = new mongoose.Schema({
   }],
   testCases: [testCaseSchema],
   functionSignature: {
-    javascript: {
-      type: String,
-      default: ''
-    },
-    python: {
-      type: String,
-      default: ''
-    },
-    java: {
-      type: String,
-      default: ''
-    },
     cpp: {
       type: String,
       default: ''
@@ -96,6 +84,17 @@ const problemSchema = new mongoose.Schema({
   successfulSubmissions: {
     type: Number,
     default: 0
+  },
+  // Like/Dislike tracking
+  likes: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  dislikes: {
+    type: Number,
+    default: 0,
+    min: 0
   },
   solutionLink: {
     type: String,

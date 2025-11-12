@@ -11,16 +11,24 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Try to load .env file (for local development), but don't fail if it doesn't exist (production uses Render env vars)
 const envPath = `${__dirname}/.env`;
-console.log('Loading .env from:', envPath);
 const result = dotenv.config({ path: envPath });
 if (result.error) {
-  console.error('Error loading .env:', result.error);
+  console.log('ℹ️ No .env file found (using environment variables from hosting platform)');
 } else {
-  console.log('✅ .env loaded successfully');
-  console.log('GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? '✅ Set' : '❌ Not set');
-  console.log('GROQ_API_KEY:', process.env.GROQ_API_KEY ? '✅ Set' : '❌ Not set');
+  console.log('✅ .env loaded successfully from file');
 }
+
+// Log critical environment variables status
+console.log('='.repeat(50));
+console.log('Environment Check:');
+console.log('- GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? '✅ Set' : '❌ Not set');
+console.log('- GROQ_API_KEY:', process.env.GROQ_API_KEY ? '✅ Set' : '❌ Not set');
+console.log('- SENDGRID_API_KEY:', process.env.SENDGRID_API_KEY ? '✅ Set' : '❌ Not set');
+console.log('- MONGODB_URI:', process.env.MONGODB_URI ? '✅ Set' : '❌ Not set');
+console.log('- JWT_SECRET:', process.env.JWT_SECRET ? '✅ Set' : '❌ Not set');
+console.log('='.repeat(50));
 
 const app = express();
 const httpServer = createServer(app);
@@ -64,9 +72,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
+const mongoUri = process.env.MONGODB_URI;
+if (!mongoUri) {
+  console.error('❌ MONGODB_URI environment variable not set!');
+  console.error('Please add MONGODB_URI to your Render environment variables.');
+  process.exit(1);
+}
+console.log('📡 Connecting to MongoDB...');
+mongoose.connect(mongoUri)
+  .then(() => console.log('✅ MongoDB connected successfully'))
+  .catch(err => {
+    console.error('❌ MongoDB connection error:', err.message);
+    process.exit(1);
+  });
 
 // Dynamically import routes after .env is loaded
 async function setupRoutes() {
@@ -86,12 +104,18 @@ async function setupRoutes() {
   const { default: contestRoutesModule } = await import('./routes/contests.js');
   const { default: adminContestRoutesModule } = await import('./routes/adminContests.js');
   const { default: notificationRoutesModule } = await import('./routes/notifications.js');
+  const { default: judgeRoutesModule } = await import('./routes/judge.js');
+  const { default: verificationRoutesModule } = await import('./routes/verification.js');
+  const { default: testEmailRoutesModule } = await import('./routes/test-email.js');
+  const { default: resourceRoutesModule } = await import('./routes/resources.js');
 
   // Setup WebSocket
   setupMatchmakingModule(io);
 
   // Routes
   app.use('/api/auth', authRoutesModule);
+  app.use('/api/verification', verificationRoutesModule);
+  app.use('/api/test-email', testEmailRoutesModule); // Test email endpoint
   app.use('/api/problems', problemRoutesModule);
   app.use('/api/matches', matchRoutesModule);
   app.use('/api/users', userRoutesModule);
@@ -106,6 +130,8 @@ async function setupRoutes() {
   app.use('/api/contests', contestRoutesModule);
   app.use('/api/admin/contests', adminContestRoutesModule);
   app.use('/api/notifications', notificationRoutesModule);
+  app.use('/api/judge', judgeRoutesModule);
+  app.use('/api/resources', resourceRoutesModule);
 
   const { default: problemMetadataRoutesModule } = await import('./routes/problemMetadata.js');
   app.use('/api/problem-metadata', problemMetadataRoutesModule);

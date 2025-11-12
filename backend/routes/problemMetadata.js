@@ -284,5 +284,99 @@ router.get('/company/:companyName', async (req, res) => {
   }
 });
 
+// @route   GET /api/problem-metadata/:problemId/hints
+// @desc    Get hints for a problem (user only gets unlocked hints)
+// @access  Private
+router.get('/:problemId/hints', protect, async (req, res) => {
+  try {
+    const metadata = await ProblemMetadata.findOne({ problem: req.params.problemId })
+      .select('hints');
+
+    if (!metadata || !metadata.hints) {
+      return res.json({ hints: [], totalHints: 0 });
+    }
+
+    // Get user's unlocked hints for this problem
+    const user = req.user;
+    const unlockedData = user.unlockedHints.find(
+      (h) => h.problem.toString() === req.params.problemId
+    );
+
+    const unlockedIndices = unlockedData?.hintIndices || [];
+
+    // Return hints with locked status
+    const hintsWithStatus = metadata.hints.map((hint, idx) => ({
+      index: idx,
+      hint: unlockedIndices.includes(idx) ? hint : `Hint ${idx + 1} (Locked)`,
+      isLocked: !unlockedIndices.includes(idx)
+    }));
+
+    res.json({
+      hints: hintsWithStatus,
+      totalHints: metadata.hints.length,
+      unlockedCount: unlockedIndices.length
+    });
+  } catch (error) {
+    console.error('Get hints error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/problem-metadata/:problemId/hints/:hintIndex/unlock
+// @desc    Unlock a hint for a problem (costs coins)
+// @access  Private
+router.post('/:problemId/hints/:hintIndex/unlock', protect, async (req, res) => {
+  try {
+    const { problemId } = req.params;
+    const hintIndex = parseInt(req.params.hintIndex);
+    const costPerHint = 1; // 1 coin per hint (can be configurable)
+
+    // Verify problem exists
+    const metadata = await ProblemMetadata.findOne({ problem: problemId });
+    if (!metadata || !metadata.hints || hintIndex >= metadata.hints.length) {
+      return res.status(404).json({ message: 'Hint not found' });
+    }
+
+    const user = req.user;
+    
+    // Check if hint already unlocked
+    const unlockedData = user.unlockedHints.find(
+      (h) => h.problem.toString() === problemId
+    );
+
+    if (unlockedData && unlockedData.hintIndices.includes(hintIndex)) {
+      return res.json({
+        message: 'Hint already unlocked',
+        hint: metadata.hints[hintIndex]
+      });
+    }
+
+    // For now, automatically unlock (can add coin cost later)
+    // In future: check user.coins >= costPerHint
+    
+    if (unlockedData) {
+      unlockedData.hintIndices.push(hintIndex);
+      unlockedData.unlockedAt = new Date();
+    } else {
+      user.unlockedHints.push({
+        problem: problemId,
+        hintIndices: [hintIndex]
+      });
+    }
+
+    await user.save();
+
+    res.json({
+      message: 'Hint unlocked',
+      hint: metadata.hints[hintIndex],
+      hintIndex: hintIndex,
+      costPerHint: costPerHint
+    });
+  } catch (error) {
+    console.error('Unlock hint error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 export default router;
 

@@ -89,9 +89,9 @@ export default function Matchmaking() {
 
           {!searching ? (
             <div>
-              <div className="mb-8 p-6 bg-slate-800 rounded-lg">
-                <p className="text-slate-400 mb-2">Your Current Rating</p>
-                <p className="text-4xl font-bold text-indigo-500">{user?.rating || 1200}</p>
+              <div className="mb-8 p-6 bg-gray-100 dark:bg-dark-800 rounded-lg">
+                <p className="text-gray-600 dark:text-gray-400 mb-2">Your Current Rating</p>
+                <p className="text-4xl font-bold text-gray-900 dark:text-white">{user?.rating || 1200}</p>
               </div>
 
               <button
@@ -107,28 +107,28 @@ export default function Matchmaking() {
               <div className="mb-8">
                 <div className="flex justify-center mb-6">
                   <div className="relative w-24 h-24">
-                    <div className="absolute inset-0 rounded-full border-4 border-indigo-500 animate-pulse"></div>
-                    <div className="absolute inset-2 rounded-full border-4 border-purple-500 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="absolute inset-4 rounded-full border-4 border-pink-500 animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                    <div className="absolute inset-0 rounded-full border-4 border-gray-300 dark:border-dark-700 animate-pulse"></div>
+                    <div className="absolute inset-2 rounded-full border-4 border-gray-400 dark:border-dark-600 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="absolute inset-4 rounded-full border-4 border-gray-500 dark:border-dark-500 animate-pulse" style={{ animationDelay: '0.4s' }}></div>
                   </div>
                 </div>
                 <p className="text-xl font-semibold mb-2">Searching for opponent...</p>
-                <p className="text-slate-400">This may take a few moments</p>
+                <p className="text-gray-600 dark:text-gray-400">This may take a few moments</p>
               </div>
 
               {/* Queue Info */}
               <div className="grid grid-cols-3 gap-4 mb-8">
-                <div className="p-4 bg-slate-800 rounded-lg">
-                  <p className="text-slate-400 text-sm mb-1">Queue Position</p>
-                  <p className="text-2xl font-bold text-indigo-500">#{queuePosition || '-'}</p>
+                <div className="p-4 bg-gray-100 dark:bg-dark-800 rounded-lg">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Queue Position</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">#{queuePosition || '-'}</p>
                 </div>
-                <div className="p-4 bg-slate-800 rounded-lg">
-                  <p className="text-slate-400 text-sm mb-1">Wait Time</p>
-                  <p className="text-2xl font-bold text-purple-500">{waitTime}s</p>
+                <div className="p-4 bg-gray-100 dark:bg-dark-800 rounded-lg">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Wait Time</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{waitTime}s</p>
                 </div>
-                <div className="p-4 bg-slate-800 rounded-lg">
-                  <p className="text-slate-400 text-sm mb-1">Queue Size</p>
-                  <p className="text-2xl font-bold text-pink-500">{queueSize}</p>
+                <div className="p-4 bg-gray-100 dark:bg-dark-800 rounded-lg">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Queue Size</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{queueSize}</p>
                 </div>
               </div>
 

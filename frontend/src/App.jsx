@@ -1,8 +1,8 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuthStore } from './store/authStore';
 import { useThemeStore } from './store/themeStore';
-import { initSocket, setUserOnline, setUserOffline, onChallengeReceived } from './utils/socket';
+import { initSocket, setUserOnline, setUserOffline, onChallengeReceived, onChallengeAccepted } from './utils/socket';
 import { Toaster } from 'react-hot-toast';
 import { toast } from 'react-hot-toast';
 
@@ -10,6 +10,7 @@ import { toast } from 'react-hot-toast';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import VerifyEmail from './pages/VerifyEmail';
 import Dashboard from './pages/Dashboard';
 import CodeEditor from './pages/CodeEditor';
 import SoloPractice from './pages/SoloPractice';
@@ -30,6 +31,9 @@ import Contests from './pages/Contests';
 import ContestDetail from './pages/ContestDetail';
 import ContestLive from './pages/ContestLive';
 import Notifications from './pages/Notifications';
+import Resources from './pages/Resources';
+import AdminResources from './pages/AdminResources';
+import CodeEditorNew from './pages/CodeEditorNew';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -37,7 +41,9 @@ const ProtectedRoute = ({ children }) => {
   return token ? children : <Navigate to="/login" />;
 };
 
-function App() {
+// App Routes Component (has access to useNavigate)
+function AppRoutes() {
+  const navigate = useNavigate();
   const token = useAuthStore((state) => state.token);
   const user = useAuthStore((state) => state.user);
   const getMe = useAuthStore((state) => state.getMe);
@@ -87,13 +93,26 @@ function App() {
     }
   }, [user]);
 
+  useEffect(() => {
+    // Listen for challenge acceptance - redirect both players to match
+    if (user) {
+      onChallengeAccepted((data) => {
+        toast.success('Your challenge was accepted! Starting match...');
+        setTimeout(() => {
+          navigate(`/match/${data.matchId}`);
+        }, 500);
+      });
+    }
+  }, [user, navigate]);
+
   return (
-    <Router>
+    <>
       <Toaster position="top-right" reverseOrder={false} />
       <Routes>
         <Route path="/landing" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/verify-email/:token" element={<VerifyEmail />} />
 
         <Route path="/" element={token ? <ProtectedRoute><Dashboard /></ProtectedRoute> : <Landing />} />
         <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
@@ -112,13 +131,24 @@ function App() {
         <Route path="/match/join/:inviteCode" element={<ProtectedRoute><JoinChallenge /></ProtectedRoute>} />
         <Route path="/match/:matchId" element={<ProtectedRoute><CodeEditor /></ProtectedRoute>} />
         <Route path="/code-editor/:problemId" element={<ProtectedRoute><CodeEditor /></ProtectedRoute>} />
+        <Route path="/problem/:problemId" element={<ProtectedRoute><CodeEditorNew /></ProtectedRoute>} />
         <Route path="/results/:matchId" element={<ProtectedRoute><Results /></ProtectedRoute>} />
         <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
         <Route path="/profile/:username" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+        <Route path="/resources" element={<ProtectedRoute><Resources /></ProtectedRoute>} />
+        <Route path="/admin/resources" element={<ProtectedRoute><AdminResources /></ProtectedRoute>} />
 
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppRoutes />
     </Router>
   );
 }

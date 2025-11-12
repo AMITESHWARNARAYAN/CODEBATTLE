@@ -1,6 +1,14 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 
+// Generate JWT token
+export const generateToken = (userId) => {
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+    expiresIn: '30d'
+  });
+};
+
+// Protect routes - verify JWT token
 export const protect = async (req, res, next) => {
   let token;
 
@@ -31,6 +39,7 @@ export const protect = async (req, res, next) => {
   }
 };
 
+// Admin middleware
 export const isAdmin = (req, res, next) => {
   if (req.user && req.user.isAdmin) {
     next();
@@ -38,10 +47,3 @@ export const isAdmin = (req, res, next) => {
     res.status(403).json({ message: 'Not authorized as admin' });
   }
 };
-
-export const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '30d'
-  });
-};
-

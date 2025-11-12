@@ -3,6 +3,7 @@ import Contest from '../models/Contest.js';
 import Problem from '../models/Problem.js';
 import User from '../models/User.js';
 import { protect } from '../middleware/auth.js';
+import { executeCodeWithJudge0 } from '../utils/codeExecutor.js';
 
 const router = express.Router();
 
@@ -213,7 +214,7 @@ router.post('/:id/start', protect, async (req, res) => {
 // Submit solution for contest problem
 router.post('/:id/submit', protect, async (req, res) => {
   try {
-    const { problemId, code, language, status, runtime, memory, testCasesPassed, totalTestCases } = req.body;
+    const { problemId, code, language } = req.body;
 
     const contest = await Contest.findById(req.params.id);
 
@@ -246,6 +247,28 @@ router.post('/:id/submit', protect, async (req, res) => {
       return res.status(400).json({ message: 'Problem not in this contest' });
     }
 
+    // Get full problem details with test cases
+    const problem = await Problem.findById(problemId);
+    if (!problem) {
+      return res.status(404).json({ message: 'Problem not found' });
+    }
+
+    // Execute code with Judge0 API
+    const executionResult = await executeCodeWithJudge0(
+      code,
+      problem.testCases,
+      language,
+      problem.timeLimit / 1000 // Convert ms to seconds
+    );
+
+    // Determine status
+    let status = executionResult.status;
+    if (executionResult.testCasesPassed === executionResult.totalTestCases) {
+      status = 'accepted';
+    } else {
+      status = executionResult.status.toLowerCase();
+    }
+
     // Calculate score and penalty
     const score = status === 'accepted' ? contestProblem.points : 0;
     const timeSinceStart = (new Date() - participant.startedAt) / (1000 * 60); // minutes
@@ -263,10 +286,10 @@ router.post('/:id/submit', protect, async (req, res) => {
       code,
       language,
       status,
-      runtime,
-      memory,
-      testCasesPassed,
-      totalTestCases,
+      runtime: executionResult.executionTime,
+      memory: executionResult.memoryUsed,
+      testCasesPassed: executionResult.testCasesPassed,
+      totalTestCases: executionResult.totalTestCases,
       score,
       penalty: status === 'accepted' ? timeSinceStart : 0
     });

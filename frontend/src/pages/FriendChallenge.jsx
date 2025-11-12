@@ -4,7 +4,7 @@ import { useMatchStore } from '../store/matchStore';
 import { useAuthStore } from '../store/authStore';
 import { toast } from 'react-hot-toast';
 import { Send, ArrowLeft, Mail } from 'lucide-react';
-import { getSocket, onChallengeAccepted, onChallengeRejected } from '../utils/socket';
+import { getSocket, onChallengeRejected } from '../utils/socket';
 
 export default function FriendChallenge() {
   const navigate = useNavigate();
@@ -15,15 +15,8 @@ export default function FriendChallenge() {
   const [isOnline, setIsOnline] = useState(false);
   const [currentMatchId, setCurrentMatchId] = useState(null);
 
-  // Listen for challenge acceptance/rejection
+  // Listen for challenge rejection only (acceptance is handled globally in App.jsx)
   useEffect(() => {
-    onChallengeAccepted((data) => {
-      toast.success('Your challenge was accepted! Starting match...');
-      setTimeout(() => {
-        navigate(`/match/${data.matchId}`);
-      }, 500);
-    });
-
     onChallengeRejected((data) => {
       toast.error('Your challenge was rejected');
       setChallengeData(null);

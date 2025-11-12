@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useNotificationStore } from '../store/notificationStore';
 import { Bell, Check, Trash2, ChevronLeft, Filter } from 'lucide-react';
 import NotificationBell from '../components/NotificationBell';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function Notifications() {
   const navigate = useNavigate();
@@ -93,7 +94,10 @@ export default function Notifications() {
               )}
             </div>
           </div>
-          <NotificationBell />
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <NotificationBell />
+          </div>
         </div>
       </header>
 

@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import axios from 'axios';
 import { ChevronLeft, CheckCircle, XCircle, Clock, AlertCircle, Code, Calendar, Filter } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import ThemeToggle from '../components/ThemeToggle';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -97,10 +98,10 @@ export default function Submissions() {
 
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
-      case 'Easy': return 'text-green-400';
-      case 'Medium': return 'text-yellow-400';
-      case 'Hard': return 'text-red-400';
-      default: return 'text-slate-400';
+      case 'Easy': return 'text-green-600 dark:text-green-400';
+      case 'Medium': return 'text-yellow-600 dark:text-yellow-400';
+      case 'Hard': return 'text-red-600 dark:text-red-400';
+      default: return 'text-gray-600 dark:text-gray-400';
     }
   };
 
@@ -114,27 +115,28 @@ export default function Submissions() {
   };
 
   const getHeatmapColor = (count) => {
-    if (count === 0) return 'bg-slate-800';
-    if (count <= 2) return 'bg-green-900/40';
-    if (count <= 5) return 'bg-green-700/60';
-    if (count <= 10) return 'bg-green-500/80';
-    return 'bg-green-400';
+    if (count === 0) return 'bg-gray-200 dark:bg-dark-800';
+    if (count <= 2) return 'bg-green-200 dark:bg-green-900/40';
+    if (count <= 5) return 'bg-green-400 dark:bg-green-700/60';
+    if (count <= 10) return 'bg-green-600 dark:bg-green-500/80';
+    return 'bg-green-700 dark:bg-green-400';
   };
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-950">
       {/* Header */}
-      <header className="border-b border-slate-800 px-4 sm:px-6 py-4 bg-slate-900/50">
+      <header className="bg-white dark:bg-dark-900 border-b border-gray-200 dark:border-dark-800 px-4 sm:px-6 py-4 shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-4">
             <button
               onClick={() => navigate('/')}
-              className="p-2 hover:bg-slate-800 rounded-lg transition"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-dark-800 rounded-lg transition"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             </button>
-            <h1 className="text-2xl font-bold">Submission History</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Submission History</h1>
           </div>
+          <ThemeToggle />
         </div>
       </header>
 
@@ -143,34 +145,34 @@ export default function Submissions() {
         {/* Stats Overview */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-              <div className="text-slate-400 text-sm mb-1">Total Submissions</div>
-              <div className="text-3xl font-bold">{stats.totalSubmissions}</div>
+            <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-xl p-6">
+              <div className="text-gray-600 dark:text-gray-400 text-sm mb-1">Total Submissions</div>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white">{stats.totalSubmissions}</div>
             </div>
-            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-              <div className="text-slate-400 text-sm mb-1">Accepted</div>
-              <div className="text-3xl font-bold text-green-400">{stats.acceptedSubmissions}</div>
+            <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-xl p-6">
+              <div className="text-gray-600 dark:text-gray-400 text-sm mb-1">Accepted</div>
+              <div className="text-3xl font-bold text-green-600 dark:text-green-400">{stats.acceptedSubmissions}</div>
             </div>
-            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-              <div className="text-slate-400 text-sm mb-1">Acceptance Rate</div>
-              <div className="text-3xl font-bold text-indigo-400">{stats.acceptanceRate}%</div>
+            <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-xl p-6">
+              <div className="text-gray-600 dark:text-gray-400 text-sm mb-1">Acceptance Rate</div>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white">{stats.acceptanceRate}%</div>
             </div>
-            <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-              <div className="text-slate-400 text-sm mb-1">Problems Solved</div>
-              <div className="text-3xl font-bold text-purple-400">{stats.solvedProblems.total}</div>
+            <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-xl p-6">
+              <div className="text-gray-600 dark:text-gray-400 text-sm mb-1">Problems Solved</div>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white">{stats.solvedProblems.total}</div>
               <div className="flex gap-2 mt-2 text-xs">
-                <span className="text-green-400">E: {stats.solvedProblems.easy}</span>
-                <span className="text-yellow-400">M: {stats.solvedProblems.medium}</span>
-                <span className="text-red-400">H: {stats.solvedProblems.hard}</span>
+                <span className="text-green-600 dark:text-green-400">E: {stats.solvedProblems.easy}</span>
+                <span className="text-yellow-600 dark:text-yellow-400">M: {stats.solvedProblems.medium}</span>
+                <span className="text-red-600 dark:text-red-400">H: {stats.solvedProblems.hard}</span>
               </div>
             </div>
           </div>
         )}
 
         {/* Activity Heatmap */}
-        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 mb-8">
-          <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-indigo-400" />
+        <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-xl p-6 mb-8">
+          <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
+            <Calendar className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             Submission Activity
           </h3>
           <div className="overflow-x-auto">
@@ -183,14 +185,14 @@ export default function Submissions() {
                 />
               ))}
             </div>
-            <div className="flex items-center gap-2 mt-4 text-xs text-slate-400">
+            <div className="flex items-center gap-2 mt-4 text-xs text-gray-600 dark:text-gray-400">
               <span>Less</span>
               <div className="flex gap-1">
-                <div className="w-3 h-3 rounded-sm bg-slate-800" />
-                <div className="w-3 h-3 rounded-sm bg-green-900/40" />
-                <div className="w-3 h-3 rounded-sm bg-green-700/60" />
-                <div className="w-3 h-3 rounded-sm bg-green-500/80" />
-                <div className="w-3 h-3 rounded-sm bg-green-400" />
+                <div className="w-3 h-3 rounded-sm bg-gray-200 dark:bg-dark-800" />
+                <div className="w-3 h-3 rounded-sm bg-green-200 dark:bg-green-900/40" />
+                <div className="w-3 h-3 rounded-sm bg-green-400 dark:bg-green-700/60" />
+                <div className="w-3 h-3 rounded-sm bg-green-600 dark:bg-green-500/80" />
+                <div className="w-3 h-3 rounded-sm bg-green-700 dark:bg-green-400" />
               </div>
               <span>More</span>
             </div>
@@ -205,7 +207,7 @@ export default function Submissions() {
               setFilterStatus(e.target.value);
               setPage(1);
             }}
-            className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-indigo-500"
+            className="px-4 py-2 bg-white dark:bg-dark-800 border border-gray-300 dark:border-dark-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-gray-900 dark:focus:border-white"
           >
             <option value="">All Status</option>
             <option value="Accepted">Accepted</option>
@@ -221,7 +223,7 @@ export default function Submissions() {
               setFilterLanguage(e.target.value);
               setPage(1);
             }}
-            className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-indigo-500"
+            className="px-4 py-2 bg-white dark:bg-dark-800 border border-gray-300 dark:border-dark-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-gray-900 dark:focus:border-white"
           >
             <option value="">All Languages</option>
             <option value="javascript">JavaScript</option>
@@ -233,23 +235,23 @@ export default function Submissions() {
 
         {/* Submissions List */}
         {loading ? (
-          <div className="text-center py-12 text-slate-400">Loading submissions...</div>
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400">Loading submissions...</div>
         ) : submissions.length === 0 ? (
-          <div className="text-center py-12 text-slate-400">No submissions found</div>
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400">No submissions found</div>
         ) : (
           <div className="space-y-3">
             {submissions.map((submission) => (
               <div
                 key={submission._id}
                 onClick={() => navigate(`/submission/${submission._id}`)}
-                className="bg-slate-800/50 hover:bg-slate-800 border border-slate-700 rounded-lg p-4 cursor-pointer transition-all"
+                className="bg-white dark:bg-dark-900 hover:shadow-md border border-gray-200 dark:border-dark-800 rounded-lg p-4 cursor-pointer transition-all"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4 flex-1">
                     {getStatusIcon(submission.status)}
                     <div className="flex-1">
-                      <h3 className="font-semibold text-white">{submission.problem.title}</h3>
-                      <div className="flex items-center gap-3 mt-1 text-sm text-slate-400">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">{submission.problem.title}</h3>
+                      <div className="flex items-center gap-3 mt-1 text-sm text-gray-600 dark:text-gray-400">
                         <span className={getDifficultyColor(submission.problem.difficulty)}>
                           {submission.problem.difficulty}
                         </span>
@@ -265,7 +267,7 @@ export default function Submissions() {
                       {submission.status}
                     </span>
                     {submission.runtime > 0 && (
-                      <div className="text-sm text-slate-400">
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
                         {submission.runtime}ms
                       </div>
                     )}
@@ -282,17 +284,17 @@ export default function Submissions() {
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="px-4 py-2 bg-white dark:bg-dark-800 hover:bg-gray-100 dark:hover:bg-dark-700 border border-gray-200 dark:border-dark-700 text-gray-900 dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               Previous
             </button>
-            <span className="px-4 py-2 bg-slate-800 rounded-lg">
+            <span className="px-4 py-2 bg-white dark:bg-dark-800 border border-gray-200 dark:border-dark-700 text-gray-900 dark:text-white rounded-lg">
               Page {page} of {pagination.pages}
             </span>
             <button
               onClick={() => setPage(p => Math.min(pagination.pages, p + 1))}
               disabled={page === pagination.pages}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="px-4 py-2 bg-white dark:bg-dark-800 hover:bg-gray-100 dark:hover:bg-dark-700 border border-gray-200 dark:border-dark-700 text-gray-900 dark:text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               Next
             </button>

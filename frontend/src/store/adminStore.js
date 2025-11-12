@@ -8,6 +8,7 @@ export const useAdminStore = create((set) => ({
   categories: [],
   challenges: [],
   contests: [],
+  users: [],
   stats: null,
   loading: false,
   error: null,
@@ -455,6 +456,41 @@ export const useAdminStore = create((set) => ({
       return response.data;
     } catch (error) {
       set({ error: 'Failed to fetch contest stats', loading: false });
+      throw error;
+    }
+  },
+
+  // User Management
+  getUsers: async () => {
+    set({ loading: true, error: null });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/admin/users`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      set({ users: response.data, loading: false });
+      return response.data;
+    } catch (error) {
+      set({ error: 'Failed to fetch users', loading: false });
+      throw error;
+    }
+  },
+
+  deleteUser: async (userId) => {
+    set({ loading: true, error: null });
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/admin/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      set((state) => ({
+        users: state.users.filter((u) => u._id !== userId),
+        loading: false
+      }));
+      return { message: 'User deleted successfully' };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to delete user';
+      set({ error: message, loading: false });
       throw error;
     }
   },

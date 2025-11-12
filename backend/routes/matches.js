@@ -4,9 +4,10 @@ import Match from '../models/Match.js';
 import Problem from '../models/Problem.js';
 import User from '../models/User.js';
 import { protect } from '../middleware/auth.js';
-import { executeCode, analyzeComplexity } from '../utils/codeExecutor.js';
+import { executeCodeWithJudge0, analyzeComplexity } from '../utils/codeExecutor.js';
 import { calculateMatchRatings, determineWinner } from '../utils/eloRating.js';
 import { createNotification } from './notifications.js';
+import { getOnlineUsers } from '../socket/matchmaking.js';
 
 const router = express.Router();
 
@@ -205,6 +206,32 @@ router.post('/friend/accept-challenge/:matchId', protect, async (req, res) => {
 
     await match.populate('players');
 
+    // Emit socket event to notify the challenger that challenge was accepted
+    const io = global.io;
+    if (io && match.challengerEmail) {
+      const onlineUsers = getOnlineUsers();
+      
+      // Find challenger's socket
+      let challengerSocket = null;
+      for (const [userId, userInfo] of onlineUsers.entries()) {
+        if (userInfo.email === match.challengerEmail) {
+          challengerSocket = userInfo.socketId;
+          break;
+        }
+      }
+
+      if (challengerSocket) {
+        io.to(challengerSocket).emit('challenge-accepted', {
+          matchId: match._id.toString(),
+          message: 'Your challenge was accepted!',
+          timestamp: Date.now()
+        });
+        console.log(`Notified challenger ${match.challengerEmail} that challenge was accepted`);
+      } else {
+        console.log(`Challenger ${match.challengerEmail} is not currently online`);
+      }
+    }
+
     // Return match data without all test cases
     const matchData = match.toObject();
 
@@ -326,7 +353,12 @@ router.post('/:matchId/submit', protect, async (req, res) => {
     }
 
     // Execute code with all test cases (including hidden ones)
-    const executionResult = await executeCode(code, match.problem.testCases, match.problem.timeLimit);
+    const executionResult = await executeCodeWithJudge0(
+      code,
+      match.problem.testCases,
+      language,
+      match.problem.timeLimit / 1000 // Convert ms to seconds
+    );
     
     // Analyze complexity
     const complexity = analyzeComplexity(code);

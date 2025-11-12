@@ -20,30 +20,30 @@ const problems = [
     ],
     testCases: [
       {
-        input: JSON.stringify({ nums: [2, 7, 11, 15], target: 9 }),
+        input: JSON.stringify([2, 7, 11, 15, 9]),
         expectedOutput: JSON.stringify([0, 1]),
         isHidden: false
       },
       {
-        input: JSON.stringify({ nums: [3, 2, 4], target: 6 }),
+        input: JSON.stringify([3, 2, 4, 6]),
         expectedOutput: JSON.stringify([1, 2]),
         isHidden: false
       },
       {
-        input: JSON.stringify({ nums: [3, 3], target: 6 }),
+        input: JSON.stringify([3, 3, 6]),
         expectedOutput: JSON.stringify([0, 1]),
         isHidden: true
       }
     ],
     functionSignature: {
-      javascript: 'function twoSum(nums, target) { /* your code here */ }'
+      cpp: 'vector<int> twoSum(vector<int>& nums, int target) {\n    \n}'
     },
     timeLimit: 2000,
     memoryLimit: 256
   },
   {
     title: 'Reverse String',
-    description: 'Write a function that reverses a string. The input string is given as an array of characters s.',
+    description: 'Write a function that reverses a string. The input string is given as an array of characters s. You must do this by modifying the input array in-place with O(1) extra memory.',
     difficulty: 'Easy',
     tags: ['String', 'Two Pointers'],
     constraints: '1 <= s.length <= 10^5',
@@ -56,18 +56,18 @@ const problems = [
     ],
     testCases: [
       {
-        input: JSON.stringify(['h', 'e', 'l', 'l', 'o']),
+        input: JSON.stringify([['h', 'e', 'l', 'l', 'o']]),
         expectedOutput: JSON.stringify(['o', 'l', 'l', 'e', 'h']),
         isHidden: false
       },
       {
-        input: JSON.stringify(['H', 'a', 'n', 'n', 'a', 'h']),
+        input: JSON.stringify([['H', 'a', 'n', 'n', 'a', 'h']]),
         expectedOutput: JSON.stringify(['h', 'a', 'n', 'n', 'a', 'H']),
         isHidden: false
       }
     ],
     functionSignature: {
-      javascript: 'function reverseString(s) { /* your code here */ }'
+      cpp: 'void reverseString(vector<char>& s) {\n    \n}'
     },
     timeLimit: 2000,
     memoryLimit: 256
@@ -87,23 +87,23 @@ const problems = [
     ],
     testCases: [
       {
-        input: JSON.stringify(121),
+        input: JSON.stringify([121]),
         expectedOutput: JSON.stringify(true),
         isHidden: false
       },
       {
-        input: JSON.stringify(-121),
+        input: JSON.stringify([-121]),
         expectedOutput: JSON.stringify(false),
         isHidden: false
       },
       {
-        input: JSON.stringify(10),
+        input: JSON.stringify([10]),
         expectedOutput: JSON.stringify(false),
         isHidden: true
       }
     ],
     functionSignature: {
-      javascript: 'function isPalindrome(x) { /* your code here */ }'
+      cpp: 'bool isPalindrome(int x) {\n    \n}'
     },
     timeLimit: 2000,
     memoryLimit: 256
@@ -123,23 +123,23 @@ const problems = [
     ],
     testCases: [
       {
-        input: JSON.stringify('()'),
+        input: JSON.stringify(['()']),
         expectedOutput: JSON.stringify(true),
         isHidden: false
       },
       {
-        input: JSON.stringify('()[]{}'),
+        input: JSON.stringify(['()[]{}'])  ,
         expectedOutput: JSON.stringify(true),
         isHidden: false
       },
       {
-        input: JSON.stringify('(]'),
+        input: JSON.stringify(['(]']),
         expectedOutput: JSON.stringify(false),
         isHidden: true
       }
     ],
     functionSignature: {
-      javascript: 'function isValid(s) { /* your code here */ }'
+      cpp: 'bool isValid(string s) {\n    \n}'
     },
     timeLimit: 2000,
     memoryLimit: 256
@@ -159,13 +159,13 @@ const problems = [
     ],
     testCases: [
       {
-        input: JSON.stringify({ nums1: [1, 2, 3, 0, 0, 0], m: 3, nums2: [2, 5, 6], n: 3 }),
+        input: JSON.stringify([[1, 2, 3, 0, 0, 0], 3, [2, 5, 6], 3]),
         expectedOutput: JSON.stringify([1, 2, 2, 3, 5, 6]),
         isHidden: false
       }
     ],
     functionSignature: {
-      javascript: 'function merge(nums1, m, nums2, n) { /* your code here */ }'
+      cpp: 'void merge(vector<int>& nums1, int m, vector<int>& nums2, int n) {\n    \n}'
     },
     timeLimit: 2000,
     memoryLimit: 256

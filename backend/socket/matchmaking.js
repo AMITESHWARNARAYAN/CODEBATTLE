@@ -8,6 +8,9 @@ const matchmakingQueue = [];
 // Online users map: { userId: { socketId, email } }
 const onlineUsers = new Map();
 
+// Export for use in routes
+export const getOnlineUsers = () => onlineUsers;
+
 // Rating difference threshold for matching (increases over time)
 const INITIAL_RATING_DIFF = 100;
 const MAX_RATING_DIFF = 500;

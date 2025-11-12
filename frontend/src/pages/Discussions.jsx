@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import axios from 'axios';
 import { ChevronLeft, MessageSquare, ThumbsUp, ThumbsDown, Eye, Plus, Filter, Code } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import ThemeToggle from '../components/ThemeToggle';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -105,13 +106,16 @@ export default function Discussions() {
               {problem && <p className="text-slate-400 text-sm">{problem.title}</p>}
             </div>
           </div>
-          <button
-            onClick={() => setShowNewDiscussion(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition"
-          >
-            <Plus className="w-4 h-4" />
-            New Discussion
-          </button>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <button
+              onClick={() => setShowNewDiscussion(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition"
+            >
+              <Plus className="w-4 h-4" />
+              New Discussion
+            </button>
+          </div>
         </div>
       </header>
 

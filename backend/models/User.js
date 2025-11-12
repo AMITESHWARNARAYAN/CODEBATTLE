@@ -22,6 +22,15 @@ const userSchema = new mongoose.Schema({
     required: true,
     minlength: 6
   },
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
+  bio: {
+    type: String,
+    default: '',
+    maxlength: 200
+  },
   rating: {
     type: Number,
     default: 1200 // Starting ELO rating like chess
@@ -110,10 +119,49 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  isApproved: {
-    type: Boolean,
-    default: true  // Changed to true to allow users to login without admin approval
-  },
+  // Problem Interaction Tracking
+  likedProblems: [{
+    problem: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Problem'
+    },
+    likedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  dislikedProblems: [{
+    problem: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Problem'
+    },
+    dislikedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  bookmarkedProblems: [{
+    problem: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Problem'
+    },
+    bookmarkedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  // Unlocked hints per problem
+  unlockedHints: [{
+    problem: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Problem'
+    },
+    hintIndices: [Number], // Array of hint indices unlocked
+    unlockedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   createdAt: {
     type: Date,
     default: Date.now

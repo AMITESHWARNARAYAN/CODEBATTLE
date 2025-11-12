@@ -1,9 +1,29 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
 import User from '../models/User.js';
+import VerificationToken from '../models/VerificationToken.js';
 import { generateToken, protect } from '../middleware/auth.js';
+import { generateVerificationToken, sendVerificationEmail } from '../utils/emailService.js';
 
 const router = express.Router();
+
+// @route   GET /api/auth/registration-status
+// @desc    Check if registration is available
+// @access  Public
+router.get('/registration-status', async (req, res) => {
+  try {
+    const userCount = await User.countDocuments();
+
+    res.json({
+      isAvailable: true,
+      totalUsers: userCount,
+      message: 'Registration is open for all users'
+    });
+  } catch (error) {
+    console.error('Registration status error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // @route   POST /api/auth/register
 // @desc    Register a new user
@@ -24,8 +44,8 @@ router.post('/register', [
     // Check if user already exists
     const userExists = await User.findOne({ $or: [{ email }, { username }] });
     if (userExists) {
-      return res.status(400).json({ 
-        message: userExists.email === email ? 'Email already registered' : 'Username already taken' 
+      return res.status(400).json({
+        message: userExists.email === email ? 'Email already registered' : 'Username already taken'
       });
     }
 
@@ -33,7 +53,8 @@ router.post('/register', [
     const user = await User.create({
       username,
       email,
-      password
+      password,
+      isEmailVerified: true // Auto-verify for now, email verification disabled
     });
 
     if (user) {
@@ -43,7 +64,9 @@ router.post('/register', [
         email: user.email,
         rating: user.rating,
         isAdmin: user.isAdmin,
-        token: generateToken(user._id)
+        isEmailVerified: user.isEmailVerified,
+        token: generateToken(user._id),
+        message: 'Registration successful! Please check your email to verify your account.'
       });
     }
   } catch (error) {
@@ -79,6 +102,8 @@ router.post('/login', [
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
+    // Email verification disabled - users can login without verification
+
     // Update online status
     user.isOnline = true;
     user.lastSeen = new Date();
@@ -94,6 +119,7 @@ router.post('/login', [
       draws: user.draws,
       totalMatches: user.totalMatches,
       isAdmin: user.isAdmin,
+      isEmailVerified: user.isEmailVerified,
       token: generateToken(user._id)
     });
   } catch (error) {

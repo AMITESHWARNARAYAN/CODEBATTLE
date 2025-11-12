@@ -234,7 +234,46 @@ router.get('/stats', protect, isAdmin, async (req, res) => {
   }
 });
 
+// @route   GET /api/admin/users
+// @desc    Get all users (admin only)
+// @access  Private/Admin
+router.get('/users', protect, isAdmin, async (req, res) => {
+  try {
+    const users = await User.find()
+      .select('-password')
+      .sort({ createdAt: -1 });
 
+    res.json(users);
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   DELETE /api/admin/users/:userId
+// @desc    Delete a user account (admin only)
+// @access  Private/Admin
+router.delete('/users/:userId', protect, isAdmin, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Prevent admin from deleting themselves
+    if (user._id.toString() === req.user._id.toString()) {
+      return res.status(400).json({ message: 'You cannot delete your own account' });
+    }
+
+    await User.findByIdAndDelete(req.params.userId);
+
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 export default router;
 

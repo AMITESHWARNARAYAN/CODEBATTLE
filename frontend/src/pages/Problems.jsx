@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import axios from 'axios';
-import { ChevronLeft, Search, BarChart3, ChevronDown, ChevronUp, Building2, ListChecks, TrendingUp, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, Search, BarChart3, ChevronDown, ChevronUp, Building2, ListChecks, TrendingUp, CheckCircle2, Code2, Filter, X, Sparkles, Award } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import ThemeToggle from '../components/ThemeToggle';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function Problems() {
   const navigate = useNavigate();
@@ -136,7 +137,7 @@ export default function Problems() {
   };
 
   const handleProblemClick = (problemId) => {
-    navigate(`/match/solo?problemId=${problemId}`);
+    navigate(`/problem/${problemId}`);
   };
 
   const getDifficultyColor = (difficulty) => {
@@ -152,41 +153,58 @@ export default function Problems() {
     }
   };
 
+  const activeFiltersCount = [selectedDifficulty, selectedCompany, selectedList, selectedFrequency, selectedStatus].filter(Boolean).length;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-950">
       {/* Header */}
-      <header className="border-b border-slate-800 px-6 py-4 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <header className="bg-white dark:bg-dark-900 border-b border-gray-200 dark:border-dark-800 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/dashboard')}
-              className="p-2 hover:bg-slate-800 rounded-lg transition"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-dark-800 rounded-lg transition"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             </button>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-              Problems
-            </h1>
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-gray-900 dark:bg-white rounded-lg">
+                <Code2 className="w-5 h-5 text-white dark:text-gray-900" />
+              </div>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Practice Problems
+              </h1>
+            </div>
           </div>
-          <div className="text-sm text-slate-400">
-            Welcome, <span className="text-white font-semibold">{user?.username}</span>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-dark-800 rounded-lg border border-gray-200 dark:border-dark-700">
+              <span className="text-gray-700 dark:text-gray-300 font-medium text-sm">{user?.username}</span>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content with Sidebar */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex gap-6">
           {/* Sidebar - Filters */}
           <div className="w-64 flex-shrink-0">
-            <div className="glass border border-slate-700 rounded-lg p-4 sticky top-24">
-              <h2 className="text-lg font-bold mb-4">Filters</h2>
+            <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-lg p-5 sticky top-24">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white">Filters</h2>
+                {activeFiltersCount > 0 && (
+                  <span className="px-2 py-0.5 bg-gray-200 dark:bg-dark-800 border border-gray-300 dark:border-dark-700 rounded-full text-xs font-semibold text-gray-700 dark:text-gray-300">
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </div>
               
               {/* Companies Filter */}
               <div className="mb-4">
                 <button
                   onClick={() => setCompaniesExpanded(!companiesExpanded)}
-                  className="flex items-center justify-between w-full text-sm font-semibold mb-2 hover:text-indigo-400 transition"
+                  className="flex items-center justify-between w-full text-sm font-medium mb-2 text-gray-900 dark:text-white"
                 >
                   <span className="flex items-center gap-2">
                     <Building2 className="w-4 h-4" />
@@ -202,8 +220,8 @@ export default function Problems() {
                         onClick={() => setSelectedCompany(selectedCompany === company ? '' : company)}
                         className={`w-full text-left px-3 py-1.5 rounded text-sm transition ${
                           selectedCompany === company
-                            ? 'bg-indigo-600 text-white'
-                            : 'hover:bg-slate-800 text-slate-300'
+                            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium'
+                            : 'hover:bg-gray-100 dark:hover:bg-dark-800 text-gray-700 dark:text-gray-300'
                         }`}
                       >
                         {company}
@@ -217,7 +235,7 @@ export default function Problems() {
               <div className="mb-4">
                 <button
                   onClick={() => setListsExpanded(!listsExpanded)}
-                  className="flex items-center justify-between w-full text-sm font-semibold mb-2 hover:text-indigo-400 transition"
+                  className="flex items-center justify-between w-full text-sm font-medium mb-2 text-gray-900 dark:text-white"
                 >
                   <span className="flex items-center gap-2">
                     <ListChecks className="w-4 h-4" />
@@ -233,8 +251,8 @@ export default function Problems() {
                         onClick={() => setSelectedList(selectedList === list ? '' : list)}
                         className={`w-full text-left px-3 py-1.5 rounded text-sm transition ${
                           selectedList === list
-                            ? 'bg-indigo-600 text-white'
-                            : 'hover:bg-slate-800 text-slate-300'
+                            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium'
+                            : 'hover:bg-gray-100 dark:hover:bg-dark-800 text-gray-700 dark:text-gray-300'
                         }`}
                       >
                         {list}
@@ -248,7 +266,7 @@ export default function Problems() {
               <div className="mb-4">
                 <button
                   onClick={() => setFrequencyExpanded(!frequencyExpanded)}
-                  className="flex items-center justify-between w-full text-sm font-semibold mb-2 hover:text-indigo-400 transition"
+                  className="flex items-center justify-between w-full text-sm font-medium mb-2 text-gray-900 dark:text-white"
                 >
                   <span className="flex items-center gap-2">
                     <TrendingUp className="w-4 h-4" />
@@ -264,8 +282,8 @@ export default function Problems() {
                         onClick={() => setSelectedFrequency(selectedFrequency === freq ? '' : freq)}
                         className={`w-full text-left px-3 py-1.5 rounded text-sm transition ${
                           selectedFrequency === freq
-                            ? 'bg-indigo-600 text-white'
-                            : 'hover:bg-slate-800 text-slate-300'
+                            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium'
+                            : 'hover:bg-gray-100 dark:hover:bg-dark-800 text-gray-700 dark:text-gray-300'
                         }`}
                       >
                         {freq}
@@ -279,7 +297,7 @@ export default function Problems() {
               <div className="mb-4">
                 <button
                   onClick={() => setStatusExpanded(!statusExpanded)}
-                  className="flex items-center justify-between w-full text-sm font-semibold mb-2 hover:text-indigo-400 transition"
+                  className="flex items-center justify-between w-full text-sm font-medium mb-2 text-gray-900 dark:text-white"
                 >
                   <span className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4" />
@@ -295,8 +313,8 @@ export default function Problems() {
                         onClick={() => setSelectedStatus(selectedStatus === status ? '' : status)}
                         className={`w-full text-left px-3 py-1.5 rounded text-sm transition ${
                           selectedStatus === status
-                            ? 'bg-indigo-600 text-white'
-                            : 'hover:bg-slate-800 text-slate-300'
+                            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium'
+                            : 'hover:bg-gray-100 dark:hover:bg-dark-800 text-gray-700 dark:text-gray-300'
                         }`}
                       >
                         {status}
@@ -310,9 +328,12 @@ export default function Problems() {
               <div className="mb-4">
                 <button
                   onClick={() => setDifficultyExpanded(!difficultyExpanded)}
-                  className="flex items-center justify-between w-full text-sm font-semibold mb-2 hover:text-indigo-400 transition"
+                  className="flex items-center justify-between w-full text-sm font-medium mb-2 text-gray-900 dark:text-white"
                 >
-                  <span>Difficulty</span>
+                  <span className="flex items-center gap-2">
+                    <Award className="w-4 h-4" />
+                    Difficulty
+                  </span>
                   {difficultyExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
                 {difficultyExpanded && (
@@ -323,8 +344,8 @@ export default function Problems() {
                         onClick={() => setSelectedDifficulty(selectedDifficulty === diff ? '' : diff)}
                         className={`w-full text-left px-3 py-1.5 rounded text-sm transition ${
                           selectedDifficulty === diff
-                            ? 'bg-indigo-600 text-white'
-                            : 'hover:bg-slate-800 text-slate-300'
+                            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium'
+                            : 'hover:bg-gray-100 dark:hover:bg-dark-800 text-gray-700 dark:text-gray-300'
                         }`}
                       >
                         {diff}
@@ -335,115 +356,143 @@ export default function Problems() {
               </div>
 
               {/* Clear Filters */}
-              <button
-                onClick={() => {
-                  setSelectedCompany('');
-                  setSelectedList('');
-                  setSelectedFrequency('');
-                  setSelectedStatus('');
-                  setSelectedDifficulty('');
-                  setSearchQuery('');
-                }}
-                className="w-full px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition"
-              >
-                Clear All Filters
-              </button>
+              {activeFiltersCount > 0 && (
+                <button
+                  onClick={() => {
+                    setSelectedCompany('');
+                    setSelectedList('');
+                    setSelectedFrequency('');
+                    setSelectedStatus('');
+                    setSelectedDifficulty('');
+                    setSearchQuery('');
+                  }}
+                  className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition flex items-center justify-center gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  Clear All
+                </button>
+              )}
             </div>
           </div>
 
           {/* Problems List */}
           <div className="flex-1">
             {/* Search Bar */}
-            <div className="mb-6">
+            <div className="mb-5">
               <div className="relative">
-                <Search className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+                <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search problems..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-indigo-500"
+                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-gray-400 dark:focus:border-gray-600 transition"
                 />
               </div>
             </div>
 
-            {/* Sort Options */}
-            <div className="flex gap-2 mb-6">
-              <button
-                onClick={() => setSortBy('acceptance')}
-                className={`px-4 py-2 rounded-lg text-sm transition ${
-                  sortBy === 'acceptance'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                }`}
-              >
-                Acceptance
-              </button>
-              <button
-                onClick={() => setSortBy('difficulty')}
-                className={`px-4 py-2 rounded-lg text-sm transition ${
-                  sortBy === 'difficulty'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                }`}
-              >
-                Difficulty
-              </button>
-              <button
-                onClick={() => setSortBy('frequency')}
-                className={`px-4 py-2 rounded-lg text-sm transition ${
-                  sortBy === 'frequency'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                }`}
-              >
-                Frequency
-              </button>
+            {/* Stats and Sort Options */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Showing <span className="text-gray-900 dark:text-white font-semibold">{problems.length}</span> problems
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSortBy('acceptance')}
+                  className={`px-3 py-1.5 rounded text-sm font-medium transition ${
+                    sortBy === 'acceptance'
+                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                      : 'bg-gray-100 dark:bg-dark-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-700 border border-gray-200 dark:border-dark-700'
+                  }`}
+                >
+                  Acceptance
+                </button>
+                <button
+                  onClick={() => setSortBy('difficulty')}
+                  className={`px-3 py-1.5 rounded text-sm font-medium transition ${
+                    sortBy === 'difficulty'
+                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                      : 'bg-gray-100 dark:bg-dark-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-700 border border-gray-200 dark:border-dark-700'
+                  }`}
+                >
+                  Difficulty
+                </button>
+                <button
+                  onClick={() => setSortBy('frequency')}
+                  className={`px-3 py-1.5 rounded text-sm font-medium transition ${
+                    sortBy === 'frequency'
+                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                      : 'bg-gray-100 dark:bg-dark-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-700 border border-gray-200 dark:border-dark-700'
+                  }`}
+                >
+                  Frequency
+                </button>
+              </div>
             </div>
 
             {/* Problems Table */}
             {loading ? (
-              <div className="text-center py-12 text-slate-400">Loading problems...</div>
+              <div className="flex items-center justify-center py-20">
+                <div className="text-center">
+                  <div className="w-12 h-12 border-4 border-gray-300 dark:border-dark-700 border-t-gray-900 dark:border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+                  <p className="text-gray-600 dark:text-gray-400">Loading problems...</p>
+                </div>
+              </div>
             ) : problems.length === 0 ? (
-              <div className="text-center py-12 text-slate-400">No problems found</div>
+              <div className="text-center py-20">
+                <div className="text-6xl mb-4">🔍</div>
+                <p className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No problems found</p>
+                <p className="text-gray-600 dark:text-gray-400">Try adjusting your filters</p>
+              </div>
             ) : (
               <div className="space-y-2">
                 {problems.map((problem, idx) => (
                   <div
                     key={problem._id}
                     onClick={() => handleProblemClick(problem._id)}
-                    className="bg-slate-800/50 hover:bg-slate-800 border border-slate-700 rounded-lg p-4 cursor-pointer transition-all group"
+                    className="bg-white dark:bg-dark-900 hover:shadow-md border border-gray-200 dark:border-dark-800 rounded-lg p-4 cursor-pointer transition"
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 flex-1">
-                        <span className="text-slate-400 font-medium w-8">{idx + 1}.</span>
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="flex items-center justify-center w-8 h-8 bg-gray-100 dark:bg-dark-800 rounded font-semibold text-gray-600 dark:text-gray-400 text-sm">
+                          {idx + 1}
+                        </div>
                         <div className="flex-1">
-                          <h3 className="font-semibold text-white group-hover:text-indigo-400 transition">
+                          <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
                             {problem.title}
                           </h3>
                           {problem.metadata?.companies && problem.metadata.companies.length > 0 && (
-                            <div className="flex gap-2 mt-1">
+                            <div className="flex gap-1.5 mt-1.5">
                               {problem.metadata.companies.slice(0, 3).map(company => (
-                                <span key={company.name} className="text-xs px-2 py-0.5 bg-slate-700 rounded text-slate-300">
+                                <span key={company.name} className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-dark-800 rounded text-gray-600 dark:text-gray-400">
                                   {company.name}
                                 </span>
                               ))}
+                              {problem.metadata.companies.length > 3 && (
+                                <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-dark-800 rounded text-gray-500 dark:text-gray-500">
+                                  +{problem.metadata.companies.length - 3}
+                                </span>
+                              )}
                             </div>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-6 ml-4">
-                        <span className={`text-sm font-semibold ${getDifficultyColor(problem.difficulty)}`}>
+                      <div className="flex items-center gap-4 ml-4">
+                        <span className={`px-2.5 py-1 rounded text-xs font-semibold ${
+                          problem.difficulty === 'Easy' ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300' :
+                          problem.difficulty === 'Medium' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300' :
+                          'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+                        }`}>
                           {problem.difficulty}
                         </span>
-                        <div className="flex items-center gap-2 text-slate-400 text-sm">
-                          <BarChart3 className="w-4 h-4" />
-                          <span>{problem.acceptanceRate || 0}%</span>
+                        <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 text-sm bg-gray-100 dark:bg-dark-800 px-2.5 py-1 rounded">
+                          <BarChart3 className="w-3.5 h-3.5" />
+                          <span className="font-medium">{problem.acceptanceRate || 0}%</span>
                         </div>
                         {selectedFrequency && problem.metadata?.frequencyData && (
-                          <div className="w-24 h-1 bg-slate-700 rounded-full overflow-hidden">
+                          <div className="w-20 h-1.5 bg-gray-200 dark:bg-dark-800 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-gradient-to-r from-indigo-500 to-purple-500"
+                              className="h-full bg-gray-900 dark:bg-white"
                               style={{ width: `${Math.min(getFrequencyValue(problem.metadata.frequencyData), 100)}%` }}
                             />
                           </div>

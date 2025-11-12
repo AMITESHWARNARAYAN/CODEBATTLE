@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { Trophy, Calendar, Users, Clock, ArrowLeft, Play, CheckCircle } from 'lucide-react';
+import ThemeToggle from '../components/ThemeToggle';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -184,8 +185,11 @@ export default function Challenges() {
               <p className="text-sm text-slate-400">Complete challenges to earn rewards</p>
             </div>
           </div>
-          <div className="text-sm text-slate-400">
-            Welcome, {user?.username}
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <div className="text-sm text-slate-400">
+              Welcome, {user?.username}
+            </div>
           </div>
         </div>
       </header>
