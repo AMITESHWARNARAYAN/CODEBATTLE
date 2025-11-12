@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useThemeStore } from '../store/themeStore';
 import { useAuthStore } from '../store/authStore';
-import { BookOpen, Video, FileText, Code2, ExternalLink, Github, Youtube, Award, Lightbulb, Zap, Target, Brain, ArrowRight, Book, Library, Newspaper, GraduationCap, Trophy } from 'lucide-react';
+import { BookOpenIcon, VideoIcon, DocumentTextIcon, CodeBracketIcon, ArrowTopRightOnSquareIcon, ArrowTopRightOnSquareIcon, ArrowTopRightOnSquareIcon, AcademicCapIcon, LightBulbIcon, BoltIcon, TargetIcon, SparklesIcon, ArrowRightIcon, Book, BookOpenIcon, NewspaperIcon, AcademicCapIcon, TrophyIcon } from '@heroicons/react/24/solid';
 import { useState, useEffect } from 'react';
 
 export default function Resources() {
@@ -57,18 +57,18 @@ export default function Resources() {
 
   const getIconComponent = (iconName) => {
     const icons = {
-      BookOpen, Video, FileText, Code2, ExternalLink, Github, Youtube, 
-      Award, Lightbulb, Zap, Target, Brain, ArrowRight, Book, 
-      Library, Newspaper, GraduationCap, Trophy
+      BookOpenIcon, VideoIcon, DocumentTextIcon, CodeBracketIcon, ArrowTopRightOnSquareIcon, ArrowTopRightOnSquareIcon, ArrowTopRightOnSquareIcon, 
+      AcademicCapIcon, LightBulbIcon, BoltIcon, TargetIcon, SparklesIcon, ArrowRightIcon, Book, 
+      BookOpenIcon, NewspaperIcon, AcademicCapIcon, TrophyIcon
     };
-    return icons[iconName] || BookOpen;
+    return icons[iconName] || BookOpenIcon;
   };
 
   const learningPaths = [
     {
       title: 'Data Structures & Algorithms',
       description: 'Master fundamental DSA concepts from basics to advanced',
-      icon: Brain,
+      icon: SparklesIcon,
       difficulty: 'Beginner to Advanced',
       topics: ['Arrays', 'Linked Lists', 'Trees', 'Graphs', 'Dynamic Programming'],
       color: 'orange'
@@ -76,7 +76,7 @@ export default function Resources() {
     {
       title: 'Competitive Programming',
       description: 'Learn strategies and techniques for coding competitions',
-      icon: Trophy,
+      icon: TrophyIcon,
       difficulty: 'Intermediate',
       topics: ['Time Complexity', 'Problem Solving', 'Contest Strategies'],
       color: 'blue'
@@ -84,7 +84,7 @@ export default function Resources() {
     {
       title: 'System Design',
       description: 'Understand how to design scalable systems',
-      icon: Target,
+      icon: TargetIcon,
       difficulty: 'Advanced',
       topics: ['Scalability', 'Database Design', 'Caching', 'Load Balancing'],
       color: 'purple'
@@ -96,56 +96,56 @@ export default function Resources() {
       title: 'Getting Started Guide',
       description: 'Learn how to use CodeBattle effectively',
       type: 'Guide',
-      icon: BookOpen,
+      icon: BookOpenIcon,
       link: '#'
     },
     {
       title: 'Problem Solving Tips',
       description: 'Essential tips for solving coding problems',
       type: 'Article',
-      icon: Lightbulb,
+      icon: LightBulbIcon,
       link: '#'
     },
     {
       title: 'C++ STL Reference',
-      description: 'Complete reference for C++ Standard Template Library',
+      description: 'Complete reference for C++ Standard Template BookOpenIcon',
       type: 'Reference',
-      icon: Code2,
+      icon: CodeBracketIcon,
       link: '#'
     },
     {
       title: 'Python Cheat Sheet',
       description: 'Quick reference for Python syntax and libraries',
       type: 'Cheat Sheet',
-      icon: FileText,
+      icon: DocumentTextIcon,
       link: '#'
     }
   ];
 
   const externalResources = [
     {
-      title: 'LeetCode',
+      title: 'LeetCodeBracketIcon',
       description: 'Practice coding problems',
       url: 'https://leetcode.com',
-      icon: ExternalLink
+      icon: ArrowTopRightOnSquareIcon
     },
     {
       title: 'Codeforces',
       description: 'Competitive programming platform',
       url: 'https://codeforces.com',
-      icon: ExternalLink
+      icon: ArrowTopRightOnSquareIcon
     },
     {
       title: 'GeeksforGeeks',
       description: 'Tutorials and practice problems',
       url: 'https://www.geeksforgeeks.org',
-      icon: ExternalLink
+      icon: ArrowTopRightOnSquareIcon
     },
     {
       title: 'CP-Algorithms',
       description: 'Algorithm implementations and explanations',
       url: 'https://cp-algorithms.com',
-      icon: ExternalLink
+      icon: ArrowTopRightOnSquareIcon
     }
   ];
 
@@ -154,19 +154,19 @@ export default function Resources() {
       title: 'DSA Playlist',
       description: 'Complete DSA tutorial series',
       platform: 'YouTube',
-      icon: Youtube
+      icon: ArrowTopRightOnSquareIcon
     },
     {
       title: 'System Design',
       description: 'System design interview preparation',
       platform: 'YouTube',
-      icon: Youtube
+      icon: ArrowTopRightOnSquareIcon
     },
     {
       title: 'Problem Walkthroughs',
       description: 'Step-by-step problem solutions',
       platform: 'YouTube',
-      icon: Youtube
+      icon: ArrowTopRightOnSquareIcon
     }
   ];
 
@@ -180,7 +180,7 @@ export default function Resources() {
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg blur-sm opacity-50"></div>
                 <div className="relative p-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg shadow-lg">
-                  <Code2 className="w-5 h-5 text-white" />
+                  <CodeBracketIcon className="w-5 h-5 text-white" />
                 </div>
               </div>
               <h1 className={`text-xl font-bold ${textColor}`}>
@@ -203,7 +203,7 @@ export default function Resources() {
         <div className="mb-16">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl shadow-lg">
-              <Library className="w-8 h-8 text-white" />
+              <BookOpenIcon className="w-8 h-8 text-white" />
             </div>
             <div>
               <h1 className={`text-4xl md:text-5xl font-bold ${textColor} mb-2`}>
@@ -219,7 +219,7 @@ export default function Resources() {
         {/* Learning Paths */}
         <section className="mb-16">
           <div className="flex items-center gap-2 mb-6">
-            <GraduationCap className="w-6 h-6 text-orange-500" />
+            <AcademicCapIcon className="w-6 h-6 text-orange-500" />
             <h2 className={`text-3xl font-bold ${textColor}`}>Learning Paths</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -273,7 +273,7 @@ export default function Resources() {
                         className="w-full mt-4 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg transition font-medium text-sm shadow-lg flex items-center justify-center gap-2"
                       >
                         Start Learning
-                        <ArrowRight className="w-4 h-4" />
+                        <ArrowRightIcon className="w-4 h-4" />
                       </button>
                     )}
                   </div>
@@ -317,7 +317,7 @@ export default function Resources() {
                     </div>
                     <button className="w-full mt-4 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg transition font-medium text-sm shadow-lg flex items-center justify-center gap-2">
                       Start Learning
-                      <ArrowRight className="w-4 h-4" />
+                      <ArrowRightIcon className="w-4 h-4" />
                     </button>
                   </div>
                 );
@@ -357,11 +357,11 @@ export default function Resources() {
           </div>
         </section>
 
-        {/* Video Resources */}
+        {/* VideoIcon Resources */}
         <section className="mb-16">
           <div className="flex items-center gap-2 mb-6">
-            <Video className="w-6 h-6 text-orange-500" />
-            <h2 className={`text-3xl font-bold ${textColor}`}>Video Tutorials</h2>
+            <VideoIcon className="w-6 h-6 text-orange-500" />
+            <h2 className={`text-3xl font-bold ${textColor}`}>VideoIcon Tutorials</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {videoResources.map((video, index) => {
@@ -395,7 +395,7 @@ export default function Resources() {
         {/* External Resources */}
         <section className="mb-16">
           <div className="flex items-center gap-2 mb-6">
-            <Newspaper className="w-6 h-6 text-orange-500" />
+            <NewspaperIcon className="w-6 h-6 text-orange-500" />
             <h2 className={`text-3xl font-bold ${textColor}`}>External Resources</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -418,7 +418,7 @@ export default function Resources() {
                     <div className={`p-2 rounded-lg ${isDark ? 'bg-dark-800' : 'bg-gray-50'}`}>
                       <Icon className="w-5 h-5 text-orange-500" />
                     </div>
-                    <ArrowRight className={`w-4 h-4 ${textMuted}`} />
+                    <ArrowRightIcon className={`w-4 h-4 ${textMuted}`} />
                   </div>
                   <h3 className={`text-lg font-bold ${textColor} mb-2`}>{resource.title}</h3>
                   <p className={`text-sm ${textMuted}`}>{resource.description}</p>
@@ -431,7 +431,7 @@ export default function Resources() {
         {/* CTA Section */}
         <section className={`${cardBg} rounded-2xl p-12 border text-center shadow-2xl`} style={{ borderColor: isDark ? '#2a2a2a' : '#e5e7eb', borderWidth: '1px' }}>
           <div className="max-w-2xl mx-auto">
-            <Zap className="w-12 h-12 text-orange-500 mx-auto mb-4" />
+            <BoltIcon className="w-12 h-12 text-orange-500 mx-auto mb-4" />
             <h2 className={`text-3xl font-bold ${textColor} mb-4`}>
               Ready to Start Learning?
             </h2>

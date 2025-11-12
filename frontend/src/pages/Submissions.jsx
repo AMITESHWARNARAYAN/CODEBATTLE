@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import axios from 'axios';
-import { ChevronLeft, CheckCircle, XCircle, Clock, AlertCircle, Code, Calendar, Filter } from 'lucide-react';
+import { ChevronLeftIcon, CheckCircleIcon, XCircleIcon, ClockIcon, ExclamationCircleIcon, CodeBracketIcon, CalendarIcon, FunnelIcon } from '@heroicons/react/24/solid';
 import { toast } from 'react-hot-toast';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -73,13 +73,13 @@ export default function Submissions() {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'Accepted':
-        return <CheckCircle className="w-5 h-5 text-green-400" />;
+        return <CheckCircleIcon className="w-5 h-5 text-green-400" />;
       case 'Wrong Answer':
-        return <XCircle className="w-5 h-5 text-red-400" />;
+        return <XCircleIcon className="w-5 h-5 text-red-400" />;
       case 'Time Limit Exceeded':
-        return <Clock className="w-5 h-5 text-yellow-400" />;
+        return <ClockIcon className="w-5 h-5 text-yellow-400" />;
       default:
-        return <AlertCircle className="w-5 h-5 text-orange-400" />;
+        return <ExclamationCircleIcon className="w-5 h-5 text-orange-400" />;
     }
   };
 
@@ -132,7 +132,7 @@ export default function Submissions() {
               onClick={() => navigate('/')}
               className="p-2 hover:bg-gray-100 dark:hover:bg-dark-800 rounded-lg transition"
             >
-              <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+              <ChevronLeftIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             </button>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Submission History</h1>
           </div>
@@ -172,7 +172,7 @@ export default function Submissions() {
         {/* Activity Heatmap */}
         <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-xl p-6 mb-8">
           <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
-            <Calendar className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            <CalendarIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             Submission Activity
           </h3>
           <div className="overflow-x-auto">

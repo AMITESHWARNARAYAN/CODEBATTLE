@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { Trophy, Calendar, Users, Clock, ArrowLeft, Play, CheckCircle } from 'lucide-react';
+import { TrophyIcon, CalendarIcon, UserGroupIcon, ClockIcon, ArrowLeftIcon, PlayIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 import ThemeToggle from '../components/ThemeToggle';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -95,7 +95,7 @@ export default function Challenges() {
             </span>
             {challenge.userStatus === 'completed' && (
               <span className="px-2 py-1 bg-green-900 text-green-300 rounded text-xs font-semibold flex items-center gap-1">
-                <CheckCircle className="w-3 h-3" />
+                <CheckCircleIcon className="w-3 h-3" />
                 Completed
               </span>
             )}
@@ -106,19 +106,19 @@ export default function Challenges() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4">
         <div className="flex items-center gap-2 text-sm text-slate-400">
-          <Trophy className="w-4 h-4 text-indigo-400" />
+          <TrophyIcon className="w-4 h-4 text-indigo-400" />
           <span>{challenge.problem?.title}</span>
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-400">
-          <Users className="w-4 h-4 text-indigo-400" />
+          <UserGroupIcon className="w-4 h-4 text-indigo-400" />
           <span>{challenge.totalParticipants} participants</span>
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-400">
-          <Calendar className="w-4 h-4 text-indigo-400" />
+          <CalendarIcon className="w-4 h-4 text-indigo-400" />
           <span>{new Date(challenge.startDate).toLocaleDateString()}</span>
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-400">
-          <Clock className="w-4 h-4 text-indigo-400" />
+          <ClockIcon className="w-4 h-4 text-indigo-400" />
           <span>{getTimeRemaining(challenge.endDate)}</span>
         </div>
       </div>
@@ -126,7 +126,7 @@ export default function Challenges() {
       {challenge.rewards?.points > 0 && (
         <div className="mb-4 p-3 bg-indigo-900/20 border border-indigo-700 rounded-lg">
           <div className="flex items-center gap-2 text-sm">
-            <Trophy className="w-4 h-4 text-yellow-400" />
+            <TrophyIcon className="w-4 h-4 text-yellow-400" />
             <span className="text-indigo-300">
               Rewards: {challenge.rewards.points} points
               {challenge.rewards.badge && ` + ${challenge.rewards.badge} badge`}
@@ -140,7 +140,7 @@ export default function Challenges() {
           onClick={() => handleStartChallenge(challenge._id)}
           className="btn-primary w-full flex items-center justify-center gap-2"
         >
-          <Play className="w-4 h-4" />
+          <PlayIcon className="w-4 h-4" />
           Start Challenge
         </button>
       )}
@@ -150,7 +150,7 @@ export default function Challenges() {
           onClick={() => navigate(`/match/solo?problemId=${challenge.problem._id}&challengeId=${challenge._id}`)}
           className="w-full px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition flex items-center justify-center gap-2"
         >
-          <Play className="w-4 h-4" />
+          <PlayIcon className="w-4 h-4" />
           Continue Challenge
         </button>
       )}
@@ -178,7 +178,7 @@ export default function Challenges() {
               onClick={() => navigate('/')}
               className="p-2 hover:bg-slate-800 rounded-lg transition"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeftIcon className="w-5 h-5" />
             </button>
             <div>
               <h1 className="text-2xl font-bold gradient-text">Challenges</h1>
@@ -243,7 +243,7 @@ export default function Challenges() {
               <>
                 {activeChallenges.length === 0 ? (
                   <div className="text-center py-12 text-slate-400">
-                    <Trophy className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    <TrophyIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
                     <p>No active challenges at the moment</p>
                   </div>
                 ) : (
@@ -256,7 +256,7 @@ export default function Challenges() {
               <>
                 {upcomingChallenges.length === 0 ? (
                   <div className="text-center py-12 text-slate-400">
-                    <Calendar className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    <CalendarIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
                     <p>No upcoming challenges</p>
                   </div>
                 ) : (
@@ -269,7 +269,7 @@ export default function Challenges() {
               <>
                 {completedChallenges.length === 0 ? (
                   <div className="text-center py-12 text-slate-400">
-                    <CheckCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    <CheckCircleIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
                     <p>You haven't completed any challenges yet</p>
                   </div>
                 ) : (

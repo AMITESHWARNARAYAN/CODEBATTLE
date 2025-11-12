@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useContestStore } from '../store/contestStore';
-import { Trophy, Calendar, Clock, Users, Award, ArrowLeft, CheckCircle } from 'lucide-react';
+import { TrophyIcon, CalendarIcon, ClockIcon, UserGroupIcon, AcademicCapIcon, ArrowLeftIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
 
 export default function ContestDetail() {
@@ -62,7 +62,7 @@ export default function ContestDetail() {
           onClick={() => navigate('/contests')}
           className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeftIcon className="w-4 h-4" />
           Back to Contests
         </button>
 
@@ -71,7 +71,7 @@ export default function ContestDetail() {
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <Trophy className="w-6 h-6 text-yellow-400" />
+                <TrophyIcon className="w-6 h-6 text-yellow-400" />
                 <h1 className="text-3xl font-bold">{currentContest.title}</h1>
                 <span className={`px-3 py-1 rounded text-sm font-semibold ${
                   currentContest.status === 'running' ? 'bg-green-900 text-green-300 animate-pulse' :
@@ -86,28 +86,28 @@ export default function ContestDetail() {
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="flex items-center gap-2 text-slate-300">
-                  <Calendar className="w-5 h-5 text-indigo-400" />
+                  <CalendarIcon className="w-5 h-5 text-indigo-400" />
                   <div>
                     <div className="text-xs text-slate-500">Start Time</div>
                     <div className="font-semibold">{new Date(currentContest.startTime).toLocaleString()}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-slate-300">
-                  <Clock className="w-5 h-5 text-indigo-400" />
+                  <ClockIcon className="w-5 h-5 text-indigo-400" />
                   <div>
                     <div className="text-xs text-slate-500">Duration</div>
                     <div className="font-semibold">{currentContest.duration} minutes</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-slate-300">
-                  <Trophy className="w-5 h-5 text-indigo-400" />
+                  <TrophyIcon className="w-5 h-5 text-indigo-400" />
                   <div>
                     <div className="text-xs text-slate-500">Problems</div>
                     <div className="font-semibold">{currentContest.problems?.length || 0}</div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-slate-300">
-                  <Users className="w-5 h-5 text-indigo-400" />
+                  <UserGroupIcon className="w-5 h-5 text-indigo-400" />
                   <div>
                     <div className="text-xs text-slate-500">Participants</div>
                     <div className="font-semibold">{currentContest.totalParticipants}</div>
@@ -124,7 +124,7 @@ export default function ContestDetail() {
                 onClick={handleRegister}
                 className="btn-primary flex items-center gap-2"
               >
-                <CheckCircle className="w-4 h-4" />
+                <CheckCircleIcon className="w-4 h-4" />
                 Register for Contest
               </button>
             )}
@@ -194,7 +194,7 @@ export default function ContestDetail() {
             {currentContest.prizes && currentContest.prizes.length > 0 && (
               <div className="mt-6">
                 <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <Award className="w-5 h-5 text-yellow-400" />
+                  <AcademicCapIcon className="w-5 h-5 text-yellow-400" />
                   Prizes
                 </h2>
                 <div className="space-y-2">
@@ -242,7 +242,7 @@ export default function ContestDetail() {
               <thead className="bg-slate-800">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Rank</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase">User</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase">UserIcon</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Score</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Penalty</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-400 uppercase">Solved</th>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useContestStore } from '../store/contestStore';
-import { Trophy, Clock, CheckCircle, XCircle, ArrowLeft, Code } from 'lucide-react';
+import { TrophyIcon, ClockIcon, CheckCircleIcon, XCircleIcon, ArrowLeftIcon, CodeBracketIcon } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
 
 export default function ContestLive() {
@@ -18,7 +18,7 @@ export default function ContestLive() {
   useEffect(() => {
     if (!currentContest) return;
 
-    // Check if user has started
+    // CheckIcon if user has started
     if (currentContest.userData?.startedAt) {
       setHasStarted(true);
       updateTimer();
@@ -139,11 +139,11 @@ export default function ContestLive() {
                 onClick={() => navigate(`/contests/${id}`)}
                 className="p-2 hover:bg-slate-800 rounded-lg transition"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeftIcon className="w-5 h-5" />
               </button>
               <div>
                 <div className="flex items-center gap-3 mb-1">
-                  <Trophy className="w-6 h-6 text-yellow-400" />
+                  <TrophyIcon className="w-6 h-6 text-yellow-400" />
                   <h1 className="text-2xl font-bold">{currentContest.title}</h1>
                 </div>
                 <p className="text-sm text-slate-400">
@@ -203,10 +203,10 @@ export default function ContestLive() {
                         <div className="flex items-center gap-2">
                           <span className="text-2xl font-bold text-slate-600">{index + 1}</span>
                           {status === 'accepted' && (
-                            <CheckCircle className="w-5 h-5 text-green-400" />
+                            <CheckCircleIcon className="w-5 h-5 text-green-400" />
                           )}
                           {status === 'attempted' && (
-                            <XCircle className="w-5 h-5 text-yellow-400" />
+                            <XCircleIcon className="w-5 h-5 text-yellow-400" />
                           )}
                         </div>
                         
@@ -231,7 +231,7 @@ export default function ContestLive() {
                         onClick={() => handleSolveProblem(cp.problem)}
                         className="btn-primary flex items-center gap-2"
                       >
-                        <Code className="w-4 h-4" />
+                        <CodeBracketIcon className="w-4 h-4" />
                         {status === 'accepted' ? 'View Solution' : 'Solve'}
                       </button>
                     </div>
@@ -240,7 +240,7 @@ export default function ContestLive() {
               })}
             </div>
 
-            {/* User Stats */}
+            {/* UserIcon Stats */}
             <div className="glass border border-slate-700 rounded-lg p-6 mt-6">
               <h3 className="text-lg font-bold mb-4">Your Progress</h3>
               <div className="grid grid-cols-3 gap-6">

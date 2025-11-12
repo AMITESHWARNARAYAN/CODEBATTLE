@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
-import { Code2, Plus, Edit2, Trash2, Save, X, BookOpen, Video, FileText, ExternalLink, ChevronLeft } from 'lucide-react';
+import { CodeBracketIcon, PlusIcon, PencilIcon, TrashIcon, CheckIcon, XMarkIcon, BookOpenIcon, VideoIcon, DocumentTextIcon, ArrowTopRightOnSquareIcon, ChevronLeftIcon } from '@heroicons/react/24/solid';
 import { toast } from 'react-hot-toast';
 
 export default function AdminResources() {
@@ -22,7 +22,7 @@ export default function AdminResources() {
     topics: [],
     url: '',
     platform: '',
-    icon: 'BookOpen'
+    icon: 'BookOpenIcon'
   });
 
   // TensorFlow color scheme
@@ -116,7 +116,7 @@ export default function AdminResources() {
       topics: resource.topics || [],
       url: resource.url || '',
       platform: resource.platform || '',
-      icon: resource.icon || 'BookOpen'
+      icon: resource.icon || 'BookOpenIcon'
     });
     setShowModal(true);
   };
@@ -131,7 +131,7 @@ export default function AdminResources() {
       topics: [],
       url: '',
       platform: '',
-      icon: 'BookOpen'
+      icon: 'BookOpenIcon'
     });
   };
 
@@ -158,14 +158,14 @@ export default function AdminResources() {
                 onClick={() => navigate('/admin')}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-dark-800 text-gray-300' : 'hover:bg-gray-100 text-gray-700'}`}
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeftIcon className="w-4 h-4" />
                 <span className="text-sm font-medium">Back to Admin</span>
               </button>
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg blur-sm opacity-50"></div>
                   <div className="relative p-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg shadow-lg">
-                    <Code2 className="w-5 h-5 text-white" />
+                    <CodeBracketIcon className="w-5 h-5 text-white" />
                   </div>
                 </div>
                 <h1 className={`text-xl font-bold ${textColor}`}>
@@ -181,7 +181,7 @@ export default function AdminResources() {
               }}
               className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg transition font-medium text-sm shadow-lg"
             >
-              <Plus className="w-4 h-4" />
+              <PlusIcon className="w-4 h-4" />
               Add Resource
             </button>
           </div>
@@ -214,13 +214,13 @@ export default function AdminResources() {
                       onClick={() => handleEdit(resource)}
                       className={`p-1.5 rounded transition-colors ${isDark ? 'hover:bg-dark-800 text-blue-400' : 'hover:bg-blue-50 text-blue-600'}`}
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <PencilIcon className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(resource._id)}
                       className={`p-1.5 rounded transition-colors ${isDark ? 'hover:bg-dark-800 text-red-400' : 'hover:bg-red-50 text-red-600'}`}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <TrashIcon className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -248,7 +248,7 @@ export default function AdminResources() {
                     rel="noopener noreferrer"
                     className="text-xs text-orange-500 hover:text-orange-600 flex items-center gap-1"
                   >
-                    <ExternalLink className="w-3 h-3" />
+                    <ArrowTopRightOnSquareIcon className="w-3 h-3" />
                     View Link
                   </a>
                 )}
@@ -259,7 +259,7 @@ export default function AdminResources() {
 
         {!loading && resources.length === 0 && (
           <div className="text-center py-16">
-            <BookOpen className={`w-16 h-16 ${textMuted} mx-auto mb-4`} />
+            <BookOpenIcon className={`w-16 h-16 ${textMuted} mx-auto mb-4`} />
             <h3 className={`text-xl font-bold ${textColor} mb-2`}>No resources yet</h3>
             <p className={`${textMuted} mb-4`}>Start by adding your first resource</p>
             <button
@@ -292,7 +292,7 @@ export default function AdminResources() {
                 }}
                 className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-dark-800' : 'hover:bg-gray-100'}`}
               >
-                <X className="w-5 h-5" />
+                <XMarkIcon className="w-5 h-5" />
               </button>
             </div>
 
@@ -308,7 +308,7 @@ export default function AdminResources() {
                 >
                   <option value="learning-path">Learning Path</option>
                   <option value="tutorial">Tutorial</option>
-                  <option value="video">Video</option>
+                  <option value="video">VideoIcon</option>
                   <option value="external">External Resource</option>
                 </select>
               </div>
@@ -370,7 +370,7 @@ export default function AdminResources() {
                           onClick={() => handleRemoveTopic(idx)}
                           className="hover:text-red-500"
                         >
-                          <X className="w-3 h-3" />
+                          <XMarkIcon className="w-3 h-3" />
                         </button>
                       </span>
                     ))}
@@ -380,7 +380,7 @@ export default function AdminResources() {
                     onClick={handleAddTopic}
                     className={`text-sm text-orange-500 hover:text-orange-600 flex items-center gap-1`}
                   >
-                    <Plus className="w-4 h-4" />
+                    <PlusIcon className="w-4 h-4" />
                     Add Topic
                   </button>
                 </div>
@@ -420,7 +420,7 @@ export default function AdminResources() {
                   type="submit"
                   className="flex-1 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg transition font-medium shadow-lg flex items-center justify-center gap-2"
                 >
-                  <Save className="w-4 h-4" />
+                  <CheckIcon className="w-4 h-4" />
                   {editingResource ? 'Update' : 'Create'}
                 </button>
                 <button

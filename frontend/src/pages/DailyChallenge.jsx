@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import axios from 'axios';
-import { ChevronLeft, Calendar, Flame, Trophy, CheckCircle, Clock, TrendingUp } from 'lucide-react';
+import { ChevronLeftIcon, CalendarIcon, FireIcon, TrophyIcon, CheckCircleIcon, ClockIcon, ArrowTrendingUpIcon } from '@heroicons/react/24/solid';
 import { toast } from 'react-hot-toast';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -92,7 +92,7 @@ export default function DailyChallenge() {
               onClick={() => navigate('/')}
               className="p-2 hover:bg-gray-100 dark:hover:bg-dark-800 rounded-lg transition"
             >
-              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-300" />
+              <ChevronLeftIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700 dark:text-gray-300" />
             </button>
             <h1 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">Daily Challenge</h1>
           </div>
@@ -109,7 +109,7 @@ export default function DailyChallenge() {
             <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-xl p-8 shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <Calendar className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                  <CalendarIcon className="w-6 h-6 text-gray-700 dark:text-gray-300" />
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Today's Challenge</h2>
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -133,7 +133,7 @@ export default function DailyChallenge() {
                   <div className="flex items-center gap-4 pt-4 flex-wrap">
                     {userCompleted ? (
                       <div className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-500/30 px-4 py-2 rounded-lg">
-                        <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        <CheckCircleIcon className="w-5 h-5 text-green-600 dark:text-green-400" />
                         <span className="font-semibold text-green-700 dark:text-green-300">Completed!</span>
                       </div>
                     ) : (
@@ -141,7 +141,7 @@ export default function DailyChallenge() {
                         onClick={handleStartChallenge}
                         className="btn-primary flex items-center gap-2"
                       >
-                        <Clock className="w-5 h-5" />
+                        <ClockIcon className="w-5 h-5" />
                         Start Challenge
                       </button>
                     )}
@@ -156,7 +156,7 @@ export default function DailyChallenge() {
             {/* Recent History */}
             <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-xl p-6 shadow-sm">
               <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
-                <TrendingUp className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                <ArrowTrendingUpIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
                 Recent Challenges
               </h3>
               <div className="space-y-3">
@@ -169,7 +169,7 @@ export default function DailyChallenge() {
                       className="bg-gray-50 dark:bg-dark-800 border border-gray-200 dark:border-dark-700 rounded-lg p-4 flex items-center justify-between hover:shadow-sm transition"
                     >
                       <div className="flex items-center gap-4">
-                        <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                        <CheckCircleIcon className="w-5 h-5 text-green-600 dark:text-green-400" />
                         <div>
                           <h4 className="font-semibold text-gray-900 dark:text-white">{item.problem.title}</h4>
                           <p className="text-sm text-gray-600 dark:text-gray-400">{formatDate(item.date)}</p>
@@ -190,7 +190,7 @@ export default function DailyChallenge() {
             {/* Streak Card */}
             <div className="bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-900/30 rounded-xl p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
-                <Flame className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                <FireIcon className="w-6 h-6 text-orange-600 dark:text-orange-400" />
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white">Current Streak</h3>
               </div>
               <div className="text-center">
@@ -202,7 +202,7 @@ export default function DailyChallenge() {
             {/* Stats Cards */}
             <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-xl p-6 space-y-4 shadow-sm">
               <h3 className="text-lg font-bold flex items-center gap-2 text-gray-900 dark:text-white">
-                <Trophy className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                <TrophyIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
                 Your Stats
               </h3>
 

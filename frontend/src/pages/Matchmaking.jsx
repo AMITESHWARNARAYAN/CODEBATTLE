@@ -10,7 +10,7 @@ import {
   removeListener
 } from '../utils/socket';
 import { toast } from 'react-hot-toast';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeftIcon } from '@heroicons/react/24/solid';
 
 export default function Matchmaking() {
   const navigate = useNavigate();
@@ -72,7 +72,7 @@ export default function Matchmaking() {
             onClick={() => navigate('/')}
             className="flex items-center gap-2 px-4 py-2 hover:bg-slate-700 rounded-lg transition"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeftIcon className="w-4 h-4" />
             Back
           </button>
           <h1 className="text-2xl font-bold">Matchmaking</h1>
@@ -116,7 +116,7 @@ export default function Matchmaking() {
                 <p className="text-gray-600 dark:text-gray-400">This may take a few moments</p>
               </div>
 
-              {/* Queue Info */}
+              {/* Queue InformationCircleIcon */}
               <div className="grid grid-cols-3 gap-4 mb-8">
                 <div className="p-4 bg-gray-100 dark:bg-dark-800 rounded-lg">
                   <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Queue Position</p>
@@ -142,7 +142,7 @@ export default function Matchmaking() {
           )}
         </div>
 
-        {/* Info Section */}
+        {/* InformationCircleIcon Section */}
         <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="card">
             <h3 className="text-lg font-bold mb-3">⚡ How It Works</h3>

@@ -8,7 +8,7 @@ import { useExplanationStore } from '../store/explanationStore';
 import Editor from '@monaco-editor/react';
 import { submitCodeNotification, onOpponentSubmitted } from '../utils/socket';
 import { toast } from 'react-hot-toast';
-import { Play, Send, Clock, Flag, Moon, Sun, ExternalLink, Lightbulb, BookOpen, Zap, ChevronLeft, ChevronRight, Settings, Users, Share2, Award, Trophy, Code2, Terminal, Maximize2, Minimize2, RotateCcw } from 'lucide-react';
+import { PlayIcon, PaperAirplaneIcon, ClockIcon, Flag, MoonIcon, SunIcon, ArrowTopRightOnSquareIcon, LightBulbIcon, BookOpenIcon, BoltIcon, ChevronLeftIcon, ChevronRightIcon, Cog6ToothIcon, UserGroupIcon, ShareIcon, AcademicCapIcon, TrophyIcon, CodeBracketIcon, CommandLineIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
 
 export default function CodeEditor() {
   const { matchId } = useParams();
@@ -18,11 +18,11 @@ export default function CodeEditor() {
   const problemId = searchParams.get('problem') || matchId;
   const navigate = useNavigate();
   const { user, token } = useAuthStore();
-  const { currentMatch, submitCode, getMatch, giveUp } = useMatchStore();
+  const { currentMatch, submitCodeBracketIcon, getMatch, giveUp } = useMatchStore();
   const { submitSolution: submitContestSolution } = useContestStore();
   const { isDark, toggleTheme } = useThemeStore();
   const { explanation, guidance, solution, loading: explanationLoading, generateExplanation, generateGuidance, generateSolution, clearExplanations } = useExplanationStore();
-  const [code, setCode] = useState('');
+  const [code, setCodeBracketIcon] = useState('');
   const [language, setLanguage] = useState('cpp');
   const [submitting, setSubmitting] = useState(false);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes
@@ -40,7 +40,7 @@ export default function CodeEditor() {
   const [isDragging, setIsDragging] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fontSize, setFontSize] = useState(14);
-  const [showSettings, setShowSettings] = useState(false);
+  const [showCog6ToothIcon, setShowCog6ToothIcon] = useState(false);
   const isContestMode = !!contestId;
 
   // Fetch match or problem data
@@ -70,7 +70,7 @@ export default function CodeEditor() {
     if (problem && problem.functionSignature && !code) {
       const signature = problem.functionSignature[language] || '';
       if (signature) {
-        setCode(signature);
+        setCodeBracketIcon(signature);
       }
     }
   }, [match, contestProblem, language, isContestMode]);
@@ -140,14 +140,14 @@ export default function CodeEditor() {
       }
       // Match mode submission
       else {
-        const result = await submitCode(matchId, code, language);
+        const result = await submitCodeBracketIcon(matchId, code, language);
         setTestResults(result.executionResult);
 
         // Notify opponent
         submitCodeNotification(matchId, user._id, user.username);
 
-        toast.success('Code submitted!');
-        console.log('Code submitted - staying on editor page (no redirect)');
+        toast.success('CodeBracketIcon submitted!');
+        console.log('CodeBracketIcon submitted - staying on editor page (no redirect)');
 
         // Don't redirect - stay on code editor to see results
       }
@@ -274,7 +274,7 @@ export default function CodeEditor() {
       if (!isDragging) return;
       const container = document.getElementById('editor-container');
       if (container) {
-        const newWidth = (e.clientX / container.clientWidth) * 100;
+        const newWidth = (e.clientXMarkIcon / container.clientWidth) * 100;
         if (newWidth > 20 && newWidth < 70) {
           setLeftPanelWidth(newWidth);
         }
@@ -300,7 +300,7 @@ export default function CodeEditor() {
               onClick={() => isContestMode ? navigate(`/contests/${contestId}/live`) : navigate('/dashboard')}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-dark-800 text-gray-300' : 'hover:bg-gray-100 text-gray-700'}`}
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeftIcon className="w-4 h-4" />
               <span className="text-sm font-medium">Back</span>
             </button>
             
@@ -308,7 +308,7 @@ export default function CodeEditor() {
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg blur-sm opacity-50"></div>
                 <div className="relative p-1.5 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg">
-                  <Code2 className="w-4 h-4 text-white" />
+                  <CodeBracketIcon className="w-4 h-4 text-white" />
                 </div>
               </div>
               <div>
@@ -336,7 +336,7 @@ export default function CodeEditor() {
           {/* Center: Timer (if applicable) */}
           {match?.matchType === 'solo' && timerEnabled && (
             <div className={`flex items-center gap-2 px-4 py-1.5 rounded-lg ${isDark ? 'bg-dark-800' : 'bg-gray-100'}`}>
-              <Clock className="w-4 h-4 text-orange-500" />
+              <ClockIcon className="w-4 h-4 text-orange-500" />
               <span className={`text-sm font-medium ${timeLeft < 60 ? 'text-red-500' : isDark ? 'text-white' : 'text-gray-900'}`}>
                 {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
               </span>
@@ -364,17 +364,17 @@ export default function CodeEditor() {
               </button>
             </div>
 
-            {/* Reset Code */}
+            {/* Reset CodeBracketIcon */}
             <button
               onClick={() => {
                 const signature = problem?.functionSignature?.[language] || '';
-                setCode(signature);
-                toast.success('Code reset to template');
+                setCodeBracketIcon(signature);
+                toast.success('CodeBracketIcon reset to template');
               }}
               className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-dark-800 text-gray-300' : 'hover:bg-gray-100 text-gray-700'}`}
               title="Reset code"
             >
-              <RotateCcw className="w-4 h-4" />
+              <ArrowPathIcon className="w-4 h-4" />
             </button>
 
             {/* Fullscreen Toggle */}
@@ -383,7 +383,7 @@ export default function CodeEditor() {
               className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-dark-800 text-gray-300' : 'hover:bg-gray-100 text-gray-700'}`}
               title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
             >
-              {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+              {isFullscreen ? <ArrowsPointingInIcon className="w-4 h-4" /> : <ArrowsPointingOutIcon className="w-4 h-4" />}
             </button>
 
             {/* Theme Toggle */}
@@ -392,7 +392,7 @@ export default function CodeEditor() {
               className={`p-2 rounded-lg transition-colors ${isDark ? 'hover:bg-dark-800 text-gray-300' : 'hover:bg-gray-100 text-gray-700'}`}
               title="Toggle theme"
             >
-              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {isDark ? <SunIcon className="w-4 h-4" /> : <MoonIcon className="w-4 h-4" />}
             </button>
 
             {/* Language Selector */}
@@ -520,7 +520,7 @@ export default function CodeEditor() {
                 {match?.matchType === 'solo' && (
                   <div className={`p-3 rounded-lg border ${isDark ? 'bg-purple-900/20 border-purple-700' : 'bg-purple-50 border-purple-200'}`}>
                     <p className={`text-xs font-semibold mb-2 flex items-center gap-1.5 ${isDark ? 'text-purple-400' : 'text-purple-700'}`}>
-                      <Zap className="w-3.5 h-3.5" /> AI-Powered Help
+                      <BoltIcon className="w-3.5 h-3.5" /> AI-Powered Help
                     </p>
                     <div className="space-y-1.5">
                       <button
@@ -528,7 +528,7 @@ export default function CodeEditor() {
                         disabled={explanationLoading}
                         className="w-full px-3 py-1.5 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-900 text-white rounded text-xs font-medium transition flex items-center justify-center gap-1.5"
                       >
-                        <Lightbulb className="w-3.5 h-3.5" />
+                        <LightBulbIcon className="w-3.5 h-3.5" />
                         {explanationLoading ? 'Generating...' : 'Get Explanation'}
                       </button>
                       <button
@@ -536,7 +536,7 @@ export default function CodeEditor() {
                         disabled={explanationLoading || !code}
                         className="w-full px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-900 text-white rounded text-xs font-medium transition flex items-center justify-center gap-1.5"
                       >
-                        <BookOpen className="w-3.5 h-3.5" />
+                        <BookOpenIcon className="w-3.5 h-3.5" />
                         {explanationLoading ? 'Generating...' : 'Get Guidance'}
                       </button>
                       <button
@@ -544,7 +544,7 @@ export default function CodeEditor() {
                         disabled={explanationLoading}
                         className="w-full px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 disabled:bg-cyan-900 text-white rounded text-xs font-medium transition flex items-center justify-center gap-1.5"
                       >
-                        <ExternalLink className="w-3.5 h-3.5" />
+                        <ArrowTopRightOnSquareIcon className="w-3.5 h-3.5" />
                         {explanationLoading ? 'Generating...' : 'View Full Solution'}
                       </button>
                     </div>
@@ -617,14 +617,14 @@ export default function CodeEditor() {
           className={`w-1 ${isDark ? 'bg-dark-800 hover:bg-blue-500' : 'bg-gray-300 hover:bg-blue-400'} cursor-col-resize ${isDragging ? 'bg-blue-500' : ''}`}
         />
 
-        {/* Right Panel - Code Editor */}
+        {/* Right Panel - CodeBracketIcon Editor */}
         <div className={`flex-1 flex flex-col ${isDark ? 'bg-dark-950' : 'bg-white'}`}>
-          {/* Code Tab */}
+          {/* CodeBracketIcon Tab */}
           <div className={`flex items-center justify-between border-b ${isDark ? 'border-dark-800 bg-[#1a1a1a]' : 'border-gray-200 bg-gray-50'} px-4 flex-shrink-0`}>
             <div className="flex items-center gap-2">
-              <Terminal className={`w-4 h-4 ${isDark ? 'text-orange-500' : 'text-orange-600'}`} />
+              <CommandLineIcon className={`w-4 h-4 ${isDark ? 'text-orange-500' : 'text-orange-600'}`} />
               <button className={`px-3 py-2.5 text-sm font-medium border-b-2 -mb-px ${isDark ? 'border-orange-500 text-white' : 'border-orange-500 text-gray-900'}`}>
-                Code
+                CodeBracketIcon
               </button>
             </div>
             <div className="flex items-center gap-2">
@@ -640,12 +640,12 @@ export default function CodeEditor() {
               height="100%"
               language={language}
               value={code}
-              onChange={(value) => setCode(value || '')}
+              onChange={(value) => setCodeBracketIcon(value || '')}
               theme={isDark ? 'vs-dark' : 'vs-light'}
               options={{
                 minimap: { enabled: !isFullscreen },
                 fontSize: fontSize,
-                fontFamily: "'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace",
+                fontFamily: "'Fira CodeBracketIcon', 'Consolas', 'Monaco', 'Courier New', monospace",
                 lineNumbers: 'on',
                 scrollBeyondLastLine: false,
                 automaticLayout: true,
@@ -787,8 +787,8 @@ export default function CodeEditor() {
                   : isDark ? 'bg-dark-800 hover:bg-dark-700 text-white border border-dark-700' : 'bg-white hover:bg-gray-50 text-gray-900 border border-gray-300'
               }`}
             >
-              <Play className="w-4 h-4" />
-              <span>Run Code</span>
+              <PlayIcon className="w-4 h-4" />
+              <span>Run CodeBracketIcon</span>
             </button>
             <button
               onClick={handleSubmit}
@@ -806,7 +806,7 @@ export default function CodeEditor() {
                 </>
               ) : (
                 <>
-                  <Send className="w-4 h-4" />
+                  <PaperAirplaneIcon className="w-4 h-4" />
                   <span>Submit Solution</span>
                 </>
               )}

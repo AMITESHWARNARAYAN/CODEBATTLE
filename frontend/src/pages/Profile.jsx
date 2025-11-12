@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useUserStore } from '../store/userStore';
 import { useAuthStore } from '../store/authStore';
 import { toast } from 'react-hot-toast';
-import { Trophy, TrendingUp, ArrowLeft, Edit2, Save, X, Lock, Trash2, User, Mail, FileText, Code2, Sparkles, Award, Swords, Target } from 'lucide-react';
+import { TrophyIcon, ArrowTrendingUpIcon, ArrowLeftIcon, PencilIcon, CheckIcon, XMarkIcon, LockClosedIcon, TrashIcon, UserIcon, EnvelopeIcon, DocumentTextIcon, CodeBracketIcon, SparklesIcon, AcademicCapIcon, BoltIcon, TargetIcon } from '@heroicons/react/24/solid';
 import axios from 'axios';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -13,7 +13,7 @@ export default function Profile() {
   const { username } = useParams();
   const navigate = useNavigate();
   const { getUserProfile } = useUserStore();
-  const { user: currentUser, logout } = useAuthStore();
+  const { user: currentUserIcon, logout } = useAuthStore();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -37,7 +37,7 @@ export default function Profile() {
   // Delete account state
   const [deletePassword, setDeletePassword] = useState('');
 
-  const isOwnProfile = currentUser?.username === username;
+  const isOwnProfile = currentUserIcon?.username === username;
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -46,7 +46,7 @@ export default function Profile() {
         setProfile(data);
         setEditForm({
           username: data.username,
-          email: currentUser?.email || '',
+          email: currentUserIcon?.email || '',
           bio: data.bio || ''
         });
       } catch (error) {
@@ -58,7 +58,7 @@ export default function Profile() {
     };
 
     fetchProfile();
-  }, [username, getUserProfile, navigate, currentUser]);
+  }, [username, getUserProfile, navigate, currentUserIcon]);
 
   const handleUpdateProfile = async () => {
     try {
@@ -148,11 +148,11 @@ export default function Profile() {
               onClick={() => navigate('/dashboard')}
               className="p-2 hover:bg-gray-100 dark:hover:bg-dark-800 rounded-lg transition"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+              <ArrowLeftIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             </button>
             <div className="flex items-center gap-2">
               <div className="p-1.5 bg-gray-900 dark:bg-white rounded-lg">
-                <User className="w-5 h-5 text-white dark:text-gray-900" />
+                <UserIcon className="w-5 h-5 text-white dark:text-gray-900" />
               </div>
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
                 Player Profile
@@ -166,7 +166,7 @@ export default function Profile() {
                 onClick={() => setIsEditing(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 rounded-lg transition font-medium text-sm"
               >
-                <Edit2 className="w-4 h-4" />
+                <PencilIcon className="w-4 h-4" />
                 <span className="hidden md:inline">Edit Profile</span>
               </button>
             )}
@@ -187,14 +187,14 @@ export default function Profile() {
                     onClick={handleUpdateProfile}
                     className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all font-medium"
                   >
-                    <Save className="w-4 h-4" />
-                    Save
+                    <CheckIcon className="w-4 h-4" />
+                    CheckIcon
                   </button>
                   <button
                     onClick={() => setIsEditing(false)}
                     className="btn-secondary"
                   >
-                    <X className="w-4 h-4" />
+                    <XMarkIcon className="w-4 h-4" />
                     Cancel
                   </button>
                 </div>
@@ -203,7 +203,7 @@ export default function Profile() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <User className="w-4 h-4 inline mr-2" />
+                    <UserIcon className="w-4 h-4 inline mr-2" />
                     Username
                   </label>
                   <input
@@ -215,7 +215,7 @@ export default function Profile() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    <Mail className="w-4 h-4 inline mr-2" />
+                    <EnvelopeIcon className="w-4 h-4 inline mr-2" />
                     Email
                   </label>
                   <input
@@ -229,7 +229,7 @@ export default function Profile() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <FileText className="w-4 h-4 inline mr-2" />
+                  <DocumentTextIcon className="w-4 h-4 inline mr-2" />
                   Bio
                 </label>
                 <textarea
@@ -311,35 +311,35 @@ export default function Profile() {
           <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-2xl p-6 shadow-sm">
             <h3 className="text-xl font-bold mb-6 flex items-center gap-3 text-gray-900 dark:text-white">
               <div className="p-2 bg-yellow-600 dark:bg-yellow-500 rounded-lg">
-                <Trophy className="w-5 h-5 text-white" />
+                <TrophyIcon className="w-5 h-5 text-white" />
               </div>
               Performance
             </h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center p-4 bg-gray-50 dark:bg-dark-800 rounded-xl border border-gray-200 dark:border-dark-700 hover:shadow-sm transition-all">
                 <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                  <Swords className="w-4 h-4" />
+                  <BoltIcon className="w-4 h-4" />
                   Total Matches
                 </span>
                 <span className="font-bold text-gray-900 dark:text-white text-lg">{profile.totalMatches}</span>
               </div>
               <div className="flex justify-between items-center p-4 bg-gray-50 dark:bg-dark-800 rounded-xl border border-gray-200 dark:border-dark-700 hover:shadow-sm transition-all">
                 <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                  <Target className="w-4 h-4" />
+                  <TargetIcon className="w-4 h-4" />
                   Win Rate
                 </span>
                 <span className="font-bold text-green-600 dark:text-green-400 text-lg">{winRate}%</span>
               </div>
               <div className="flex justify-between items-center p-4 bg-gray-50 dark:bg-dark-800 rounded-xl border border-gray-200 dark:border-dark-700 hover:shadow-sm transition-all">
                 <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                  <Award className="w-4 h-4" />
+                  <AcademicCapIcon className="w-4 h-4" />
                   Highest Rating
                 </span>
                 <span className="font-bold text-yellow-600 dark:text-yellow-400 text-lg">{profile.highestRating}</span>
               </div>
               <div className="flex justify-between items-center p-4 bg-gray-50 dark:bg-dark-800 rounded-xl border border-gray-200 dark:border-dark-700 hover:shadow-sm transition-all">
                 <span className="text-gray-600 dark:text-gray-400 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" />
+                  <ArrowTrendingUpIcon className="w-4 h-4" />
                   Lowest Rating
                 </span>
                 <span className="font-bold text-gray-600 dark:text-gray-400 text-lg">{profile.lowestRating}</span>
@@ -350,7 +350,7 @@ export default function Profile() {
           <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-2xl p-6 shadow-sm">
             <h3 className="text-xl font-bold mb-6 flex items-center gap-3 text-gray-900 dark:text-white">
               <div className="p-2 bg-gray-900 dark:bg-white rounded-lg">
-                <TrendingUp className="w-5 h-5 text-white dark:text-gray-900" />
+                <ArrowTrendingUpIcon className="w-5 h-5 text-white dark:text-gray-900" />
               </div>
               Statistics
             </h3>
@@ -382,21 +382,21 @@ export default function Profile() {
               onClick={() => navigate('/leaderboard')}
               className="btn-primary flex items-center justify-center gap-2 px-6 py-4 rounded-xl hover:scale-105 font-semibold"
             >
-              <Trophy className="w-5 h-5" />
+              <TrophyIcon className="w-5 h-5" />
               View Leaderboard
             </button>
             <button
               onClick={() => setShowPasswordModal(true)}
               className="btn-secondary flex items-center justify-center gap-2 px-6 py-4 rounded-xl hover:scale-105 font-semibold"
             >
-              <Lock className="w-5 h-5" />
+              <LockClosedIcon className="w-5 h-5" />
               Change Password
             </button>
             <button
               onClick={() => setShowDeleteModal(true)}
               className="flex items-center justify-center gap-2 px-6 py-4 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-300 dark:border-red-500/50 hover:border-red-500 dark:hover:border-red-500 rounded-xl transition-all hover:scale-105 font-semibold text-red-700 dark:text-red-400"
             >
-              <Trash2 className="w-5 h-5" />
+              <TrashIcon className="w-5 h-5" />
               Delete Account
             </button>
           </div>
@@ -406,14 +406,14 @@ export default function Profile() {
               onClick={() => navigate('/dashboard')}
               className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-slate-700 hover:bg-slate-600 rounded-xl transition-all border border-slate-600 hover:scale-105 font-semibold"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeftIcon className="w-5 h-5" />
               Back to Dashboard
             </button>
             <button
               onClick={() => navigate('/leaderboard')}
               className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl transition-all shadow-lg shadow-indigo-500/30 hover:scale-105 font-semibold"
             >
-              <Trophy className="w-5 h-5" />
+              <TrophyIcon className="w-5 h-5" />
               View Leaderboard
             </button>
           </div>
@@ -426,14 +426,14 @@ export default function Profile() {
           <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-2xl p-8 max-w-md w-full shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
-                <Lock className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                <LockClosedIcon className="w-6 h-6 text-gray-700 dark:text-gray-300" />
                 Change Password
               </h3>
               <button
                 onClick={() => setShowPasswordModal(false)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-dark-800 rounded-lg transition-all"
               >
-                <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                <XMarkIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
               </button>
             </div>
 
@@ -500,14 +500,14 @@ export default function Profile() {
           <div className="bg-white dark:bg-dark-900 border border-red-300 dark:border-red-500/50 rounded-2xl p-8 max-w-md w-full shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold flex items-center gap-2 text-red-700 dark:text-red-400">
-                <Trash2 className="w-6 h-6" />
+                <TrashIcon className="w-6 h-6" />
                 Delete Account
               </h3>
               <button
                 onClick={() => setShowDeleteModal(false)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-dark-800 rounded-lg transition-all"
               >
-                <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                <XMarkIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
               </button>
             </div>
 

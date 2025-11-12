@@ -4,10 +4,10 @@ import { useAuthStore } from '../store/authStore';
 import { useUserStore } from '../store/userStore';
 import { useMatchStore } from '../store/matchStore';
 import { useThemeStore } from '../store/themeStore';
-import { LogOut, Trophy, Zap, Users, Check, X, Settings, Calendar, Target, Brain, Sparkles, TrendingUp, Award, Code2, Swords, BookOpen, ArrowRight, Play, Clock, BarChart3 } from 'lucide-react';
+import { ArrowRightOnRectangleIcon, TrophyIcon, BoltIcon, UserGroupIcon, CheckIcon, XMarkIcon, Cog6ToothIcon, CalendarIcon, TargetIcon, SparklesIcon, SparklesIcon, ArrowTrendingUpIcon, AcademicCapIcon, CodeBracketIcon, BoltIcon, BookOpenIcon, ArrowRightIcon, PlayIcon, ClockIcon, BarChartIcon } from '@heroicons/react/24/solid';
 import { toast } from 'react-hot-toast';
 import { getSocket, acceptChallenge as emitAcceptChallenge, rejectChallenge as emitRejectChallenge } from '../utils/socket';
-import NotificationBell from '../components/NotificationBell';
+import NotificationBellIcon from '../components/NotificationBellIcon';
 import ThemeToggle from '../components/ThemeToggle';
 
 export default function Dashboard() {
@@ -113,28 +113,28 @@ export default function Dashboard() {
     {
       label: 'ELO Rating',
       value: user?.rating || 1200,
-      icon: Trophy,
+      icon: TrophyIcon,
       change: user?.rating > 1200 ? `+${user.rating - 1200}` : user?.rating < 1200 ? `${user.rating - 1200}` : '0',
       color: 'orange'
     },
     {
       label: 'Total Wins',
       value: user?.wins || 0,
-      icon: Zap,
+      icon: BoltIcon,
       change: `${winRate}% WR`,
       color: 'green'
     },
     {
       label: 'Total Matches',
       value: user?.totalMatches || 0,
-      icon: Swords,
+      icon: BoltIcon,
       change: `${user?.losses || 0} losses`,
       color: 'blue'
     },
     {
       label: 'Peak Rating',
       value: user?.highestRating || user?.rating || 1200,
-      icon: Award,
+      icon: AcademicCapIcon,
       change: 'All-time best',
       color: 'purple'
     }
@@ -152,7 +152,7 @@ export default function Dashboard() {
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg blur-sm opacity-50"></div>
                   <div className="relative p-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg shadow-lg">
-                    <Code2 className="w-5 h-5 text-white" />
+                    <CodeBracketIcon className="w-5 h-5 text-white" />
                   </div>
                 </div>
                 <h1 className={`text-xl font-bold ${textColor}`}>
@@ -206,14 +206,14 @@ export default function Dashboard() {
               <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border ${isDark ? 'bg-dark-800 border-dark-700' : 'bg-gray-50 border-gray-200'}`}>
                 <span className={`${textColor} font-medium text-sm`}>{user?.username}</span>
               </div>
-              <NotificationBell />
+              <NotificationBellIcon />
               <ThemeToggle />
               {user?.isAdmin && (
                 <button
                   onClick={() => navigate('/admin')}
                   className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg transition font-medium text-sm shadow-lg"
                 >
-                  <Settings className="w-4 h-4" />
+                  <Cog6ToothIcon className="w-4 h-4" />
                   <span className="hidden md:inline">Admin</span>
                 </button>
               )}
@@ -221,7 +221,7 @@ export default function Dashboard() {
                 onClick={handleLogout}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition font-medium text-sm border ${isDark ? 'bg-dark-800 hover:bg-dark-700 border-dark-700 text-white' : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-900'}`}
               >
-                <LogOut className="w-4 h-4" />
+                <ArrowRightOnRectangleIcon className="w-4 h-4" />
                 <span className="hidden md:inline">Logout</span>
               </button>
             </div>
@@ -234,7 +234,7 @@ export default function Dashboard() {
         {/* Sidebar */}
         <aside className={`hidden lg:block w-64 min-h-screen ${cardBg} border-r`} style={{ borderColor: isDark ? '#2a2a2a' : '#e5e7eb', borderRightWidth: '1px' }}>
           <div className="sticky top-20 p-6">
-            {/* User Info Card */}
+            {/* UserIcon InformationCircleIcon Card */}
             <div 
               className={`${cardBg} rounded-xl p-4 border mb-6 cursor-pointer transition-all duration-300 hover:shadow-lg`}
               style={{ borderColor: isDark ? '#2a2a2a' : '#e5e7eb', borderWidth: '1px' }}
@@ -263,56 +263,56 @@ export default function Dashboard() {
                   onClick={() => navigate('/dashboard')}
                   className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${textColor} hover:bg-orange-500 hover:text-white`}
                 >
-                  <BarChart3 className="w-4 h-4" />
+                  <BarChartIcon className="w-4 h-4" />
                   <span className="text-sm font-medium">Dashboard</span>
                 </button>
                 <button
                   onClick={() => navigate('/matchmaking')}
                   className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${textMuted} hover:bg-orange-500 hover:text-white`}
                 >
-                  <Swords className="w-4 h-4" />
+                  <BoltIcon className="w-4 h-4" />
                   <span className="text-sm font-medium">Matchmaking</span>
                 </button>
                 <button
                   onClick={() => navigate('/problems')}
                   className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${textMuted} hover:bg-orange-500 hover:text-white`}
                 >
-                  <BookOpen className="w-4 h-4" />
+                  <BookOpenIcon className="w-4 h-4" />
                   <span className="text-sm font-medium">Problems</span>
                 </button>
                 <button
                   onClick={() => navigate('/contests')}
                   className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${textMuted} hover:bg-orange-500 hover:text-white`}
                 >
-                  <Trophy className="w-4 h-4" />
+                  <TrophyIcon className="w-4 h-4" />
                   <span className="text-sm font-medium">Contests</span>
                 </button>
                 <button
                   onClick={() => navigate('/challenges')}
                   className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${textMuted} hover:bg-orange-500 hover:text-white`}
                 >
-                  <Target className="w-4 h-4" />
+                  <TargetIcon className="w-4 h-4" />
                   <span className="text-sm font-medium">Challenges</span>
                 </button>
                 <button
                   onClick={() => navigate('/daily-challenge')}
                   className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${textMuted} hover:bg-orange-500 hover:text-white`}
                 >
-                  <Calendar className="w-4 h-4" />
+                  <CalendarIcon className="w-4 h-4" />
                   <span className="text-sm font-medium">Daily Challenge</span>
                 </button>
                 <button
                   onClick={() => navigate('/leaderboard')}
                   className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${textMuted} hover:bg-orange-500 hover:text-white`}
                 >
-                  <Award className="w-4 h-4" />
+                  <AcademicCapIcon className="w-4 h-4" />
                   <span className="text-sm font-medium">Leaderboard</span>
                 </button>
                 <button
                   onClick={() => navigate('/submissions')}
                   className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${textMuted} hover:bg-orange-500 hover:text-white`}
                 >
-                  <Code2 className="w-4 h-4" />
+                  <CodeBracketIcon className="w-4 h-4" />
                   <span className="text-sm font-medium">Submissions</span>
                 </button>
               </nav>
@@ -375,7 +375,7 @@ export default function Dashboard() {
                     <Icon className="w-6 h-6 text-orange-500" />
                   </div>
                   <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${isDark ? 'bg-dark-800 text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
-                    <TrendingUp className="w-3 h-3" />
+                    <ArrowTrendingUpIcon className="w-3 h-3" />
                     {stat.change}
                   </div>
                 </div>
@@ -437,7 +437,7 @@ export default function Dashboard() {
                       disabled={challengeLoading[challenge._id]}
                       className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm shadow-lg"
                     >
-                      <Check className="w-4 h-4" />
+                      <CheckIcon className="w-4 h-4" />
                       {challengeLoading[challenge._id] ? 'Accepting...' : 'Accept'}
                     </button>
                     <button
@@ -445,7 +445,7 @@ export default function Dashboard() {
                       disabled={challengeLoading[challenge._id]}
                       className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm border ${isDark ? 'bg-dark-800 hover:bg-dark-700 border-dark-700 text-white' : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-900'}`}
                     >
-                      <X className="w-4 h-4" />
+                      <XMarkIcon className="w-4 h-4" />
                       {challengeLoading[challenge._id] ? 'Rejecting...' : 'Reject'}
                     </button>
                   </div>
@@ -469,9 +469,9 @@ export default function Dashboard() {
           >
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg shadow-lg">
-                <Calendar className="w-6 h-6 text-white" />
+                <CalendarIcon className="w-6 h-6 text-white" />
               </div>
-              <ArrowRight className="w-5 h-5 text-orange-500" />
+              <ArrowRightIcon className="w-5 h-5 text-orange-500" />
             </div>
             <h3 className={`text-lg font-bold ${textColor} mb-2`}>Daily Challenge</h3>
             <p className={`text-sm ${textMuted}`}>
@@ -491,9 +491,9 @@ export default function Dashboard() {
           >
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg shadow-lg">
-                <Target className="w-6 h-6 text-white" />
+                <TargetIcon className="w-6 h-6 text-white" />
               </div>
-              <ArrowRight className="w-5 h-5 text-purple-500" />
+              <ArrowRightIcon className="w-5 h-5 text-purple-500" />
             </div>
             <h3 className={`text-lg font-bold ${textColor} mb-2`}>Challenges</h3>
             <p className={`text-sm ${textMuted}`}>
@@ -513,9 +513,9 @@ export default function Dashboard() {
           >
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg shadow-lg">
-                <Trophy className="w-6 h-6 text-white" />
+                <TrophyIcon className="w-6 h-6 text-white" />
               </div>
-              <ArrowRight className="w-5 h-5 text-blue-500" />
+              <ArrowRightIcon className="w-5 h-5 text-blue-500" />
             </div>
             <h3 className={`text-lg font-bold ${textColor} mb-2`}>Contests</h3>
             <p className={`text-sm ${textMuted}`}>
@@ -552,7 +552,7 @@ export default function Dashboard() {
               </p>
               <div className="flex items-center gap-2 text-orange-500 font-semibold text-sm">
                 Start Matching
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRightIcon className="w-4 h-4" />
               </div>
             </div>
 
@@ -569,11 +569,11 @@ export default function Dashboard() {
               <div className="text-5xl mb-4">👥</div>
               <h4 className={`text-xl font-bold ${textColor} mb-3`}>Challenge Friend</h4>
               <p className={`text-sm ${textMuted} mb-6`}>
-                Send an invitation link to your friend and compete head-to-head in custom matches.
+                PaperAirplaneIcon an invitation link to your friend and compete head-to-head in custom matches.
               </p>
               <div className="flex items-center gap-2 text-orange-500 font-semibold text-sm">
                 Challenge Now
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRightIcon className="w-4 h-4" />
               </div>
             </div>
 
@@ -594,7 +594,7 @@ export default function Dashboard() {
               </p>
               <div className="flex items-center gap-2 text-orange-500 font-semibold text-sm">
                 Start Practice
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRightIcon className="w-4 h-4" />
               </div>
             </div>
           </div>
@@ -615,7 +615,7 @@ export default function Dashboard() {
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="text-4xl">📚</div>
-                <BookOpen className="w-5 h-5 text-orange-500" />
+                <BookOpenIcon className="w-5 h-5 text-orange-500" />
               </div>
               <h4 className={`text-lg font-bold ${textColor} mb-2`}>Practice Problems</h4>
               <p className={`text-sm ${textMuted}`}>Browse problems by category</p>
@@ -632,7 +632,7 @@ export default function Dashboard() {
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="text-4xl">🏆</div>
-                <Trophy className="w-5 h-5 text-orange-500" />
+                <TrophyIcon className="w-5 h-5 text-orange-500" />
               </div>
               <h4 className={`text-lg font-bold ${textColor} mb-2`}>Leaderboard</h4>
               <p className={`text-sm ${textMuted}`}>See global rankings</p>
@@ -649,7 +649,7 @@ export default function Dashboard() {
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="text-4xl">📊</div>
-                <BarChart3 className="w-5 h-5 text-orange-500" />
+                <BarChartIcon className="w-5 h-5 text-orange-500" />
               </div>
               <h4 className={`text-lg font-bold ${textColor} mb-2`}>Your Profile</h4>
               <p className={`text-sm ${textMuted}`}>View your statistics</p>
@@ -666,7 +666,7 @@ export default function Dashboard() {
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="text-4xl">📝</div>
-                <Code2 className="w-5 h-5 text-orange-500" />
+                <CodeBracketIcon className="w-5 h-5 text-orange-500" />
               </div>
               <h4 className={`text-lg font-bold ${textColor} mb-2`}>Submissions</h4>
               <p className={`text-sm ${textMuted}`}>View your code history</p>

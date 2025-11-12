@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotificationStore } from '../store/notificationStore';
-import { Bell, Check, Trash2, X } from 'lucide-react';
+import { BellIcon, CheckIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/solid';
 import { getSocket } from '../utils/socket';
 
 export default function NotificationBell() {
@@ -114,7 +114,7 @@ export default function NotificationBell() {
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 hover:bg-slate-800 rounded-lg transition"
       >
-        <Bell className="w-5 h-5 text-slate-300" />
+        <BellIcon className="w-5 h-5 text-slate-300" />
         {unreadCount > 0 && (
           <span className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
             {unreadCount > 9 ? '9+' : unreadCount}
@@ -134,7 +134,7 @@ export default function NotificationBell() {
                   onClick={handleMarkAllRead}
                   className="text-xs text-indigo-400 hover:text-indigo-300 transition flex items-center gap-1"
                 >
-                  <Check className="w-3 h-3" />
+                  <CheckIcon className="w-3 h-3" />
                   Mark all read
                 </button>
               )}
@@ -142,7 +142,7 @@ export default function NotificationBell() {
                 onClick={() => setIsOpen(false)}
                 className="p-1 hover:bg-slate-700 rounded transition"
               >
-                <X className="w-4 h-4 text-slate-400" />
+                <XMarkIcon className="w-4 h-4 text-slate-400" />
               </button>
             </div>
           </div>
@@ -193,7 +193,7 @@ export default function NotificationBell() {
                             onClick={(e) => handleDelete(e, notification._id)}
                             className="p-1 hover:bg-slate-600 rounded transition opacity-0 group-hover:opacity-100"
                           >
-                            <Trash2 className="w-3 h-3 text-slate-400 hover:text-red-400" />
+                            <TrashIcon className="w-3 h-3 text-slate-400 hover:text-red-400" />
                           </button>
                         </div>
                       </div>

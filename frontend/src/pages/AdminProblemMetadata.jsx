@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { Building2, List, Clock, Plus, X, Save, Search, ChevronLeft } from 'lucide-react';
+import { BuildingOfficeIcon, List, ClockIcon, PlusIcon, XMarkIcon, CheckIcon, Search, ChevronLeftIcon } from '@heroicons/react/24/solid';
 import ThemeToggle from '../components/ThemeToggle';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -33,7 +33,7 @@ export default function AdminProblemMetadata() {
   const availableLists = [
     'Top 100 Liked',
     'Blind 75',
-    'NeetCode 150',
+    'NeetCodeBracketIcon 150',
     'Top Interview Questions',
     'Beginner Friendly',
     'Amazon Top 50',
@@ -188,7 +188,7 @@ export default function AdminProblemMetadata() {
               onClick={() => navigate('/admin')}
               className="p-2 hover:bg-gray-100 dark:hover:bg-dark-800 rounded-lg transition"
             >
-              <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+              <ChevronLeftIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             </button>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Problem Metadata Management</h1>
           </div>
@@ -247,7 +247,7 @@ export default function AdminProblemMetadata() {
               </div>
             ) : (
               <div className="space-y-6">
-                {/* Selected Problem Info */}
+                {/* Selected Problem InformationCircleIcon */}
                 <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-lg p-4">
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white">{selectedProblem.title}</h2>
                   <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">{selectedProblem.difficulty}</p>
@@ -256,7 +256,7 @@ export default function AdminProblemMetadata() {
                 {/* Company Tags */}
                 <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-lg p-4">
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
-                    <Building2 className="w-5 h-5" />
+                    <BuildingOfficeIcon className="w-5 h-5" />
                     Company Tags
                   </h3>
 
@@ -272,7 +272,7 @@ export default function AdminProblemMetadata() {
                           onClick={() => handleRemoveCompany(company.name)}
                           className="hover:text-red-600 dark:hover:text-red-400 transition"
                         >
-                          <X className="w-3 h-3" />
+                          <XMarkIcon className="w-3 h-3" />
                         </button>
                       </span>
                     ))}
@@ -303,7 +303,7 @@ export default function AdminProblemMetadata() {
                       onClick={handleAddCompany}
                       className="px-4 py-2 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 rounded-lg transition flex items-center gap-2 font-medium"
                     >
-                      <Plus className="w-4 h-4" />
+                      <PlusIcon className="w-4 h-4" />
                       Add
                     </button>
                   </div>
@@ -337,7 +337,7 @@ export default function AdminProblemMetadata() {
                 {/* Frequency Data */}
                 <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-lg p-4">
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900 dark:text-white">
-                    <Clock className="w-5 h-5" />
+                    <ClockIcon className="w-5 h-5" />
                     Frequency Data
                   </h3>
 
@@ -398,8 +398,8 @@ export default function AdminProblemMetadata() {
                       onClick={handleSaveFrequency}
                       className="w-full px-4 py-2 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 rounded-lg transition flex items-center justify-center gap-2 font-medium"
                     >
-                      <Save className="w-4 h-4" />
-                      Save Frequency Data
+                      <CheckIcon className="w-4 h-4" />
+                      CheckIcon Frequency Data
                     </button>
                   </div>
                 </div>

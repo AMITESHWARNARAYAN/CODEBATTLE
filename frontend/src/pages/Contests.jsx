@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useContestStore } from '../store/contestStore';
-import { Trophy, Calendar, Clock, Users, ArrowRight } from 'lucide-react';
+import { TrophyIcon, CalendarIcon, ClockIcon, UserGroupIcon, ArrowRightIcon } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -66,7 +66,7 @@ export default function Contests() {
       <div className="flex flex-col sm:flex-row items-start justify-between mb-4 gap-3">
         <div className="flex-1 w-full">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-            <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 dark:text-yellow-400" />
+            <TrophyIcon className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 dark:text-yellow-400" />
             <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{contest.title}</h3>
             <span className={`px-2 py-1 rounded text-xs font-semibold ${
               contest.type === 'weekly' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' :
@@ -85,19 +85,19 @@ export default function Contests() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-xs sm:text-sm">
             <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-              <Calendar className="w-4 h-4" />
+              <CalendarIcon className="w-4 h-4" />
               <span>{new Date(contest.startTime).toLocaleDateString()}</span>
             </div>
             <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-              <Clock className="w-4 h-4" />
+              <ClockIcon className="w-4 h-4" />
               <span>{contest.duration} min</span>
             </div>
             <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-              <Trophy className="w-4 h-4" />
+              <TrophyIcon className="w-4 h-4" />
               <span>{contest.problems?.length || 0} problems</span>
             </div>
             <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-              <Users className="w-4 h-4" />
+              <UserGroupIcon className="w-4 h-4" />
               <span>{contest.totalParticipants} registered</span>
             </div>
           </div>
@@ -129,7 +129,7 @@ export default function Contests() {
               className="btn-primary flex items-center gap-2"
             >
               Register
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRightIcon className="w-4 h-4" />
             </button>
           )}
 
@@ -147,7 +147,7 @@ export default function Contests() {
               className="btn-primary flex items-center gap-2 bg-green-600 hover:bg-green-700"
             >
               Enter Contest
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRightIcon className="w-4 h-4" />
             </button>
           )}
 
@@ -158,7 +158,7 @@ export default function Contests() {
               className="btn-primary flex items-center gap-2"
             >
               Register & Enter
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRightIcon className="w-4 h-4" />
             </button>
           )}
 
@@ -169,7 +169,7 @@ export default function Contests() {
               className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition flex items-center gap-2"
             >
               View Details
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRightIcon className="w-4 h-4" />
             </button>
           )}
         </div>

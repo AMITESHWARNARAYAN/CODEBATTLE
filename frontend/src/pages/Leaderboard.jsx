@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserStore } from '../store/userStore';
-import { Trophy, ArrowLeft } from 'lucide-react';
+import { TrophyIcon, ArrowLeftIcon } from '@heroicons/react/24/solid';
 import ThemeToggle from '../components/ThemeToggle';
 import { toast } from 'react-hot-toast';
 
@@ -32,11 +32,11 @@ export default function Leaderboard() {
               onClick={() => navigate('/')}
               className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-dark-800 rounded-lg transition"
             >
-              <ArrowLeft className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+              <ArrowLeftIcon className="w-4 h-4 text-gray-700 dark:text-gray-300" />
               <span className="text-gray-900 dark:text-white">Back</span>
             </button>
             <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
-              <Trophy className="w-6 h-6 text-yellow-600 dark:text-yellow-500" />
+              <TrophyIcon className="w-6 h-6 text-yellow-600 dark:text-yellow-500" />
               Global Leaderboard
             </h1>
           </div>
@@ -76,9 +76,9 @@ export default function Leaderboard() {
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          {idx === 0 && <Trophy className="w-5 h-5 text-yellow-600 dark:text-yellow-500" />}
-                          {idx === 1 && <Trophy className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
-                          {idx === 2 && <Trophy className="w-5 h-5 text-orange-600 dark:text-orange-500" />}
+                          {idx === 0 && <TrophyIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-500" />}
+                          {idx === 1 && <TrophyIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
+                          {idx === 2 && <TrophyIcon className="w-5 h-5 text-orange-600 dark:text-orange-500" />}
                           <span className="font-bold text-gray-900 dark:text-white">{player.rank}</span>
                         </div>
                       </td>

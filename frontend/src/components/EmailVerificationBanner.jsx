@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, X, RefreshCw } from 'lucide-react';
+import { EnvelopeIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/react/24/solid';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -35,12 +35,12 @@ export default function EmailVerificationBanner({ onClose }) {
         onClick={onClose}
         className="absolute top-4 right-4 text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-300 transition"
       >
-        <X className="w-5 h-5" />
+        <XMarkIcon className="w-5 h-5" />
       </button>
       
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0">
-          <Mail className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+          <EnvelopeIcon className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
         </div>
         <div className="flex-1">
           <h3 className="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-1">
@@ -56,12 +56,12 @@ export default function EmailVerificationBanner({ onClose }) {
           >
             {isResending ? (
               <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
+                <ArrowPathIcon className="w-4 h-4 animate-spin" />
                 Sending...
               </>
             ) : (
               <>
-                <Mail className="w-4 h-4" />
+                <EnvelopeIcon className="w-4 h-4" />
                 Resend Verification Email
               </>
             )}

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMatchStore } from '../store/matchStore';
 import { useAuthStore } from '../store/authStore';
 import { toast } from 'react-hot-toast';
-import { Send, ArrowLeft, Mail } from 'lucide-react';
+import { PaperAirplaneIcon, ArrowLeftIcon, EnvelopeIcon } from '@heroicons/react/24/solid';
 import { getSocket, onChallengeRejected } from '../utils/socket';
 
 export default function FriendChallenge() {
@@ -43,7 +43,7 @@ export default function FriendChallenge() {
       setCurrentMatchId(data.matchId);
       setIsOnline(data.isOnline);
 
-      // Send live notification if friend is online
+      // PaperAirplaneIcon live notification if friend is online
       if (data.isOnline) {
         const socket = getSocket();
         socket.emit('send-challenge', {
@@ -51,9 +51,9 @@ export default function FriendChallenge() {
           challengerEmail: user.email,
           challengerUsername: user.username,
           challengedEmail: friendEmail,
-          challengedUsername: data.challengedUser
+          challengedUsername: data.challengedUserIcon
         });
-        toast.success(`Challenge sent to ${data.challengedUser}! They're online now.`);
+        toast.success(`Challenge sent to ${data.challengedUserIcon}! They're online now.`);
       } else {
         toast.success(`Challenge sent to ${friendEmail}. They'll see it when they log in.`);
       }
@@ -73,7 +73,7 @@ export default function FriendChallenge() {
             onClick={() => navigate('/')}
             className="flex items-center gap-2 px-4 py-2 hover:bg-slate-700 rounded-lg transition"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeftIcon className="w-4 h-4" />
             Back
           </button>
           <h1 className="text-2xl font-bold">Challenge a Friend</h1>
@@ -88,7 +88,7 @@ export default function FriendChallenge() {
               <div className="text-6xl mb-4">👥</div>
               <h2 className="text-3xl font-bold mb-2">Challenge Your Friend</h2>
               <p className="text-slate-400">
-                Send a challenge via email. If they're online, they'll get a live notification!
+                PaperAirplaneIcon a challenge via email. If they're online, they'll get a live notification!
               </p>
             </div>
 
@@ -96,7 +96,7 @@ export default function FriendChallenge() {
               <div>
                 <label className="block text-sm font-medium mb-2">Friend's Email</label>
                 <div className="flex items-center gap-2">
-                  <Mail className="w-5 h-5 text-slate-400" />
+                  <EnvelopeIcon className="w-5 h-5 text-slate-400" />
                   <input
                     type="email"
                     value={friendEmail}
@@ -112,8 +112,8 @@ export default function FriendChallenge() {
                 disabled={loading}
                 className="btn-primary w-full flex items-center justify-center gap-2 py-3"
               >
-                <Send className="w-4 h-4" />
-                {loading ? 'Sending Challenge...' : 'Send Challenge'}
+                <PaperAirplaneIcon className="w-4 h-4" />
+                {loading ? 'Sending Challenge...' : 'PaperAirplaneIcon Challenge'}
               </button>
             </form>
 
@@ -121,7 +121,7 @@ export default function FriendChallenge() {
               <div className="card">
                 <h3 className="text-lg font-bold mb-3">✨ Features</h3>
                 <ul className="text-slate-400 space-y-2 text-sm">
-                  <li>• 📧 Send via email</li>
+                  <li>• 📧 PaperAirplaneIcon via email</li>
                   <li>• 🔔 Live notifications if online</li>
                   <li>• 🎯 Same DSA problem</li>
                   <li>• 🏆 Rating changes apply</li>
@@ -132,7 +132,7 @@ export default function FriendChallenge() {
                 <h3 className="text-lg font-bold mb-3">🎯 How It Works</h3>
                 <ul className="text-slate-400 space-y-2 text-sm">
                   <li>1. Enter friend's email</li>
-                  <li>2. Send challenge</li>
+                  <li>2. PaperAirplaneIcon challenge</li>
                   <li>3. They get notified</li>
                   <li>4. Start competing!</li>
                 </ul>
@@ -146,8 +146,8 @@ export default function FriendChallenge() {
 
             <div className="mb-8 p-4 bg-slate-800 rounded-lg">
               <p className="text-slate-400 text-sm mb-2">Challenged Player</p>
-              <p className="text-xl font-bold">{challengeData.challengedUser}</p>
-              <p className="text-slate-400 text-sm mt-1">{challengeData.challengedUser}</p>
+              <p className="text-xl font-bold">{challengeData.challengedUserIcon}</p>
+              <p className="text-slate-400 text-sm mt-1">{challengeData.challengedUserIcon}</p>
             </div>
 
             {isOnline ? (
@@ -178,7 +178,7 @@ export default function FriendChallenge() {
                 }}
                 className="btn-primary w-full"
               >
-                Send Another Challenge
+                PaperAirplaneIcon Another Challenge
               </button>
             </div>
 

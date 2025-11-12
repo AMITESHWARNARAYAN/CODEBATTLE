@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotificationStore } from '../store/notificationStore';
-import { Bell, Check, Trash2, ChevronLeft, Filter } from 'lucide-react';
-import NotificationBell from '../components/NotificationBell';
+import { BellIcon, CheckIcon, TrashIcon, ChevronLeftIcon, FunnelIcon } from '@heroicons/react/24/solid';
+import NotificationBellIcon from '../components/NotificationBellIcon';
 import ThemeToggle from '../components/ThemeToggle';
 
 export default function Notifications() {
   const navigate = useNavigate();
-  const [filter, setFilter] = useState('all'); // all, unread
+  const [filter, setFunnelIcon] = useState('all'); // all, unread
   const { notifications, unreadCount, getNotifications, markAsRead, markAllAsRead, deleteNotification, clearReadNotifications, loading } = useNotificationStore();
 
   useEffect(() => {
@@ -85,7 +85,7 @@ export default function Notifications() {
               onClick={() => navigate('/')}
               className="p-2 hover:bg-slate-800 rounded-lg transition"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeftIcon className="w-5 h-5" />
             </button>
             <div>
               <h1 className="text-2xl font-bold">Notifications</h1>
@@ -96,7 +96,7 @@ export default function Notifications() {
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <NotificationBell />
+            <NotificationBellIcon />
           </div>
         </div>
       </header>
@@ -107,7 +107,7 @@ export default function Notifications() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setFilter('all')}
+              onClick={() => setFunnelIcon('all')}
               className={`px-4 py-2 rounded-lg transition ${
                 filter === 'all'
                   ? 'bg-indigo-600 text-white'
@@ -117,7 +117,7 @@ export default function Notifications() {
               All
             </button>
             <button
-              onClick={() => setFilter('unread')}
+              onClick={() => setFunnelIcon('unread')}
               className={`px-4 py-2 rounded-lg transition ${
                 filter === 'unread'
                   ? 'bg-indigo-600 text-white'
@@ -134,7 +134,7 @@ export default function Notifications() {
                 onClick={handleMarkAllRead}
                 className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition text-sm"
               >
-                <Check className="w-4 h-4" />
+                <CheckIcon className="w-4 h-4" />
                 Mark all read
               </button>
             )}
@@ -142,7 +142,7 @@ export default function Notifications() {
               onClick={handleClearRead}
               className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition text-sm"
             >
-              <Trash2 className="w-4 h-4" />
+              <TrashIcon className="w-4 h-4" />
               Clear read
             </button>
           </div>
@@ -155,7 +155,7 @@ export default function Notifications() {
           </div>
         ) : notifications.length === 0 ? (
           <div className="text-center py-12">
-            <Bell className="w-16 h-16 mx-auto mb-4 text-slate-600" />
+            <BellIcon className="w-16 h-16 mx-auto mb-4 text-slate-600" />
             <h3 className="text-xl font-semibold mb-2">No notifications</h3>
             <p className="text-slate-400">
               {filter === 'unread' ? "You're all caught up!" : 'Notifications will appear here'}
@@ -203,7 +203,7 @@ export default function Notifications() {
                         }}
                         className="p-2 hover:bg-slate-700 rounded-lg transition opacity-0 group-hover:opacity-100"
                       >
-                        <Trash2 className="w-4 h-4 text-slate-400 hover:text-red-400" />
+                        <TrashIcon className="w-4 h-4 text-slate-400 hover:text-red-400" />
                       </button>
                     </div>
                   </div>

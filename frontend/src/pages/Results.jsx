@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMatchStore } from '../store/matchStore';
-import { Trophy, TrendingUp, TrendingDown } from 'lucide-react';
+import { TrophyIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon } from '@heroicons/react/24/solid';
 import { toast } from 'react-hot-toast';
 
 export default function Results() {
@@ -63,7 +63,7 @@ export default function Results() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-12">
-        {/* Problem Info */}
+        {/* Problem InformationCircleIcon */}
         <div className="card mb-8">
           <h2 className="text-2xl font-bold mb-2">{match.problem?.title}</h2>
           <p className="text-slate-400">Difficulty: {match.problem?.difficulty}</p>
@@ -84,7 +84,7 @@ export default function Results() {
                 >
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-bold">{player.username}</h3>
-                    {isWinner && <Trophy className="w-6 h-6 text-yellow-500" />}
+                    {isWinner && <TrophyIcon className="w-6 h-6 text-yellow-500" />}
                   </div>
 
                   {submission && (
@@ -124,9 +124,9 @@ export default function Results() {
                         <span className="font-bold">{ratingChange.oldRating} → {ratingChange.newRating}</span>
                         <div className={`flex items-center gap-1 ${ratingChange.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                           {ratingChange.change >= 0 ? (
-                            <TrendingUp className="w-4 h-4" />
+                            <ArrowTrendingUpIcon className="w-4 h-4" />
                           ) : (
-                            <TrendingDown className="w-4 h-4" />
+                            <ArrowTrendingDownIcon className="w-4 h-4" />
                           )}
                           <span className="font-bold">{ratingChange.change > 0 ? '+' : ''}{ratingChange.change}</span>
                         </div>
@@ -184,7 +184,7 @@ export default function Results() {
             onClick={() => navigate('/matchmaking')}
             className="btn-primary flex-1"
           >
-            Play Again
+            PlayIcon Again
           </button>
         </div>
       </main>

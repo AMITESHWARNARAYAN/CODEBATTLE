@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import axios from 'axios';
-import { ChevronLeft, Search, BarChart3, ChevronDown, ChevronUp, Building2, ListChecks, TrendingUp, CheckCircle2, Code2, Filter, X, Sparkles, Award } from 'lucide-react';
+import { ChevronLeftIcon, Search, BarChartIcon, ChevronDownIcon, ChevronUpIcon, BuildingOfficeIcon, CheckIcon, ArrowTrendingUpIcon, CheckCircleIcon, CodeBracketIcon, FunnelIcon, XMarkIcon, SparklesIcon, AcademicCapIcon } from '@heroicons/react/24/solid';
 import { toast } from 'react-hot-toast';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -29,7 +29,7 @@ export default function Problems() {
   const [difficultyExpanded, setDifficultyExpanded] = useState(true);
 
   const companies = ['Google', 'Meta', 'Amazon', 'Microsoft', 'Apple', 'Netflix', 'Tesla', 'Adobe', 'Bloomberg', 'Uber', 'LinkedIn', 'Oracle', 'Salesforce', 'Twitter'];
-  const lists = ['Top 100 Liked', 'Blind 75', 'NeetCode 150', 'Top Interview Questions', 'Beginner Friendly', 'Amazon Top 50', 'Google Top 50', 'Meta Top 50', 'Microsoft Top 50', 'Apple Top 50'];
+  const lists = ['Top 100 Liked', 'Blind 75', 'NeetCodeBracketIcon 150', 'Top Interview Questions', 'Beginner Friendly', 'Amazon Top 50', 'Google Top 50', 'Meta Top 50', 'Microsoft Top 50', 'Apple Top 50'];
   const frequencies = ['6 Months', '1 Year', '2 Years', 'All Time'];
   const statuses = ['Solved', 'Unsolved'];
   const difficulties = ['Easy', 'Medium', 'Hard'];
@@ -165,11 +165,11 @@ export default function Problems() {
               onClick={() => navigate('/dashboard')}
               className="p-2 hover:bg-gray-100 dark:hover:bg-dark-800 rounded-lg transition"
             >
-              <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+              <ChevronLeftIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             </button>
             <div className="flex items-center gap-2">
               <div className="p-1.5 bg-gray-900 dark:bg-white rounded-lg">
-                <Code2 className="w-5 h-5 text-white dark:text-gray-900" />
+                <CodeBracketIcon className="w-5 h-5 text-white dark:text-gray-900" />
               </div>
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
                 Practice Problems
@@ -200,17 +200,17 @@ export default function Problems() {
                 )}
               </div>
               
-              {/* Companies Filter */}
+              {/* Companies FunnelIcon */}
               <div className="mb-4">
                 <button
                   onClick={() => setCompaniesExpanded(!companiesExpanded)}
                   className="flex items-center justify-between w-full text-sm font-medium mb-2 text-gray-900 dark:text-white"
                 >
                   <span className="flex items-center gap-2">
-                    <Building2 className="w-4 h-4" />
+                    <BuildingOfficeIcon className="w-4 h-4" />
                     Companies
                   </span>
-                  {companiesExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  {companiesExpanded ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
                 </button>
                 {companiesExpanded && (
                   <div className="space-y-1 max-h-48 overflow-y-auto">
@@ -231,17 +231,17 @@ export default function Problems() {
                 )}
               </div>
 
-              {/* Lists Filter */}
+              {/* Lists FunnelIcon */}
               <div className="mb-4">
                 <button
                   onClick={() => setListsExpanded(!listsExpanded)}
                   className="flex items-center justify-between w-full text-sm font-medium mb-2 text-gray-900 dark:text-white"
                 >
                   <span className="flex items-center gap-2">
-                    <ListChecks className="w-4 h-4" />
+                    <CheckIcon className="w-4 h-4" />
                     Lists
                   </span>
-                  {listsExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  {listsExpanded ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
                 </button>
                 {listsExpanded && (
                   <div className="space-y-1 max-h-48 overflow-y-auto">
@@ -262,17 +262,17 @@ export default function Problems() {
                 )}
               </div>
 
-              {/* Frequency Filter */}
+              {/* Frequency FunnelIcon */}
               <div className="mb-4">
                 <button
                   onClick={() => setFrequencyExpanded(!frequencyExpanded)}
                   className="flex items-center justify-between w-full text-sm font-medium mb-2 text-gray-900 dark:text-white"
                 >
                   <span className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4" />
+                    <ArrowTrendingUpIcon className="w-4 h-4" />
                     Frequency
                   </span>
-                  {frequencyExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  {frequencyExpanded ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
                 </button>
                 {frequencyExpanded && (
                   <div className="space-y-1">
@@ -293,17 +293,17 @@ export default function Problems() {
                 )}
               </div>
 
-              {/* Status Filter */}
+              {/* Status FunnelIcon */}
               <div className="mb-4">
                 <button
                   onClick={() => setStatusExpanded(!statusExpanded)}
                   className="flex items-center justify-between w-full text-sm font-medium mb-2 text-gray-900 dark:text-white"
                 >
                   <span className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" />
+                    <CheckCircleIcon className="w-4 h-4" />
                     Status
                   </span>
-                  {statusExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  {statusExpanded ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
                 </button>
                 {statusExpanded && (
                   <div className="space-y-1">
@@ -324,17 +324,17 @@ export default function Problems() {
                 )}
               </div>
 
-              {/* Difficulty Filter */}
+              {/* Difficulty FunnelIcon */}
               <div className="mb-4">
                 <button
                   onClick={() => setDifficultyExpanded(!difficultyExpanded)}
                   className="flex items-center justify-between w-full text-sm font-medium mb-2 text-gray-900 dark:text-white"
                 >
                   <span className="flex items-center gap-2">
-                    <Award className="w-4 h-4" />
+                    <AcademicCapIcon className="w-4 h-4" />
                     Difficulty
                   </span>
-                  {difficultyExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  {difficultyExpanded ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
                 </button>
                 {difficultyExpanded && (
                   <div className="space-y-1">
@@ -368,7 +368,7 @@ export default function Problems() {
                   }}
                   className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition flex items-center justify-center gap-2"
                 >
-                  <X className="w-4 h-4" />
+                  <XMarkIcon className="w-4 h-4" />
                   Clear All
                 </button>
               )}
@@ -486,7 +486,7 @@ export default function Problems() {
                           {problem.difficulty}
                         </span>
                         <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 text-sm bg-gray-100 dark:bg-dark-800 px-2.5 py-1 rounded">
-                          <BarChart3 className="w-3.5 h-3.5" />
+                          <BarChartIcon className="w-3.5 h-3.5" />
                           <span className="font-medium">{problem.acceptanceRate || 0}%</span>
                         </div>
                         {selectedFrequency && problem.metadata?.frequencyData && (

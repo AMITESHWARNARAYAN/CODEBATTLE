@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Code2, Zap, Trophy, Users, ArrowRight, Moon, Sun, Terminal, Clock, TrendingUp, Play, Github, Linkedin, ChevronRight, BookOpen, Sparkles } from 'lucide-react';
+import { CodeBracketIcon, BoltIcon, TrophyIcon, UserGroupIcon, ArrowRightIcon, MoonIcon, SunIcon, CommandLineIcon, ClockIcon, ArrowTrendingUpIcon, PlayIcon, ArrowTopRightOnSquareIcon, SparklesIcon, ChevronRightIcon, BookOpenIcon } from '@heroicons/react/24/solid';
 import { useThemeStore } from '../store/themeStore';
 import { useState } from 'react';
 
@@ -23,8 +23,8 @@ export default function Landing() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg shadow-orange-500/20">
-                <Code2 className="w-5 h-5 text-white" />
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg shadow-blue-500/20">
+                <CodeBracketIcon className="w-5 h-5 text-white" />
               </div>
               <span className={`text-xl font-bold ${textColor}`}>CodeBattle</span>
             </div>
@@ -51,7 +51,7 @@ export default function Landing() {
                 onClick={toggleTheme}
                 className={`p-2 rounded-lg ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'} transition-colors`}
               >
-                {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                {isDark ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
               </button>
               <button
                 onClick={() => navigate('/login')}
