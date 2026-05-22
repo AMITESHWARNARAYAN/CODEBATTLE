@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotificationStore } from '../store/notificationStore';
 import { BellIcon, CheckIcon, TrashIcon, ChevronLeftIcon, FunnelIcon } from '@heroicons/react/24/solid';
-import NotificationBellIcon from '../components/NotificationBellIcon';
+import { Trophy, Calendar, Users, Target, Bell, Medal, Swords, Megaphone } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
 
 export default function Notifications() {
@@ -41,22 +41,22 @@ export default function Notifications() {
       case 'challenge_received':
       case 'challenge_accepted':
       case 'challenge_rejected':
-        return '⚔️';
+        return <Swords className="w-6 h-6 text-blue-500" />;
       case 'match_result':
-        return '🏆';
+        return <Trophy className="w-6 h-6 text-yellow-500" />;
       case 'contest_starting':
       case 'contest_reminder':
-        return '🎯';
+        return <Target className="w-6 h-6 text-red-500" />;
       case 'admin_challenge':
-        return '📢';
+        return <Megaphone className="w-6 h-6 text-purple-500" />;
       case 'achievement':
-        return '🏅';
+        return <Medal className="w-6 h-6 text-yellow-600" />;
       case 'friend_request':
-        return '👥';
+        return <Users className="w-6 h-6 text-green-500" />;
       case 'daily_challenge':
-        return '📅';
+        return <Calendar className="w-6 h-6 text-orange-500" />;
       default:
-        return '🔔';
+        return <Bell className="w-6 h-6 text-gray-500" />;
     }
   };
 
@@ -173,7 +173,7 @@ export default function Notifications() {
               >
                 <div className="flex items-start gap-4">
                   {/* Icon */}
-                  <div className="text-3xl flex-shrink-0">
+                  <div className="flex-shrink-0 mt-1">
                     {getNotificationIcon(notification.type)}
                   </div>
 

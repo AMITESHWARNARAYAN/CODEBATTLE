@@ -1,6 +1,7 @@
 import express from 'express';
 import Contest from '../models/Contest.js';
 import Problem from '../models/Problem.js';
+import User from '../models/User.js';
 import { protect, isAdmin } from '../middleware/auth.js';
 
 const router = express.Router();

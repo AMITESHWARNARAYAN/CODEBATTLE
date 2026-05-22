@@ -8,11 +8,18 @@ const router = express.Router();
 router.get('/problem/:problemId', protect, async (req, res) => {
   try {
     const { problemId } = req.params;
-    const { sortBy = 'recent', tag } = req.query;
+    const { sortBy = 'recent', tag, search } = req.query;
 
     let query = { problem: problemId };
     if (tag) {
       query.tags = tag;
+    }
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { content: { $regex: search, $options: 'i' } }
+      ];
     }
 
     let sortOptions = {};
@@ -46,6 +53,33 @@ router.get('/problem/:problemId', protect, async (req, res) => {
   } catch (error) {
     console.error('Error fetching discussions:', error);
     res.status(500).json({ message: 'Failed to fetch discussions' });
+  }
+});
+
+// @route   PUT /api/discussions/:id/pin
+// @desc    Pin/unpin a discussion (Admin only)
+// @access  Private (Admin)
+router.put('/:id/pin', protect, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const discussion = await Discussion.findById(req.params.id);
+    if (!discussion) {
+      return res.status(404).json({ message: 'Discussion not found' });
+    }
+
+    discussion.isPinned = !discussion.isPinned;
+    await discussion.save();
+
+    res.json({
+      message: discussion.isPinned ? 'Discussion pinned' : 'Discussion unpinned',
+      isPinned: discussion.isPinned
+    });
+  } catch (error) {
+    console.error('Error pinning discussion:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

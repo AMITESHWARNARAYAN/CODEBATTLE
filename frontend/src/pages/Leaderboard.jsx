@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserStore } from '../store/userStore';
-import { TrophyIcon, ArrowLeftIcon } from '@heroicons/react/24/solid';
+import { Trophy, ArrowLeft } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
 import { toast } from 'react-hot-toast';
 
@@ -32,11 +32,11 @@ export default function Leaderboard() {
               onClick={() => navigate('/')}
               className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 dark:hover:bg-dark-800 rounded-lg transition"
             >
-              <ArrowLeftIcon className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+              <ArrowLeft className="w-4 h-4 text-gray-700 dark:text-gray-300" />
               <span className="text-gray-900 dark:text-white">Back</span>
             </button>
             <h1 className="text-2xl font-bold flex items-center gap-2 text-gray-900 dark:text-white">
-              <TrophyIcon className="w-6 h-6 text-yellow-600 dark:text-yellow-500" />
+              <Trophy className="w-6 h-6 text-yellow-600 dark:text-yellow-500" />
               Global Leaderboard
             </h1>
           </div>
@@ -59,10 +59,10 @@ export default function Leaderboard() {
                   <tr className="bg-gray-50 dark:bg-dark-800 border-b border-gray-200 dark:border-dark-700">
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Rank</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Player</th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">Rating</th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">Battle Rating</th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">Contest Rating</th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">Wins</th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">Losses</th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">Draws</th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">Win Rate</th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">Matches</th>
                   </tr>
@@ -76,21 +76,25 @@ export default function Leaderboard() {
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          {idx === 0 && <TrophyIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-500" />}
-                          {idx === 1 && <TrophyIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
-                          {idx === 2 && <TrophyIcon className="w-5 h-5 text-orange-600 dark:text-orange-500" />}
+                          {idx === 0 && <Trophy className="w-5 h-5 text-yellow-600 dark:text-yellow-500" />}
+                          {idx === 1 && <Trophy className="w-5 h-5 text-gray-500 dark:text-gray-400" />}
+                          {idx === 2 && <Trophy className="w-5 h-5 text-orange-600 dark:text-orange-500" />}
                           <span className="font-bold text-gray-900 dark:text-white">{player.rank}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">{player.username}</td>
                       <td className="px-6 py-4 text-center">
-                        <span className="px-3 py-1 bg-gray-200 dark:bg-dark-800 text-gray-900 dark:text-white rounded-full font-bold">
+                        <span className="px-3 py-1 bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 rounded-full font-bold text-sm">
                           {player.rating}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-full font-bold text-sm">
+                          {player.contestRating || 0}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-center text-green-600 dark:text-green-500 font-semibold">{player.wins}</td>
                       <td className="px-6 py-4 text-center text-red-600 dark:text-red-500 font-semibold">{player.losses}</td>
-                      <td className="px-6 py-4 text-center text-gray-600 dark:text-gray-400 font-semibold">{player.draws}</td>
                       <td className="px-6 py-4 text-center font-semibold text-gray-900 dark:text-white">{player.winRate}%</td>
                       <td className="px-6 py-4 text-center font-semibold text-gray-900 dark:text-white">{player.totalMatches}</td>
                     </tr>

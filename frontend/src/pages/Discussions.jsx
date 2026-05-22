@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import axios from 'axios';
-import { ChevronLeftIcon, ChatBubbleLeftIcon, HandThumbUpIcon, HandThumbDownIcon, EyeIcon, PlusIcon, FunnelIcon, CodeBracketIcon } from '@heroicons/react/24/solid';
+import { ChevronLeft, MessageSquare, ThumbsUp, ThumbsDown, Eye, Plus, Filter, Code } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -99,7 +99,7 @@ export default function Discussions() {
               onClick={() => navigate('/problems')}
               className="p-2 hover:bg-slate-800 rounded-lg transition"
             >
-              <ChevronLeftIcon className="w-5 h-5" />
+              <ChevronLeft className="w-5 h-5" />
             </button>
             <div>
               <h1 className="text-2xl font-bold">Discussions</h1>
@@ -110,9 +110,9 @@ export default function Discussions() {
             <ThemeToggle />
             <button
               onClick={() => setShowNewDiscussion(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition"
+              className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 rounded-lg transition"
             >
-              <PlusIcon className="w-4 h-4" />
+              <Plus className="w-4 h-4" />
               New Discussion
             </button>
           </div>
@@ -126,7 +126,7 @@ export default function Discussions() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-indigo-500"
+            className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-orange-500"
           >
             <option value="recent">Most Recent</option>
             <option value="popular">Most Popular</option>
@@ -136,7 +136,7 @@ export default function Discussions() {
           <select
             value={filterTag}
             onChange={(e) => setFilterTag(e.target.value)}
-            className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-indigo-500"
+            className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-orange-500"
           >
             <option value="">All Tags</option>
             {tags.map(tag => (
@@ -150,11 +150,11 @@ export default function Discussions() {
           <div className="text-center py-12 text-slate-400">Loading discussions...</div>
         ) : discussions.length === 0 ? (
           <div className="text-center py-12">
-            <ChatBubbleLeftIcon className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+            <MessageSquare className="w-16 h-16 text-slate-600 mx-auto mb-4" />
             <p className="text-slate-400 mb-4">No discussions yet</p>
             <button
               onClick={() => setShowNewDiscussion(true)}
-              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg transition"
+              className="px-6 py-3 bg-orange-600 hover:bg-orange-700 rounded-lg transition"
             >
               Start the first discussion
             </button>
@@ -181,7 +181,7 @@ export default function Discussions() {
                           : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
                       }`}
                     >
-                      <HandThumbUpIcon className="w-4 h-4" />
+                      <ThumbsUp className="w-4 h-4" />
                     </button>
                     <span className={`font-bold ${
                       discussion.voteCount > 0 ? 'text-green-400' :
@@ -200,14 +200,14 @@ export default function Discussions() {
                           : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
                       }`}
                     >
-                      <HandThumbDownIcon className="w-4 h-4" />
+                      <ThumbsDown className="w-4 h-4" />
                     </button>
                   </div>
 
                   {/* Content */}
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-xl font-bold text-white hover:text-indigo-400 transition">
+                      <h3 className="text-xl font-bold text-white hover:text-orange-400 transition">
                         {discussion.title}
                       </h3>
                       {discussion.isSolution && (
@@ -221,7 +221,7 @@ export default function Discussions() {
 
                     {discussion.code && (
                       <div className="flex items-center gap-2 text-sm text-slate-400 mb-3">
-                        <CodeBracketIcon className="w-4 h-4" />
+                        <Code className="w-4 h-4" />
                         <span>Contains code snippet</span>
                       </div>
                     )}
@@ -232,12 +232,12 @@ export default function Discussions() {
                       <span>{formatDate(discussion.createdAt)}</span>
                       <span>•</span>
                       <div className="flex items-center gap-1">
-                        <ChatBubbleLeftIcon className="w-4 h-4" />
+                        <MessageSquare className="w-4 h-4" />
                         <span>{discussion.commentCount} comments</span>
                       </div>
                       <span>•</span>
                       <div className="flex items-center gap-1">
-                        <EyeIcon className="w-4 h-4" />
+                        <Eye className="w-4 h-4" />
                         <span>{discussion.views} views</span>
                       </div>
                     </div>
@@ -280,7 +280,7 @@ export default function Discussions() {
 function NewDiscussionModal({ problemId, onClose, onSuccess }) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [code, setCodeBracketIcon] = useState('');
+  const [code, setCode] = useState('');
   const [language, setLanguage] = useState('javascript');
   const [selectedTags, setSelectedTags] = useState([]);
   const [isSolution, setIsSolution] = useState(false);
@@ -344,10 +344,10 @@ function NewDiscussionModal({ problemId, onClose, onSuccess }) {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-2">CodeBracketIcon (Optional)</label>
+            <label className="block text-sm font-semibold mb-2">Code (Optional)</label>
             <textarea
               value={code}
-              onChange={(e) => setCodeBracketIcon(e.target.value)}
+              onChange={(e) => setCode(e.target.value)}
               rows={8}
               className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:border-indigo-500 font-mono text-sm"
               placeholder="Paste your code here..."

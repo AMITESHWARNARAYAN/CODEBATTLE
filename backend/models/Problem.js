@@ -1,20 +1,5 @@
 import mongoose from 'mongoose';
 
-const testCaseSchema = new mongoose.Schema({
-  input: {
-    type: String,
-    required: true
-  },
-  expectedOutput: {
-    type: String,
-    required: true
-  },
-  isHidden: {
-    type: Boolean,
-    default: false // Some test cases are hidden from users
-  }
-});
-
 const problemSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -58,7 +43,34 @@ const problemSchema = new mongoose.Schema({
     output: String,
     explanation: String
   }],
-  testCases: [testCaseSchema],
+  metaData: {
+    name: { type: String, default: 'solve' },
+    params: [{
+      name: String,
+      type: { type: String }
+    }],
+    return: {
+      type: { type: String, default: 'integer' }
+    }
+  },
+  useGitHubTestCases: {
+    type: Boolean,
+    default: false
+  },
+  testCasesUrl: {
+    type: String,
+    default: ''
+  },
+  testCases: [{
+    input: { type: String, required: true },
+    expectedOutput: { type: String, required: true },
+    isHidden: { type: Boolean, default: false }
+  }],
+  visibleTestCases: [{
+    input: { type: String, required: true },
+    expectedOutput: { type: String, required: true },
+    isHidden: { type: Boolean, default: false }
+  }],
   hints: [{
     title: String,
     content: String
@@ -83,27 +95,7 @@ const problemSchema = new mongoose.Schema({
   },
   timeLimit: {
     type: Number,
-    default: 2000 // milliseconds
-  },
-  memoryLimit: {
-    type: Number,
-    default: 256 // MB
-  },
-  acceptanceRate: {
-    type: Number,
-    default: 0
-  },
-  totalSubmissions: {
-    type: Number,
-    default: 0
-  },
-  successfulSubmissions: {
-    type: Number,
-    default: 0
-  },
-  solutionLink: {
-    type: String,
-    default: ''
+    default: 2000
   },
   category: {
     type: mongoose.Schema.Types.ObjectId,
@@ -119,4 +111,3 @@ const problemSchema = new mongoose.Schema({
 const Problem = mongoose.model('Problem', problemSchema);
 
 export default Problem;
-

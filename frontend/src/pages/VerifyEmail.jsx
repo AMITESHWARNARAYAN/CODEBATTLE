@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { CodeBracketIcon, CheckCircleIcon, XCircleIcon, ArrowPathIcon, EnvelopeIcon } from '@heroicons/react/24/solid';
+import { Code2, CheckCircle, XCircle, Loader2, Mail } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
@@ -23,7 +23,7 @@ export default function VerifyEmail() {
       if (response.data.success) {
         setStatus('success');
         setMessage(response.data.message);
-        toast.success('Email verified successfully! 🎉');
+        toast.success('Email verified successfully!');
         
         // Redirect to login after 3 seconds
         setTimeout(() => {
@@ -44,7 +44,7 @@ export default function VerifyEmail() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-6">
             <div className="p-1.5 bg-gray-900 dark:bg-white rounded-lg">
-              <CodeBracketIcon className="w-6 h-6 text-white dark:text-gray-900" />
+              <Code2 className="w-6 h-6 text-white dark:text-gray-900" />
             </div>
             <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
               CodeBattle
@@ -59,7 +59,7 @@ export default function VerifyEmail() {
             {status === 'verifying' && (
               <>
                 <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <ArrowPathIcon className="w-10 h-10 text-blue-600 dark:text-blue-400 animate-spin" />
+                  <Loader2 className="w-10 h-10 text-blue-600 dark:text-blue-400 animate-spin" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                   Verifying Your Email
@@ -74,10 +74,10 @@ export default function VerifyEmail() {
             {status === 'success' && (
               <>
                 <div className="w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircleIcon className="w-10 h-10 text-green-600 dark:text-green-400" />
+                  <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-                  Email Verified! 🎉
+                  Email Verified!
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
                   {message}
@@ -100,7 +100,7 @@ export default function VerifyEmail() {
             {status === 'error' && (
               <>
                 <div className="w-20 h-20 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <XCircleIcon className="w-10 h-10 text-red-600 dark:text-red-400" />
+                  <XCircle className="w-10 h-10 text-red-600 dark:text-red-400" />
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                   Verification Failed

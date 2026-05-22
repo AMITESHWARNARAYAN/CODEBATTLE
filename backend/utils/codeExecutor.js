@@ -1,6 +1,12 @@
 import axios from 'axios';
+import { executeCodeWithDocker, wrapAllTestCases } from './dockerExecutor.js';
 
-// Judge0 API configuration
+// ═══ Execution Mode Switch ═══
+// Set USE_DOCKER=true in .env to run code locally via Docker
+// Otherwise falls back to Judge0 RapidAPI
+const USE_DOCKER = process.env.USE_DOCKER === 'true';
+
+// Judge0 API configuration (used when USE_DOCKER is false)
 const JUDGE0_API_URL = process.env.JUDGE0_API_URL || 'https://judge0-ce.p.rapidapi.com';
 const JUDGE0_API_KEY = process.env.JUDGE0_API_KEY || '';
 
@@ -20,6 +26,20 @@ const LANGUAGE_IDS = {
   kotlin: 78       // Kotlin
 };
 
+import { compareOutputs } from './outputComparator.js';
+
+const TIME_PREFIX = '===TIME===';
+
+const extractTiming = (outputStr, defaultTime) => {
+  const timeMatch = outputStr.match(new RegExp(`${TIME_PREFIX.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\d+)`));
+  if (timeMatch) {
+    const microseconds = parseInt(timeMatch[1], 10);
+    const cleanOutput = outputStr.replace(new RegExp(`${TIME_PREFIX.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\d+\\s*`), '').trim();
+    return { time: Math.round(microseconds / 1000), output: cleanOutput };
+  }
+  return { time: defaultTime, output: outputStr.trim() };
+};
+
 /**
  * Wrap user code with test case execution logic (LeetCode-style)
  * @param {string} code - User's function code
@@ -27,148 +47,8 @@ const LANGUAGE_IDS = {
  * @param {string} language - Programming language
  * @returns {string} Complete executable code
  */
-const wrapCodeWithTestCase = (code, inputArgs, language) => {
-  if (language === 'cpp') {
-    // Extract function name from C++ code
-    const functionMatch = code.match(/(?:int|bool|void|vector<int>|string|double|float|long)\s+(\w+)\s*\(/);
-    const functionName = functionMatch ? functionMatch[1] : 'solve';
-
-    // Convert JavaScript values to C++ syntax
-    const convertToCpp = (val) => {
-      if (val === null) return 'NULL';
-      if (val === true) return 'true';
-      if (val === false) return 'false';
-      if (Array.isArray(val)) {
-        // Check if it's array of chars (for string problems)
-        if (val.length > 0 && typeof val[0] === 'string' && val[0].length === 1) {
-          return `{${val.map(v => `'${v}'`).join(', ')}}`;
-        }
-        // Regular array
-        return `{${val.map(convertToCpp).join(', ')}}`;
-      }
-      if (typeof val === 'string') return `"${val}"`;
-      return String(val);
-    };
-
-    // Extract parameter types from function signature
-    const paramsMatch = code.match(/\(([^)]*)\)/);
-    const paramsStr = paramsMatch ? paramsMatch[1] : '';
-    const params = paramsStr.split(',').map(p => p.trim()).filter(p => p);
-
-    // Check if any parameter is a reference (contains &)
-    const hasReferenceParams = params.some(p => p.includes('&'));
-
-    // Build C++ arguments - create variables for reference parameters
-    let variableDeclarations = '';
-    let cppArgs = '';
-
-    if (hasReferenceParams) {
-      // Create variables for each argument
-      inputArgs.forEach((arg, index) => {
-        const param = params[index] || '';
-        const isReference = param.includes('&');
-
-        if (isReference) {
-          // Extract type by removing parameter name and &
-          // e.g., "vector<char>& s" -> "vector<char>"
-          let varType = param.replace('&', '').trim();
-          // Remove parameter name (last word after space)
-          const lastSpaceIndex = varType.lastIndexOf(' ');
-          if (lastSpaceIndex > 0) {
-            varType = varType.substring(0, lastSpaceIndex).trim();
-          }
-
-          const varName = `arg${index}`;
-          const varValue = convertToCpp(arg);
-
-          variableDeclarations += `    ${varType} ${varName} = ${varValue};\n`;
-          cppArgs += (index > 0 ? ', ' : '') + varName;
-        } else {
-          cppArgs += (index > 0 ? ', ' : '') + convertToCpp(arg);
-        }
-      });
-    } else {
-      cppArgs = inputArgs.map(convertToCpp).join(', ');
-    }
-
-    // Determine output format based on return type
-    const returnTypeMatch = code.match(/(int|bool|void|vector<int>|vector<char>|string|double|float|long)\s+\w+\s*\(/);
-    const returnType = returnTypeMatch ? returnTypeMatch[1] : 'int';
-
-    let outputCode = '';
-    if (returnType === 'bool') {
-      outputCode = `cout << (result ? "true" : "false") << endl;`;
-    } else if (returnType === 'vector<int>') {
-      outputCode = `
-    cout << "[";
-    for(int i = 0; i < result.size(); i++) {
-        if(i > 0) cout << ",";
-        cout << result[i];
-    }
-    cout << "]" << endl;`;
-    } else if (returnType === 'vector<char>') {
-      outputCode = `
-    cout << "[";
-    for(int i = 0; i < result.size(); i++) {
-        if(i > 0) cout << ",";
-        cout << "'" << result[i] << "'";
-    }
-    cout << "]" << endl;`;
-    } else if (returnType === 'void') {
-      // For void functions with reference parameters, output the modified parameter
-      if (hasReferenceParams) {
-        const firstRefParam = params.findIndex(p => p.includes('&'));
-        if (firstRefParam >= 0) {
-          const varName = `arg${firstRefParam}`;
-          const paramType = params[firstRefParam].replace('&', '').trim();
-
-          if (paramType.includes('vector<char>')) {
-            outputCode = `
-    cout << "[";
-    for(int i = 0; i < ${varName}.size(); i++) {
-        if(i > 0) cout << ",";
-        cout << "'" << ${varName}[i] << "'";
-    }
-    cout << "]" << endl;`;
-          } else if (paramType.includes('vector<int>')) {
-            outputCode = `
-    cout << "[";
-    for(int i = 0; i < ${varName}.size(); i++) {
-        if(i > 0) cout << ",";
-        cout << ${varName}[i];
-    }
-    cout << "]" << endl;`;
-          } else {
-            outputCode = `cout << ${varName} << endl;`;
-          }
-        }
-      } else {
-        outputCode = `// void function - no output`;
-      }
-    } else if (returnType === 'string') {
-      outputCode = `cout << "\\"" << result << "\\"" << endl;`;
-    } else {
-      outputCode = `cout << result << endl;`;
-    }
-
-    return `
-#include <iostream>
-#include <vector>
-#include <string>
-#include <algorithm>
-using namespace std;
-
-${code}
-
-int main() {
-${variableDeclarations}    ${returnType !== 'void' ? `auto result = ${functionName}(${cppArgs});` : `${functionName}(${cppArgs});`}
-    ${outputCode}
-    return 0;
-}
-`;
-  }
-
-  return code; // Fallback: return original code
+const wrapCodeWithTestCase = (code, inputArgs, language, metaData = null) => {
+  return wrapAllTestCases(code, [{ input: JSON.stringify(inputArgs) }], language, metaData);
 };
 
 /**
@@ -179,7 +59,7 @@ ${variableDeclarations}    ${returnType !== 'void' ? `auto result = ${functionNa
  * @param {number} timeLimit - Time limit in seconds
  * @returns {object} Execution result
  */
-export const executeCodeWithJudge0 = async (code, testCases, language = 'cpp', timeLimit = 2) => {
+export const executeCodeWithJudge0 = async (code, testCases, language = 'cpp', timeLimit = 2, metaData = null, options = {}) => {
   const results = {
     status: 'Accepted',
     testCasesPassed: 0,
@@ -189,6 +69,8 @@ export const executeCodeWithJudge0 = async (code, testCases, language = 'cpp', t
     errors: [],
     outputs: []
   };
+
+  const failFast = options.failFast !== false;
 
   const languageId = LANGUAGE_IDS[language.toLowerCase()];
   if (!languageId) {
@@ -238,15 +120,17 @@ export const executeCodeWithJudge0 = async (code, testCases, language = 'cpp', t
         }
 
         // Wrap code with test case execution logic
-        const wrappedCode = wrapCodeWithTestCase(code, inputArgs, language);
+        const wrappedCode = wrapCodeWithTestCase(code, inputArgs, language, metaData);
 
-        console.log(`\n=== Test Case ${i + 1} ===`);
-        console.log('Input:', testCase.input);
-        console.log('Parsed Args:', inputArgs);
-        console.log('Expected Output:', testCase.expectedOutput);
-        console.log('Wrapped Code:');
-        console.log(wrappedCode);
-        console.log('===================\n');
+        // Only log full code in development — prevents massive log volume in production
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`\n=== Test Case ${i + 1} ===`);
+          console.log('Input:', testCase.input);
+          console.log('Parsed Args:', inputArgs);
+          console.log('Expected Output:', testCase.expectedOutput);
+          console.log('Wrapped Code Preview:', wrappedCode.substring(0, 200) + '...');
+          console.log('===================\n');
+        }
 
         // Add to batch submissions array (with base64 encoding)
         const base64Code = Buffer.from(wrappedCode).toString('base64');
@@ -332,11 +216,11 @@ export const executeCodeWithJudge0 = async (code, testCases, language = 'cpp', t
           }
         );
 
-        const results = resultResponse.data.submissions || resultResponse.data;
+        const fetchedSubmissions = resultResponse.data.submissions || resultResponse.data;
 
         // Map results back to submission tokens
-        for (let i = 0; i < results.length; i++) {
-          const result = results[i];
+        for (let i = 0; i < fetchedSubmissions.length; i++) {
+          const result = fetchedSubmissions[i];
           const submission = submissionTokens.find(s => s.token === result.token);
 
           if (!submission) continue;
@@ -377,10 +261,31 @@ export const executeCodeWithJudge0 = async (code, testCases, language = 'cpp', t
       if (allCompleted) break;
     }
 
-    // Step 4: Process results
+    // Step 4: Process results chronologically
+    submissionTokens.sort((a, b) => a.testCaseIndex - b.testCaseIndex);
+    let firstFailFastIndex = -1;
+    let totalRealTime = 0;
+    let totalMemoryUsed = 0;
+    let processedCount = 0;
+
     for (const submission of submissionTokens) {
       const i = submission.testCaseIndex;
       const result = submission.result;
+      const expectedOutput = (submission.expectedOutput || '').trim();
+
+      // If we already failed fast on a previous test case, mark this one as skipped
+      if (firstFailFastIndex !== -1) {
+        results.outputs.push({
+          testCase: i + 1,
+          passed: false,
+          input: submission.input,
+          expectedOutput: expectedOutput,
+          actualOutput: '',
+          error: 'Skipped due to previous failure',
+          executionTime: 0
+        });
+        continue;
+      }
 
       if (!result) {
         results.status = 'Error';
@@ -388,85 +293,150 @@ export const executeCodeWithJudge0 = async (code, testCases, language = 'cpp', t
         results.outputs.push({
           testCase: i + 1,
           passed: false,
+          input: submission.input,
+          expectedOutput: expectedOutput,
+          actualOutput: '',
           error: 'Timeout waiting for result',
           executionTime: 0
         });
+        if (failFast) {
+          firstFailFastIndex = i;
+        }
         continue;
       }
 
       const executionTime = parseFloat(result.time || 0) * 1000; // Convert to ms
       const memoryUsed = parseInt(result.memory || 0) / 1024; // Convert to MB
 
-      results.executionTime += executionTime;
-      results.memoryUsed += memoryUsed;
+      // Extract actual output and strip timing prefix
+      const rawOutput = result.stdout?.trim() || '';
+      const { time: tcTime, output: actualOutput } = extractTiming(rawOutput, executionTime);
+
+      totalRealTime += tcTime;
+      totalMemoryUsed += memoryUsed;
+      processedCount++;
 
       // Check status
-      if (result.status.id === 3) { // Accepted
-        results.testCasesPassed++;
-        results.outputs.push({
-          testCase: i + 1,
-          passed: true,
-          input: submission.input,
-          expectedOutput: submission.expectedOutput,
-          actualOutput: result.stdout?.trim() || '',
-          executionTime: executionTime
-        });
+      if (result.status.id === 3) { // Accepted (code ran without error)
+        // Now check if actualOutput is "ERROR" or contains "RUNTIME_ERROR" (caught exception inside the wrapper)
+        if (actualOutput === 'ERROR' || actualOutput.includes('RUNTIME_ERROR')) {
+          if (results.status === 'Accepted') results.status = 'Runtime Error';
+          const errMsg = actualOutput.replace('ERROR', '').trim() || result.stderr || 'Runtime Error';
+          results.errors.push(`Test case ${i + 1}: ${errMsg}`);
+          results.outputs.push({
+            testCase: i + 1,
+            passed: false,
+            input: submission.input,
+            expectedOutput: expectedOutput,
+            actualOutput: '',
+            error: errMsg,
+            executionTime: tcTime
+          });
+          if (failFast) {
+            firstFailFastIndex = i;
+          }
+        } else {
+          // Verify the output matches expected output
+          const outputMatches = compareOutputs(actualOutput, expectedOutput);
+          
+          if (outputMatches) {
+            results.testCasesPassed++;
+            results.outputs.push({
+              testCase: i + 1,
+              passed: true,
+              input: submission.input,
+              expectedOutput: expectedOutput,
+              actualOutput: actualOutput,
+              executionTime: tcTime
+            });
+          } else {
+            // Output doesn't match - this is a Wrong Answer
+            if (results.status === 'Accepted') results.status = 'Wrong Answer';
+            results.outputs.push({
+              testCase: i + 1,
+              passed: false,
+              input: submission.input,
+              expectedOutput: expectedOutput,
+              actualOutput: actualOutput,
+              executionTime: tcTime
+            });
+            if (failFast) {
+              firstFailFastIndex = i;
+            }
+          }
+        }
       } else if (result.status.id === 4) { // Wrong Answer
         if (results.status === 'Accepted') results.status = 'Wrong Answer';
         results.outputs.push({
           testCase: i + 1,
           passed: false,
           input: submission.input,
-          expectedOutput: submission.expectedOutput,
-          actualOutput: result.stdout?.trim() || '',
-          executionTime: executionTime
+          expectedOutput: expectedOutput,
+          actualOutput: actualOutput,
+          executionTime: tcTime
         });
+        if (failFast) {
+          firstFailFastIndex = i;
+        }
       } else if (result.status.id === 5) { // Time Limit Exceeded
-        results.status = 'Time Limit Exceeded';
+        if (results.status === 'Accepted') results.status = 'Time Limit Exceeded';
         results.errors.push(`Test case ${i + 1}: Time Limit Exceeded`);
         results.outputs.push({
           testCase: i + 1,
           passed: false,
+          input: submission.input,
+          expectedOutput: expectedOutput,
+          actualOutput: '',
           error: 'Time Limit Exceeded',
-          executionTime: executionTime
+          executionTime: tcTime
         });
+        if (failFast) {
+          firstFailFastIndex = i;
+        }
       } else if (result.status.id === 6) { // Compilation Error
         results.status = 'Compilation Error';
-        results.errors.push(`Test case ${i + 1}: ${result.compile_output || 'Compilation failed'}`);
+        results.compile_output = result.compile_output || 'Compilation failed';
+        results.errors.push(`Test case ${i + 1}: ${results.compile_output}`);
         results.outputs.push({
           testCase: i + 1,
           passed: false,
-          error: result.compile_output || 'Compilation failed',
+          input: submission.input,
+          expectedOutput: expectedOutput,
+          actualOutput: '',
+          error: results.compile_output,
           executionTime: 0
         });
+        if (failFast) {
+          firstFailFastIndex = i;
+        }
       } else { // Runtime Error or other
         if (results.status === 'Accepted') results.status = 'Runtime Error';
         const errorMessage = result.stderr || result.status.description;
         results.errors.push(`Test case ${i + 1}: ${errorMessage}`);
-
-        console.log(`\n=== Runtime Error - Test Case ${i + 1} ===`);
-        console.log('Status ID:', result.status.id);
-        console.log('Status:', result.status.description);
-        console.log('Stderr:', result.stderr);
-        console.log('Stdout:', result.stdout);
-        console.log('Compile Output:', result.compile_output);
-        console.log('=====================================\n');
-
         results.outputs.push({
           testCase: i + 1,
           passed: false,
+          input: submission.input,
+          expectedOutput: expectedOutput,
+          actualOutput: '',
           error: errorMessage,
-          stderr: result.stderr,
-          stdout: result.stdout,
-          executionTime: executionTime
+          executionTime: tcTime
         });
+        if (failFast) {
+          firstFailFastIndex = i;
+        }
       }
     }
 
-    // Calculate averages
-    if (testCases.length > 0) {
-      results.executionTime = Math.round(results.executionTime / testCases.length);
-      results.memoryUsed = Math.round(results.memoryUsed / testCases.length);
+    // Fallback status assignment if early crash happened without concrete output
+    if (results.testCasesPassed < testCases.length && results.status === 'Accepted') {
+      results.status = 'Wrong Answer';
+    }
+
+    // Calculate averages over actually processed test cases
+    if (processedCount > 0) {
+      results.executionTime = Math.round(totalRealTime / processedCount);
+      results.memoryUsed = Math.round(totalMemoryUsed / processedCount * 100) / 100;
     }
 
     return results;
@@ -490,37 +460,102 @@ export const executeCodeWithJudge0 = async (code, testCases, language = 'cpp', t
 
 
 /**
- * Analyze time and space complexity (simplified heuristic)
+ * Analyze time and space complexity (improved multi-signal heuristic)
+ * 
+ * NOTE: Static analysis cannot determine true complexity — only runtime
+ * profiling or a proper ML model can. This provides a "best guess" using
+ * pattern matching. The `confidence` field communicates uncertainty.
+ * 
  * @param {string} code - User's code
- * @returns {object} Complexity analysis
+ * @returns {object} Complexity analysis with confidence indicator
  */
 export const analyzeComplexity = (code) => {
   const analysis = {
     timeComplexity: 'O(n)',
-    spaceComplexity: 'O(1)'
+    spaceComplexity: 'O(1)',
+    confidence: 'Estimated' // Always honest — this is a heuristic, not ground truth
   };
 
-  // Simple heuristic analysis
-  const nestedLoops = (code.match(/for\s*\(/g) || []).length;
-  const recursiveCalls = (code.match(/function\s+\w+\s*\([^)]*\)\s*{[^}]*\1/g) || []).length;
-  const arrayCreations = (code.match(/new Array|\.map\(|\.filter\(|\.reduce\(/g) || []).length;
+  // Strip comments and strings to avoid false positives
+  let stripped = code
+    .replace(/\/\/.*$/gm, '')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/#.*$/gm, '')
+    .replace(/"(?:\\.|[^"\\])*"/g, '""')
+    .replace(/'(?:\\.|[^'\\])*'/g, "''");
 
-  // Time complexity estimation
-  if (nestedLoops >= 3) {
-    analysis.timeComplexity = 'O(n³)';
-  } else if (nestedLoops === 2) {
-    analysis.timeComplexity = 'O(n²)';
-  } else if (recursiveCalls > 0) {
-    analysis.timeComplexity = 'O(2ⁿ)';
-  } else if (code.includes('.sort(')) {
-    analysis.timeComplexity = 'O(n log n)';
+  // ── Detect nested loop depth via brace/indent tracking ──
+  // Instead of just counting `for` keywords, we track actual nesting
+  let maxLoopDepth = 0;
+  let currentLoopDepth = 0;
+  const lines = stripped.split('\n');
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // Detect loop openings
+    if (/^(for|while)\s*\(/.test(trimmed) || /^for\s+\w+/.test(trimmed)) {
+      currentLoopDepth++;
+      maxLoopDepth = Math.max(maxLoopDepth, currentLoopDepth);
+    }
+    // Detect loop closings (simplified: count closing braces at start of line)
+    if (/^\}/.test(trimmed) && currentLoopDepth > 0) {
+      currentLoopDepth--;
+    }
   }
 
-  // Space complexity estimation
-  if (arrayCreations > 2) {
+  // ── Detect specific patterns ──
+  const hasSort = /\.sort\s*\(|sort\s*\(|Arrays\.sort|Collections\.sort/.test(stripped);
+  const hasBinarySearch = /lo\s*<\s*hi|left\s*<\s*right|binarySearch|bisect|lower_bound|upper_bound/.test(stripped);
+  const hasRecursion = (() => {
+    // Check if any function calls itself
+    const fnNames = stripped.match(/(?:def|function|var|let|const)\s+(\w+)/g) || [];
+    for (const fn of fnNames) {
+      const name = fn.split(/\s+/).pop();
+      // Check if the name appears again (likely a recursive call)
+      const callPattern = new RegExp(`\\b${name}\\s*\\(`, 'g');
+      const matches = stripped.match(callPattern);
+      if (matches && matches.length >= 2) return true;
+    }
+    return false;
+  })();
+  const hasMemoization = /memo|cache|dp\[|dp =|@lru_cache|@cache|functools/.test(stripped);
+  const hasDPTable = /dp\s*=\s*\[|dp\s*=\s*new|dp\s*=\s*\{|int\s+dp\[|vector.*dp/.test(stripped);
+  const hasHeap = /heapq|PriorityQueue|priority_queue|MinHeap|MaxHeap/.test(stripped);
+  const hasHashMap = /HashMap|unordered_map|dict\(|Map\(|Set\(|unordered_set|defaultdict/.test(stripped);
+  const hasNewArray = /new Array|new int\[|\[\s*0\s*\]\s*\*|vec!\[|vector\s*</.test(stripped);
+
+  // ── Time complexity decision tree ──
+  if (maxLoopDepth >= 3) {
+    analysis.timeComplexity = 'O(n³)';
+  } else if (maxLoopDepth === 2) {
+    analysis.timeComplexity = 'O(n²)';
+  } else if (hasRecursion && !hasMemoization) {
+    analysis.timeComplexity = 'O(2ⁿ)';
+  } else if (hasRecursion && hasMemoization) {
+    analysis.timeComplexity = 'O(n)'; // Memoized recursion is typically linear
+  } else if (hasSort || hasHeap) {
+    analysis.timeComplexity = 'O(n log n)';
+  } else if (hasBinarySearch && maxLoopDepth <= 1) {
+    analysis.timeComplexity = 'O(log n)';
+  } else if (hasDPTable && maxLoopDepth === 2) {
+    analysis.timeComplexity = 'O(n²)';
+  } else if (hasDPTable && maxLoopDepth <= 1) {
+    analysis.timeComplexity = 'O(n)';
+  } else if (maxLoopDepth === 1) {
+    analysis.timeComplexity = 'O(n)';
+  } else if (maxLoopDepth === 0 && !hasRecursion) {
+    analysis.timeComplexity = 'O(1)';
+  }
+
+  // ── Space complexity ──
+  if (hasDPTable && maxLoopDepth >= 2) {
+    analysis.spaceComplexity = 'O(n²)';
+  } else if (hasDPTable || hasNewArray || hasMemoization) {
     analysis.spaceComplexity = 'O(n)';
-  } else if (recursiveCalls > 0) {
+  } else if (hasHashMap) {
     analysis.spaceComplexity = 'O(n)';
+  } else if (hasRecursion) {
+    analysis.spaceComplexity = 'O(n)'; // Call stack
   }
 
   return analysis;
@@ -552,3 +587,8 @@ export const validateCode = (code, language = 'javascript') => {
   }
 };
 
+// ═══ Unified Executor ═══
+// Routes call this — it picks Docker or Judge0 based on env
+export const executeCode = USE_DOCKER ? executeCodeWithDocker : executeCodeWithJudge0;
+
+console.log(`[CodeExecutor] Mode: ${USE_DOCKER ? '🐳 Docker (local)' : '☁️  Judge0 API'}`);

@@ -21,9 +21,11 @@ body {
   background: #ffffff;
   color: #0f172a;
   min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: scroll;
 }
 
-body.dark {
+.dark body {
   background: #0f172a;
   color: #f1f5f9;
 }
@@ -52,16 +54,16 @@ code {
   background: #94a3b8;
 }
 
-body.dark ::-webkit-scrollbar-track {
+.dark ::-webkit-scrollbar-track {
   background: #1e293b;
 }
 
-body.dark ::-webkit-scrollbar-thumb {
+.dark ::-webkit-scrollbar-thumb {
   background: #475569;
   border-color: #1e293b;
 }
 
-body.dark ::-webkit-scrollbar-thumb:hover {
+.dark ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
 
@@ -84,15 +86,15 @@ body.dark ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
 
-body.dark .custom-scrollbar::-webkit-scrollbar-track {
+.dark .custom-scrollbar::-webkit-scrollbar-track {
   background: #1e293b;
 }
 
-body.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #475569;
 }
 
-body.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
 
@@ -210,3 +212,93 @@ body.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   @apply w-full px-4 py-2 bg-white dark:bg-dark-800 border border-gray-300 dark:border-dark-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-gray-900 dark:focus:border-white transition-all;
 }
 
+/* ─── LeetCode-style Description Content ─── */
+.description-content {
+  word-wrap: break-word;
+}
+
+.description-content p {
+  margin-bottom: 0.75rem;
+  line-height: 1.7;
+}
+
+.description-content code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  color: #c7254e;
+  font-family: 'Fira Code', 'Courier New', monospace;
+}
+
+.dark .description-content code {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+.description-content strong {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.dark .description-content strong {
+  color: #f1f5f9;
+}
+
+.description-content em {
+  color: #475569;
+}
+
+.dark .description-content em {
+  color: #cbd5e1;
+}
+
+/* Force all text inside dark problem description containers to be white/off-white */
+.dark-desc,
+.dark-desc *,
+.dark .description-content,
+.dark .description-content * {
+  color: #ffffff !important;
+}
+
+.description-content ul, .description-content ol {
+  margin: 0.5rem 0 0.75rem 1.25rem;
+  padding: 0;
+}
+
+.description-content ul {
+  list-style-type: disc;
+}
+
+.description-content ol {
+  list-style-type: decimal;
+}
+
+.description-content li {
+  margin-bottom: 0.35rem;
+  line-height: 1.6;
+}
+
+.description-content li ul {
+  margin-top: 0.25rem;
+}
+
+.description-content sup {
+  font-size: 0.7em;
+  vertical-align: super;
+}
+
+.description-content pre {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+  font-size: 0.85em;
+}
+
+.dark .description-content pre {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}

@@ -20,7 +20,7 @@ const submissionSchema = new mongoose.Schema({
   language: {
     type: String,
     required: true,
-    enum: ['javascript', 'python', 'java', 'cpp']
+    enum: ['javascript', 'python', 'java', 'cpp', 'c', 'csharp', 'go', 'rust', 'ruby', 'php', 'swift', 'kotlin']
   },
   status: {
     type: String,
@@ -34,6 +34,9 @@ const submissionSchema = new mongoose.Schema({
   memory: {
     type: Number, // in MB
     default: 0
+  },
+  judge0Token: {
+    type: String
   },
   testCasesPassed: {
     type: Number,
@@ -61,6 +64,11 @@ const submissionSchema = new mongoose.Schema({
 // Compound index for efficient queries
 submissionSchema.index({ user: 1, problem: 1, submittedAt: -1 });
 submissionSchema.index({ user: 1, status: 1 });
+
+// Indexes for percentile calculations (countDocuments with $gt on runtime/memory)
+submissionSchema.index({ problem: 1, status: 1 });
+submissionSchema.index({ problem: 1, status: 1, runtime: 1 });
+submissionSchema.index({ problem: 1, status: 1, memory: 1 });
 
 const Submission = mongoose.model('Submission', submissionSchema);
 

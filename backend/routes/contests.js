@@ -3,16 +3,134 @@ import Contest from '../models/Contest.js';
 import Problem from '../models/Problem.js';
 import User from '../models/User.js';
 import { protect } from '../middleware/auth.js';
-import { executeCodeWithJudge0 } from '../utils/codeExecutor.js';
+import { executeCode as executeCodeWithJudge0 } from '../utils/codeExecutor.js';
+import { resolveTestCases } from '../utils/testCaseFetcher.js';
+import { getDynamicKFactor } from '../utils/eloRating.js';
+import { getIO } from '../utils/socketSingleton.js';
+
 
 const router = express.Router();
 
-// Get all contests (with filters)
+// ──────────────────────────────────────────────────────
+// Contest Elo Calculation (Codeforces-inspired)
+// Participants are ranked by score/penalty, then each
+// player's contestRating changes based on performance
+// relative to their expected rank.
+// ──────────────────────────────────────────────────────
+
+
+async function finalizeContestRatings(contest) {
+  // Only finalize rated contests that haven't been finalized yet
+  if (!contest.isRated) return;
+  // Use a flag to prevent double-finalization
+  if (contest._ratingsFinalized) return;
+
+  const leaderboard = contest.calculateLeaderboard();
+  if (leaderboard.length < 2) return; // Need at least 2 participants
+
+  // Fetch all participant users
+  const userIds = leaderboard.map(p => p.user);
+  const users = await User.find({ _id: { $in: userIds } });
+  const userMap = {};
+  users.forEach(u => { userMap[u._id.toString()] = u; });
+
+  const n = leaderboard.length;
+
+  for (let i = 0; i < n; i++) {
+    const userId = leaderboard[i].user.toString();
+    const user = userMap[userId];
+    if (!user) continue;
+
+    const actualRank = i + 1; // 1-indexed rank
+    const currentRating = user.contestRating || 0;
+
+    // Calculate expected rank: sum of expected scores against all others
+    // Expected score vs opponent = 1 / (1 + 10^((opponentRating - myRating) / 400))
+    let expectedRank = 0;
+    for (let j = 0; j < n; j++) {
+      if (i === j) continue;
+      const oppId = leaderboard[j].user.toString();
+      const opp = userMap[oppId];
+      if (!opp) continue;
+      const oppRating = opp.contestRating || 0;
+      const expectedScore = 1 / (1 + Math.pow(10, (oppRating - currentRating) / 400));
+      // expectedRank += probability of losing to this opponent
+      expectedRank += (1 - expectedScore);
+    }
+    expectedRank += 1; // Convert to 1-indexed rank
+
+    // Rating change = K * (expectedRank - actualRank) / n
+    // Positive when you beat expectations, negative when you underperform
+    const dynamicK = getDynamicKFactor(currentRating, user.contestsParticipated || 0);
+    const ratingDelta = Math.round(dynamicK * (expectedRank - actualRank) / Math.sqrt(n));
+
+    const newRating = Math.max(0, currentRating + ratingDelta); // Floor at 0
+
+    // Store rating change on the participant subdoc
+    const participant = contest.participants.find(
+      p => (p.user._id || p.user).toString() === userId
+    );
+    if (participant) {
+      participant.ratingChange = ratingDelta;
+      participant.oldContestRating = currentRating;
+      participant.newContestRating = newRating;
+    }
+
+    // Update user's contest rating
+    user.updateRating(newRating, 'contest');
+    user.contestsParticipated = (user.contestsParticipated || 0) + 1;
+    await user.save();
+  }
+
+  contest._ratingsFinalized = true;
+  await contest.save();
+}
+
+// ──────────────────────────────────────────────────────
+// Helper: auto-sync contest status based on current time
+// This runs on every read so we never return stale status
+// ──────────────────────────────────────────────────────
+async function syncContestStatus(filter = {}) {
+  const now = new Date();
+
+  // Upcoming → Running  (startTime has passed, endTime hasn't)
+  await Contest.updateMany(
+    { status: 'upcoming', startTime: { $lte: now }, endTime: { $gt: now }, ...filter },
+    { $set: { status: 'running' } }
+  );
+
+  // Running → Finished  (endTime has passed)
+  // Find contests about to be finalized so we can trigger rating calc
+  const justFinished = await Contest.find(
+    { status: 'running', endTime: { $lte: now }, ...filter }
+  );
+
+  if (justFinished.length > 0) {
+    await Contest.updateMany(
+      { status: 'running', endTime: { $lte: now }, ...filter },
+      { $set: { status: 'finished' } }
+    );
+
+    // Finalize contest ratings for each newly finished contest
+    for (const contest of justFinished) {
+      try {
+        contest.status = 'finished';
+        await finalizeContestRatings(contest);
+      } catch (err) {
+        console.error(`Failed to finalize ratings for contest ${contest._id}:`, err);
+      }
+    }
+  }
+}
+
+// ──────────────────────────────────────────────────────
+// GET /  — All contests (with filters)
+// ──────────────────────────────────────────────────────
 router.get('/', protect, async (req, res) => {
   try {
+    await syncContestStatus();
     const { status, type } = req.query;
     const filter = { isVisible: true };
-    
     if (status) filter.status = status;
     if (type) filter.type = type;
 
@@ -22,7 +140,6 @@ router.get('/', protect, async (req, res) => {
       .sort({ startTime: -1 })
       .lean();
 
-    // Add user registration status
     const contestsWithUserData = contests.map(contest => ({
       ...contest,
       isRegistered: contest.participants.some(
@@ -40,88 +157,83 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
-// Get upcoming contests
+// ──────────────────────────────────────────────────────
+// GET /upcoming
+// ──────────────────────────────────────────────────────
 router.get('/upcoming', protect, async (req, res) => {
   try {
-    const contests = await Contest.find({
-      status: 'upcoming',
-      isVisible: true
-    })
+    await syncContestStatus();
+    const contests = await Contest.find({ status: 'upcoming', isVisible: true })
       .populate('problems.problem', 'title difficulty')
       .sort({ startTime: 1 })
       .lean();
 
-    // Add user registration status
-    const contestsWithUserData = contests.map(contest => ({
-      ...contest,
-      isRegistered: contest.participants.some(
-        p => p.user.toString() === req.user._id.toString()
-      )
+    const result = contests.map(c => ({
+      ...c,
+      isRegistered: c.participants.some(p => p.user.toString() === req.user._id.toString())
     }));
 
-    res.json(contestsWithUserData);
+    res.json(result);
   } catch (error) {
     console.error('Get upcoming contests error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Get running contests
+// ──────────────────────────────────────────────────────
+// GET /running
+// ──────────────────────────────────────────────────────
 router.get('/running', protect, async (req, res) => {
   try {
-    const contests = await Contest.find({
-      status: 'running',
-      isVisible: true
-    })
+    await syncContestStatus();
+    const contests = await Contest.find({ status: 'running', isVisible: true })
       .populate('problems.problem', 'title difficulty')
       .sort({ startTime: -1 })
       .lean();
 
-    // Add user registration status
-    const contestsWithUserData = contests.map(contest => ({
-      ...contest,
-      isRegistered: contest.participants.some(
-        p => p.user.toString() === req.user._id.toString()
-      )
+    const result = contests.map(c => ({
+      ...c,
+      isRegistered: c.participants.some(p => p.user.toString() === req.user._id.toString())
     }));
 
-    res.json(contestsWithUserData);
+    res.json(result);
   } catch (error) {
     console.error('Get running contests error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Get past contests
+// ──────────────────────────────────────────────────────
+// GET /past
+// ──────────────────────────────────────────────────────
 router.get('/past', protect, async (req, res) => {
   try {
-    const contests = await Contest.find({
-      status: 'finished',
-      isVisible: true
-    })
+    await syncContestStatus();
+    const contests = await Contest.find({ status: 'finished', isVisible: true })
       .populate('problems.problem', 'title difficulty')
       .sort({ startTime: -1 })
-      .limit(20)
+      .limit(50)
       .lean();
 
-    // Add user registration status
-    const contestsWithUserData = contests.map(contest => ({
-      ...contest,
-      isRegistered: contest.participants.some(
-        p => p.user.toString() === req.user._id.toString()
-      )
+    const result = contests.map(c => ({
+      ...c,
+      isRegistered: c.participants.some(p => p.user.toString() === req.user._id.toString())
     }));
 
-    res.json(contestsWithUserData);
+    res.json(result);
   } catch (error) {
     console.error('Get past contests error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Get single contest details
+// ──────────────────────────────────────────────────────
+// GET /:id  — Single contest details
+// ──────────────────────────────────────────────────────
 router.get('/:id', protect, async (req, res) => {
   try {
+    await syncContestStatus();
+
     const contest = await Contest.findById(req.params.id)
       .populate('problems.problem')
       .populate('createdBy', 'username')
@@ -132,7 +244,7 @@ router.get('/:id', protect, async (req, res) => {
     }
 
     const userData = contest.getUserData(req.user._id);
-    
+
     res.json({
       ...contest.toObject(),
       isRegistered: !!userData,
@@ -144,32 +256,45 @@ router.get('/:id', protect, async (req, res) => {
   }
 });
 
-// Register for contest
+// ──────────────────────────────────────────────────────
+// POST /:id/register  — Register for contest
+// LeetCode-style: can register before OR during a running contest
+// ──────────────────────────────────────────────────────
 router.post('/:id/register', protect, async (req, res) => {
   try {
+    await syncContestStatus();
     const contest = await Contest.findById(req.params.id);
 
     if (!contest) {
       return res.status(404).json({ message: 'Contest not found' });
     }
 
-    if (!contest.canRegister(req.user._id)) {
-      return res.status(400).json({ 
-        message: 'Cannot register for this contest' 
-      });
+    // Allow registration for upcoming AND running contests
+    if (contest.status === 'finished' || contest.status === 'cancelled') {
+      return res.status(400).json({ message: 'This contest has already ended' });
+    }
+
+    const alreadyRegistered = contest.participants.some(
+      p => (p.user._id || p.user).toString() === req.user._id.toString()
+    );
+
+    if (alreadyRegistered) {
+      return res.status(400).json({ message: 'Already registered' });
     }
 
     contest.participants.push({
       user: req.user._id,
       username: req.user.username,
-      registeredAt: new Date()
+      registeredAt: new Date(),
+      // If contest is already running, mark start immediately
+      startedAt: contest.status === 'running' ? new Date() : undefined
     });
 
     await contest.save();
 
-    res.json({ 
+    res.json({
       message: 'Successfully registered for contest',
-      contest 
+      contest
     });
   } catch (error) {
     console.error('Register contest error:', error);
@@ -177,33 +302,46 @@ router.post('/:id/register', protect, async (req, res) => {
   }
 });
 
-// Start contest (for virtual contests or first submission)
+// ──────────────────────────────────────────────────────
+// POST /:id/start  — Start personal timer (enter the contest)
+// For running contests, this records when user begins solving
+// ──────────────────────────────────────────────────────
 router.post('/:id/start', protect, async (req, res) => {
   try {
+    await syncContestStatus();
     const contest = await Contest.findById(req.params.id);
 
     if (!contest) {
       return res.status(404).json({ message: 'Contest not found' });
     }
 
-    const participant = contest.participants.find(
-      p => p.user.toString() === req.user._id.toString()
-    );
-
-    if (!participant) {
-      return res.status(400).json({ 
-        message: 'You must register first' 
-      });
+    if (contest.status !== 'running') {
+      return res.status(400).json({ message: 'Contest is not running yet' });
     }
 
-    if (!participant.startedAt) {
+    let participant = contest.participants.find(
+      p => (p.user._id || p.user).toString() === req.user._id.toString()
+    );
+
+    // Auto-register if not registered (LeetCode allows joining mid-contest)
+    if (!participant) {
+      contest.participants.push({
+        user: req.user._id,
+        username: req.user.username,
+        registeredAt: new Date(),
+        startedAt: new Date()
+      });
+      await contest.save();
+      participant = contest.participants[contest.participants.length - 1];
+    } else if (!participant.startedAt) {
       participant.startedAt = new Date();
       await contest.save();
     }
 
-    res.json({ 
+    res.json({
       message: 'Contest started',
-      startedAt: participant.startedAt 
+      startedAt: participant.startedAt,
+      endTime: contest.endTime // Global end time — not per-user
     });
   } catch (error) {
     console.error('Start contest error:', error);
@@ -211,9 +349,12 @@ router.post('/:id/start', protect, async (req, res) => {
   }
 });
 
-// Submit solution for contest problem
+// ──────────────────────────────────────────────────────
+// POST /:id/submit  — Submit solution for a contest problem
+// ──────────────────────────────────────────────────────
 router.post('/:id/submit', protect, async (req, res) => {
   try {
+    await syncContestStatus();
     const { problemId, code, language } = req.body;
 
     const contest = await Contest.findById(req.params.id);
@@ -223,11 +364,18 @@ router.post('/:id/submit', protect, async (req, res) => {
     }
 
     if (contest.status !== 'running') {
-      return res.status(400).json({ message: 'Contest is not running' });
+      return res.status(400).json({ message: 'Contest is not running. Time is up!' });
+    }
+
+    // Check if endTime has passed (double-check)
+    if (new Date() >= contest.endTime) {
+      contest.status = 'finished';
+      await contest.save();
+      return res.status(400).json({ message: 'Contest time has ended' });
     }
 
     const participant = contest.participants.find(
-      p => p.user.toString() === req.user._id.toString()
+      p => (p.user._id || p.user).toString() === req.user._id.toString()
     );
 
     if (!participant) {
@@ -253,12 +401,15 @@ router.post('/:id/submit', protect, async (req, res) => {
       return res.status(404).json({ message: 'Problem not found' });
     }
 
-    // Execute code with Judge0 API
+    const problemData = problem.toObject();
+    await resolveTestCases(problemData);
+
+    // Execute code
     const executionResult = await executeCodeWithJudge0(
       code,
-      problem.testCases,
+      problemData.testCases,
       language,
-      problem.timeLimit / 1000 // Convert ms to seconds
+      problemData.timeLimit / 1000
     );
 
     // Determine status
@@ -269,15 +420,32 @@ router.post('/:id/submit', protect, async (req, res) => {
       status = executionResult.status.toLowerCase();
     }
 
-    // Calculate score and penalty
-    const score = status === 'accepted' ? contestProblem.points : 0;
-    const timeSinceStart = (new Date() - participant.startedAt) / (1000 * 60); // minutes
-    const penalty = status === 'accepted' ? timeSinceStart : 20; // 20 min penalty for wrong answer
+    // Calculate penalty: time from contest start (not user start) — LeetCode-style
+    const timeSinceContestStart = (new Date() - new Date(contest.startTime)) / (1000 * 60);
 
     // Check if already solved
     const alreadySolved = participant.submissions.some(
       s => s.problem.toString() === problemId && s.status === 'accepted'
     );
+
+    // Count wrong attempts for this problem (for penalty calculation)
+    const wrongAttempts = participant.submissions.filter(
+      s => s.problem.toString() === problemId && s.status !== 'accepted'
+    ).length;
+
+    // First to solve bonus: Check if anyone else has solved this problem
+    const isFirstToSolve = status === 'accepted' && !contest.participants.some(
+      p => p.submissions.some(s => s.problem.toString() === problemId && s.status === 'accepted')
+    );
+
+    // Score: full points for acceptance, plus 10 point bonus if first to solve
+    let score = status === 'accepted' ? contestProblem.points : 0;
+    if (isFirstToSolve) {
+      score += 10;
+    }
+
+    // Penalty: time of acceptance + 5 min per wrong attempt (LeetCode-style)
+    const penalty = status === 'accepted' ? timeSinceContestStart + (wrongAttempts * 5) : 0;
 
     // Add submission
     participant.submissions.push({
@@ -291,15 +459,17 @@ router.post('/:id/submit', protect, async (req, res) => {
       testCasesPassed: executionResult.testCasesPassed,
       totalTestCases: executionResult.totalTestCases,
       score,
-      penalty: status === 'accepted' ? timeSinceStart : 0
+      penalty: status === 'accepted' ? timeSinceContestStart : 0
     });
 
     // Update totals only if first accepted submission for this problem
     if (status === 'accepted' && !alreadySolved) {
       participant.totalScore += score;
-      participant.totalPenalty += timeSinceStart;
+      participant.totalPenalty += penalty;
       participant.problemsSolved += 1;
     }
+
+
 
     await contest.save();
 
@@ -307,22 +477,43 @@ router.post('/:id/submit', protect, async (req, res) => {
     const leaderboard = contest.calculateLeaderboard();
 
     res.json({
-      message: 'Submission recorded',
+      message: status === 'accepted' ? 'Accepted!' : 'Wrong Answer',
+      status,
       score,
-      penalty,
+      penalty: penalty.toFixed(0),
       totalScore: participant.totalScore,
+      problemsSolved: participant.problemsSolved,
       rank: participant.rank,
-      leaderboard: leaderboard.slice(0, 10) // Top 10
+      executionResult,
+      leaderboard: leaderboard.slice(0, 10),
+      isFirstToSolve
     });
+
+    // Broadcast contest update to all clients in the room
+    const io = getIO();
+    if (io) {
+      io.to(`contest-${contest._id}`).emit('contest-update', {
+        type: 'submission',
+        userId: req.user._id,
+        username: req.user.username,
+        problemId,
+        status,
+        score,
+        isFirstToSolve
+      });
+    }
   } catch (error) {
     console.error('Submit contest solution error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// Get contest leaderboard
+// ──────────────────────────────────────────────────────
+// GET /:id/leaderboard
+// ──────────────────────────────────────────────────────
 router.get('/:id/leaderboard', protect, async (req, res) => {
   try {
+    await syncContestStatus();
     const contest = await Contest.findById(req.params.id)
       .populate('participants.user', 'username email');
 
@@ -331,7 +522,6 @@ router.get('/:id/leaderboard', protect, async (req, res) => {
     }
 
     const leaderboard = contest.calculateLeaderboard();
-
     res.json(leaderboard);
   } catch (error) {
     console.error('Get leaderboard error:', error);
@@ -340,4 +530,3 @@ router.get('/:id/leaderboard', protect, async (req, res) => {
 });
 
 export default router;
-

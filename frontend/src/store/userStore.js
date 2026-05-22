@@ -63,6 +63,48 @@ export const useUserStore = create((set) => ({
     }
   },
 
+  getUserSubmissionStats: async (username) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/submissions/stats/overview${username ? `?username=${username}` : ''}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch submission stats:', error);
+      throw error;
+    }
+  },
+
+  getUserHeatmap: async (username) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/submissions/calendar/heatmap${username ? `?username=${username}` : ''}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch heatmap:', error);
+      throw error;
+    }
+  },
+
+  updateProfile: async (profileData) => {
+    set({ loading: true, error: null });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.put(`${API_URL}/users/profile`, profileData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      set({ loading: false });
+      return response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to update profile';
+      set({ error: message, loading: false });
+      throw error;
+    }
+  },
+
   setError: (error) => set({ error }),
   clearError: () => set({ error: null })
 }));

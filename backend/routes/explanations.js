@@ -5,6 +5,37 @@ import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Get saved explanation/editorial for a problem
+router.get('/:problemId', protect, async (req, res) => {
+  try {
+    const { problemId } = req.params;
+
+    // Fetch the problem
+    const problem = await Problem.findById(problemId);
+    if (!problem) {
+      return res.status(404).json({ message: 'Problem not found' });
+    }
+
+    // For now, return a basic editorial structure
+    // In production, you might have a separate Editorial model or add these fields to Problem
+    const editorial = {
+      problemId,
+      approach: 'The editorial for this problem is being prepared. Please check back later.',
+      complexity: 'Time Complexity: To be added\nSpace Complexity: To be added',
+      solution: '',
+      available: false
+    };
+
+    res.json(editorial);
+  } catch (error) {
+    console.error('Error fetching editorial:', error);
+    res.status(404).json({ 
+      message: 'Editorial not available',
+      error: error.message 
+    });
+  }
+});
+
 // Generate explanation for a problem
 router.post('/problem/:problemId/explanation', protect, async (req, res) => {
   try {

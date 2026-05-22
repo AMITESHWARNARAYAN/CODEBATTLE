@@ -35,7 +35,7 @@ const seedMetadata = async () => {
       },
       likedBy: [],
       dislikedBy: [],
-      commentCount: Math.floor(Math.random() * 50),
+      commentCount: 0,
       isPremium: false,
       similarProblems: [],
       realWorldApplications: [

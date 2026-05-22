@@ -63,6 +63,7 @@ router.post('/register', [
         username: user.username,
         email: user.email,
         rating: user.rating,
+        contestRating: user.contestRating,
         isAdmin: user.isAdmin,
         isEmailVerified: user.isEmailVerified,
         token: generateToken(user._id),
@@ -104,7 +105,36 @@ router.post('/login', [
 
     // Email verification disabled - users can login without verification
 
-    // Update online status
+    // Update online status and calculate streak
+    const now = new Date();
+    const lastLogin = user.streak.lastLoginDate ? new Date(user.streak.lastLoginDate) : null;
+
+    // Check if last login was yesterday (streak continues)
+    // We check if the difference in days is exactly 1
+    let isConsecutiveDay = false;
+    if (lastLogin) {
+      const oneDayMs = 24 * 60 * 60 * 1000;
+      const diffTime = now.setHours(0, 0, 0, 0) - new Date(lastLogin).setHours(0, 0, 0, 0);
+      const diffDays = Math.round(diffTime / oneDayMs);
+
+      if (diffDays === 1) {
+        isConsecutiveDay = true;
+      } else if (diffDays === 0) {
+        // Same day login, do nothing to streak
+      } else {
+        // Missed a day or more, reset streak
+        user.streak.current = 0;
+      }
+    }
+
+    if (isConsecutiveDay || !lastLogin) {
+      user.streak.current += 1;
+      if (user.streak.current > user.streak.longest) {
+        user.streak.longest = user.streak.current;
+      }
+    }
+
+    user.streak.lastLoginDate = new Date();
     user.isOnline = true;
     user.lastSeen = new Date();
     await user.save();
@@ -114,6 +144,7 @@ router.post('/login', [
       username: user.username,
       email: user.email,
       rating: user.rating,
+      contestRating: user.contestRating,
       wins: user.wins,
       losses: user.losses,
       draws: user.draws,

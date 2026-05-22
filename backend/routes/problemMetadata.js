@@ -1,6 +1,8 @@
 import express from 'express';
 import ProblemMetadata from '../models/ProblemMetadata.js';
 import Problem from '../models/Problem.js';
+import User from '../models/User.js';
+import Discussion from '../models/Discussion.js';
 import { protect, isAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -421,7 +423,6 @@ router.post('/:problemId/bookmark', protect, async (req, res) => {
 // @access  Private
 router.get('/:problemId/user-preferences', protect, async (req, res) => {
   try {
-    const User = require('../models/User.js').default || require('../models/User.js');
     let metadata = await ProblemMetadata.findOne({ problem: req.params.problemId });
 
     const user = await User.findById(req.user._id);
@@ -438,13 +439,18 @@ router.get('/:problemId/user-preferences', protect, async (req, res) => {
       });
     }
 
+    // Count real discussions for this problem
+    const discussionCount = await Discussion.countDocuments({
+      problem: req.params.problemId
+    });
+
     const preferences = {
       liked: metadata?.likedBy?.some(id => id.toString() === userIdStr) || false,
       disliked: metadata?.dislikedBy?.some(id => id.toString() === userIdStr) || false,
       bookmarked: user?.bookmarkedProblems?.includes(problemIdStr) || false,
       likes: metadata?.likedBy?.length || 0,
       dislikes: metadata?.dislikedBy?.length || 0,
-      comments: metadata?.commentCount || 0
+      comments: discussionCount
     };
 
     res.json(preferences);

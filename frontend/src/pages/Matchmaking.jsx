@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import {
@@ -9,36 +9,40 @@ import {
   onMatchFound,
   removeListener
 } from '../utils/socket';
-import { toast } from 'react-hot-toast';
-import { ArrowLeftIcon } from '@heroicons/react/24/solid';
+import { ArrowLeft, Swords, Users, Clock, X } from 'lucide-react';
 
 export default function Matchmaking() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [searching, setSearching] = useState(false);
-  const [queuePosition, setQueuePosition] = useState(null);
   const [waitTime, setWaitTime] = useState(0);
   const [queueSize, setQueueSize] = useState(0);
+  const timerRef = useRef(null);
+
+  // Local timer for smooth second-by-second updates
+  useEffect(() => {
+    if (searching) {
+      timerRef.current = setInterval(() => {
+        setWaitTime(prev => prev + 1);
+      }, 1000);
+    } else {
+      clearInterval(timerRef.current);
+    }
+    return () => clearInterval(timerRef.current);
+  }, [searching]);
 
   useEffect(() => {
-    // Listen for queue joined
-    onQueueJoined((data) => {
+    onQueueJoined(() => {
       setSearching(true);
-      setQueuePosition(data.position);
-      toast.success('Joined matchmaking queue!');
+      setWaitTime(0);
     });
 
-    // Listen for queue updates
     onQueueUpdate((data) => {
-      setQueuePosition(data.position);
-      setWaitTime(data.waitTime);
       setQueueSize(data.queueSize);
     });
 
-    // Listen for match found
     onMatchFound((match) => {
       setSearching(false);
-      toast.success('Match found! Starting game...');
       navigate(`/match/${match._id}`);
     });
 
@@ -58,9 +62,14 @@ export default function Matchmaking() {
     if (!user) return;
     leaveMatchmakingQueue(user._id);
     setSearching(false);
-    setQueuePosition(null);
     setWaitTime(0);
-    toast.info('Left matchmaking queue');
+    setQueueSize(0);
+  };
+
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -72,100 +81,106 @@ export default function Matchmaking() {
             onClick={() => navigate('/')}
             className="flex items-center gap-2 px-4 py-2 hover:bg-slate-700 rounded-lg transition"
           >
-            <ArrowLeftIcon className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4" />
             Back
           </button>
-          <h1 className="text-2xl font-bold">Matchmaking</h1>
+          <h1 className="text-2xl font-bold">Ranked Matchmaking</h1>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="max-w-2xl mx-auto px-4 py-12">
-        <div className="card text-center">
-          <h2 className="text-3xl font-bold mb-4">Find Your Opponent</h2>
-          <p className="text-slate-400 mb-8">
-            Get matched with players of similar skill level and compete in real-time
-          </p>
+        <div className="card">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-2">Find an Opponent</h2>
+            <p className="text-slate-400">
+              Get matched with another player and compete in a real-time DSA battle.
+            </p>
+          </div>
 
           {!searching ? (
-            <div>
-              <div className="mb-8 p-6 bg-gray-100 dark:bg-dark-800 rounded-lg">
-                <p className="text-gray-600 dark:text-gray-400 mb-2">Your Current Rating</p>
-                <p className="text-4xl font-bold text-gray-900 dark:text-white">{user?.rating || 1200}</p>
+            <>
+              {/* Rating Display */}
+              <div className="mb-6 p-4 bg-gray-100 dark:bg-dark-800 border border-gray-200 dark:border-dark-700 rounded-lg text-center">
+                <p className="text-gray-500 dark:text-gray-400 text-sm mb-1">Your Battle Rating</p>
+                <p className="text-4xl font-bold text-orange-500">{user?.rating || 0}</p>
               </div>
 
               <button
                 onClick={handleStartSearch}
-                className="btn-primary text-lg py-3 px-8 w-full"
+                className="btn-primary w-full flex items-center justify-center gap-2 py-3"
               >
-                Start Searching
+                <Swords className="w-4 h-4" />
+                Start Matchmaking
               </button>
-            </div>
+            </>
           ) : (
-            <div className="py-12">
+            <>
               {/* Searching Animation */}
-              <div className="mb-8">
-                <div className="flex justify-center mb-6">
-                  <div className="relative w-24 h-24">
-                    <div className="absolute inset-0 rounded-full border-4 border-gray-300 dark:border-dark-700 animate-pulse"></div>
-                    <div className="absolute inset-2 rounded-full border-4 border-gray-400 dark:border-dark-600 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="absolute inset-4 rounded-full border-4 border-gray-500 dark:border-dark-500 animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+              <div className="mb-6 flex flex-col items-center">
+                <div className="relative w-20 h-20 mb-4">
+                  <div className="absolute inset-0 rounded-full border-4 border-gray-200 dark:border-dark-700"></div>
+                  <div className="absolute inset-0 rounded-full border-4 border-t-orange-500 border-r-transparent border-b-orange-500 border-l-transparent animate-spin"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Swords className="w-7 h-7 text-orange-500" />
                   </div>
                 </div>
-                <p className="text-xl font-semibold mb-2">Searching for opponent...</p>
-                <p className="text-gray-600 dark:text-gray-400">This may take a few moments</p>
+                <p className="text-lg font-semibold text-gray-900 dark:text-white">Searching for opponent...</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">You'll be matched with the next available player</p>
               </div>
 
-              {/* Queue InformationCircleIcon */}
-              <div className="grid grid-cols-3 gap-4 mb-8">
-                <div className="p-4 bg-gray-100 dark:bg-dark-800 rounded-lg">
-                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Queue Position</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">#{queuePosition || '-'}</p>
+              {/* Stats */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="p-4 bg-gray-100 dark:bg-dark-800 border border-gray-200 dark:border-dark-700 rounded-lg text-center">
+                  <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-1">
+                    <Clock className="w-3.5 h-3.5" />
+                    Search Time
+                  </div>
+                  <p className="text-2xl font-bold font-mono text-gray-900 dark:text-white">{formatTime(waitTime)}</p>
                 </div>
-                <div className="p-4 bg-gray-100 dark:bg-dark-800 rounded-lg">
-                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Wait Time</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{waitTime}s</p>
-                </div>
-                <div className="p-4 bg-gray-100 dark:bg-dark-800 rounded-lg">
-                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Queue Size</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{queueSize}</p>
+                <div className="p-4 bg-gray-100 dark:bg-dark-800 border border-gray-200 dark:border-dark-700 rounded-lg text-center">
+                  <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-1">
+                    <Users className="w-3.5 h-3.5" />
+                    In Queue
+                  </div>
+                  <p className="text-2xl font-bold font-mono text-gray-900 dark:text-white">{queueSize}</p>
                 </div>
               </div>
 
               <button
                 onClick={handleCancelSearch}
-                className="btn-secondary w-full"
+                className="btn-secondary w-full flex items-center justify-center gap-2"
               >
+                <X className="w-4 h-4" />
                 Cancel Search
               </button>
-            </div>
+            </>
           )}
-        </div>
 
-        {/* InformationCircleIcon Section */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="card">
-            <h3 className="text-lg font-bold mb-3">⚡ How It Works</h3>
-            <ul className="text-slate-400 space-y-2 text-sm">
-              <li>• You'll be matched with a player of similar rating</li>
-              <li>• Both players get the same DSA problem</li>
-              <li>• Solve it faster and better to win</li>
-              <li>• Your rating changes based on the result</li>
-            </ul>
-          </div>
+          {/* Info Cards */}
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="card">
+              <h3 className="text-lg font-bold mb-3">Match Rules</h3>
+              <ul className="text-gray-500 dark:text-gray-400 space-y-2 text-sm">
+                <li>• Same DSA problem for both</li>
+                <li>• 30-minute time limit</li>
+                <li>• Fastest correct solution wins</li>
+                <li>• ELO rating changes apply</li>
+              </ul>
+            </div>
 
-          <div className="card">
-            <h3 className="text-lg font-bold mb-3">🏆 Rating System</h3>
-            <ul className="text-slate-400 space-y-2 text-sm">
-              <li>• Starting rating: 1200 (like Chess)</li>
-              <li>• Win against higher rated: +more points</li>
-              <li>• Win against lower rated: +fewer points</li>
-              <li>• Losses deduct points accordingly</li>
-            </ul>
+            <div className="card">
+              <h3 className="text-lg font-bold mb-3">How It Works</h3>
+              <ul className="text-gray-500 dark:text-gray-400 space-y-2 text-sm">
+                <li>1. Click Start Matchmaking</li>
+                <li>2. Wait for another player</li>
+                <li>3. Solve the problem faster</li>
+                <li>4. Win and climb the leaderboard!</li>
+              </ul>
+            </div>
           </div>
         </div>
       </main>
     </div>
   );
 }
-

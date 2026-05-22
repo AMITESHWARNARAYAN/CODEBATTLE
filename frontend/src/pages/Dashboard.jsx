@@ -4,10 +4,10 @@ import { useAuthStore } from '../store/authStore';
 import { useUserStore } from '../store/userStore';
 import { useMatchStore } from '../store/matchStore';
 import { useThemeStore } from '../store/themeStore';
-import { ArrowRightOnRectangleIcon, TrophyIcon, BoltIcon, UserGroupIcon, CheckIcon, XMarkIcon, Cog6ToothIcon, CalendarIcon, TargetIcon, SparklesIcon, SparklesIcon, ArrowTrendingUpIcon, AcademicCapIcon, CodeBracketIcon, BoltIcon, BookOpenIcon, ArrowRightIcon, PlayIcon, ClockIcon, BarChartIcon } from '@heroicons/react/24/solid';
+import { LogOut, Trophy, Zap, Users, Check, X, Settings, Calendar, Target, Brain, Sparkles, TrendingUp, Award, Code2, Swords, BookOpen, ArrowRight, Play, Clock, BarChart3 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getSocket, acceptChallenge as emitAcceptChallenge, rejectChallenge as emitRejectChallenge } from '../utils/socket';
-import NotificationBellIcon from '../components/NotificationBellIcon';
+import NotificationBell from '../components/NotificationBell';
 import ThemeToggle from '../components/ThemeToggle';
 
 export default function Dashboard() {
@@ -23,12 +23,13 @@ export default function Dashboard() {
   const [runningContestsCount, setRunningContestsCount] = useState(0);
   const [hoveredCard, setHoveredCard] = useState(null);
 
-  // TensorFlow color scheme
-  const bgColor = isDark ? '#0a0a0a' : '#ffffff';
-  const textColor = isDark ? '#ffffff' : '#1a1a1a';
-  const textMuted = isDark ? '#9ca3af' : '#6b7280';
-  const borderColor = isDark ? '#2a2a2a' : '#e5e7eb';
-  const cardBg = isDark ? '#1a1a1a' : '#ffffff';
+  // Modern professional color scheme
+  const bgColor = isDark ? 'bg-slate-950' : 'bg-white';
+  const textColor = isDark ? 'text-white' : 'text-gray-900';
+  const textMuted = isDark ? 'text-gray-400' : 'text-gray-600';
+  const borderColor = isDark ? 'border-slate-800' : 'border-gray-200';
+  const cardBg = isDark ? 'bg-slate-900' : 'bg-white';
+  const accentBg = isDark ? 'bg-slate-800' : 'bg-gray-50';
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -75,7 +76,6 @@ export default function Dashboard() {
       // Notify challenger via socket
       emitAcceptChallenge(matchId, challenge.challengerEmail);
 
-      toast.success('Challenge accepted! Starting match...');
       navigate(`/match/${matchId}`);
     } catch (error) {
       toast.error('Failed to accept challenge');
@@ -111,49 +111,46 @@ export default function Dashboard() {
 
   const stats = [
     {
-      label: 'ELO Rating',
-      value: user?.rating || 1200,
-      icon: TrophyIcon,
-      change: user?.rating > 1200 ? `+${user.rating - 1200}` : user?.rating < 1200 ? `${user.rating - 1200}` : '0',
-      color: 'orange'
+      label: 'Battle Rating',
+      value: user?.rating || 0,
+      icon: Swords,
+      change: user?.rating > 0 ? `+${user.rating}` : '0',
+      color: 'blue'
+    },
+    {
+      label: 'Contest Rating',
+      value: user?.contestRating || 0,
+      icon: Trophy,
+      change: user?.contestRating > 0 ? `+${user.contestRating}` : '0',
+      color: 'indigo'
     },
     {
       label: 'Total Wins',
       value: user?.wins || 0,
-      icon: BoltIcon,
+      icon: Zap,
       change: `${winRate}% WR`,
       color: 'green'
     },
     {
       label: 'Total Matches',
       value: user?.totalMatches || 0,
-      icon: BoltIcon,
+      icon: Users,
       change: `${user?.losses || 0} losses`,
-      color: 'blue'
-    },
-    {
-      label: 'Peak Rating',
-      value: user?.highestRating || user?.rating || 1200,
-      icon: AcademicCapIcon,
-      change: 'All-time best',
-      color: 'purple'
+      color: 'orange'
     }
   ];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
-      {/* Header - TensorFlow Style */}
-      <header className={`${cardBg} border-b ${borderColor} sticky top-0 z-50`} style={{ borderBottomWidth: '1px', borderBottomColor: isDark ? '#2a2a2a' : '#e5e7eb' }}>
+    <div className={`min-h-screen ${bgColor} transition-colors duration-200`}>
+      {/* Header - Modern Professional */}
+      <header className={`${cardBg} border-b ${borderColor} sticky top-0 z-50 backdrop-blur-sm`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             {/* Logo and Navigation */}
             <div className="flex items-center gap-8">
               <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/dashboard')}>
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg blur-sm opacity-50"></div>
-                  <div className="relative p-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg shadow-lg">
-                    <CodeBracketIcon className="w-5 h-5 text-white" />
-                  </div>
+                <div className="p-2 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg shadow-lg">
+                  <Code2 className="w-5 h-5 text-white" />
                 </div>
                 <h1 className={`text-xl font-bold ${textColor}`}>
                   CodeBattle
@@ -161,43 +158,23 @@ export default function Dashboard() {
               </div>
               
               {/* Navigation Links */}
-              <nav className="hidden lg:flex items-center gap-6">
-                <button
-                  onClick={() => navigate('/problems')}
-                  className={`text-sm font-medium transition-colors ${textMuted} hover:text-orange-500`}
-                >
-                  Problems
-                </button>
-                <button
-                  onClick={() => navigate('/contests')}
-                  className={`text-sm font-medium transition-colors ${textMuted} hover:text-orange-500`}
-                >
-                  Contests
-                </button>
-                <button
-                  onClick={() => navigate('/challenges')}
-                  className={`text-sm font-medium transition-colors ${textMuted} hover:text-orange-500`}
-                >
-                  Challenges
-                </button>
-                <button
-                  onClick={() => navigate('/resources')}
-                  className={`text-sm font-medium transition-colors ${textMuted} hover:text-orange-500`}
-                >
-                  Resources
-                </button>
-                <button
-                  onClick={() => navigate('/leaderboard')}
-                  className={`text-sm font-medium transition-colors ${textMuted} hover:text-orange-500`}
-                >
-                  Leaderboard
-                </button>
-                <button
-                  onClick={() => navigate('/discussions')}
-                  className={`text-sm font-medium transition-colors ${textMuted} hover:text-orange-500`}
-                >
-                  Community
-                </button>
+              <nav className="hidden lg:flex items-center gap-1">
+                {[
+                  { label: 'Problems', route: '/problems' },
+                  { label: 'Contests', route: '/contests' },
+                  { label: 'Challenges', route: '/challenges' },
+                  { label: 'Stories', route: '/stories' },
+                  { label: 'Leaderboard', route: '/leaderboard' },
+                  { label: 'Community', route: '/discussions' }
+                ].map((item) => (
+                  <button
+                    key={item.route}
+                    onClick={() => navigate(item.route)}
+                    className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${textMuted} hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-slate-800`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
               </nav>
             </div>
             
@@ -206,14 +183,14 @@ export default function Dashboard() {
               <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg border ${isDark ? 'bg-dark-800 border-dark-700' : 'bg-gray-50 border-gray-200'}`}>
                 <span className={`${textColor} font-medium text-sm`}>{user?.username}</span>
               </div>
-              <NotificationBellIcon />
+              <NotificationBell />
               <ThemeToggle />
               {user?.isAdmin && (
                 <button
                   onClick={() => navigate('/admin')}
                   className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg transition font-medium text-sm shadow-lg"
                 >
-                  <Cog6ToothIcon className="w-4 h-4" />
+                  <Settings className="w-4 h-4" />
                   <span className="hidden md:inline">Admin</span>
                 </button>
               )}
@@ -221,7 +198,7 @@ export default function Dashboard() {
                 onClick={handleLogout}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition font-medium text-sm border ${isDark ? 'bg-dark-800 hover:bg-dark-700 border-dark-700 text-white' : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-900'}`}
               >
-                <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                <LogOut className="w-4 h-4" />
                 <span className="hidden md:inline">Logout</span>
               </button>
             </div>
@@ -232,16 +209,15 @@ export default function Dashboard() {
       {/* Main Content with Sidebar */}
       <div className="flex">
         {/* Sidebar */}
-        <aside className={`hidden lg:block w-64 min-h-screen ${cardBg} border-r`} style={{ borderColor: isDark ? '#2a2a2a' : '#e5e7eb', borderRightWidth: '1px' }}>
+        <aside className={`hidden lg:block w-64 min-h-screen ${cardBg} border-r ${borderColor}`}>
           <div className="sticky top-20 p-6">
-            {/* UserIcon InformationCircleIcon Card */}
+            {/* User Info Card */}
             <div 
-              className={`${cardBg} rounded-xl p-4 border mb-6 cursor-pointer transition-all duration-300 hover:shadow-lg`}
-              style={{ borderColor: isDark ? '#2a2a2a' : '#e5e7eb', borderWidth: '1px' }}
+              className={`${cardBg} rounded-xl p-4 border-2 ${borderColor} mb-6 cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-orange-500`}
               onClick={() => navigate(`/profile/${user?.username}`)}
             >
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-orange-500 to-red-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-500 to-yellow-500 flex items-center justify-center text-white font-bold text-lg shadow-lg">
                   {user?.username?.charAt(0).toUpperCase()}
                 </div>
                 <div>
@@ -249,9 +225,13 @@ export default function Dashboard() {
                   <p className={`text-xs ${textMuted}`}>View Profile</p>
                 </div>
               </div>
-              <div className={`flex items-center justify-between py-2 px-3 rounded-lg ${isDark ? 'bg-dark-800' : 'bg-gray-50'}`}>
-                <span className={`text-xs ${textMuted}`}>ELO Rating</span>
-                <span className="text-sm font-bold text-orange-500">{user?.rating || 1200}</span>
+              <div className="flex items-center justify-between py-2 px-3 rounded-lg mb-2" style={{ backgroundColor: isDark ? 'rgba(30,30,30,0.5)' : '#f9fafb' }}>
+                <span className={`text-xs ${textMuted}`}>Battle Rating</span>
+                <span className="text-sm font-bold text-orange-500 dark:text-orange-400">{user?.rating || 0}</span>
+              </div>
+              <div className="flex items-center justify-between py-2 px-3 rounded-lg" style={{ backgroundColor: isDark ? 'rgba(30,30,30,0.5)' : '#f9fafb' }}>
+                <span className={`text-xs ${textMuted}`}>Contest Rating</span>
+                <span className="text-sm font-bold text-blue-500 dark:text-blue-400">{user?.contestRating || 0}</span>
               </div>
             </div>
 
@@ -259,62 +239,25 @@ export default function Dashboard() {
             <div className="mb-6">
               <h3 className={`text-xs font-semibold ${textMuted} uppercase tracking-wider mb-3`}>Quick Links</h3>
               <nav className="space-y-1">
-                <button
-                  onClick={() => navigate('/dashboard')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${textColor} hover:bg-orange-500 hover:text-white`}
-                >
-                  <BarChartIcon className="w-4 h-4" />
-                  <span className="text-sm font-medium">Dashboard</span>
-                </button>
-                <button
-                  onClick={() => navigate('/matchmaking')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${textMuted} hover:bg-orange-500 hover:text-white`}
-                >
-                  <BoltIcon className="w-4 h-4" />
-                  <span className="text-sm font-medium">Matchmaking</span>
-                </button>
-                <button
-                  onClick={() => navigate('/problems')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${textMuted} hover:bg-orange-500 hover:text-white`}
-                >
-                  <BookOpenIcon className="w-4 h-4" />
-                  <span className="text-sm font-medium">Problems</span>
-                </button>
-                <button
-                  onClick={() => navigate('/contests')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${textMuted} hover:bg-orange-500 hover:text-white`}
-                >
-                  <TrophyIcon className="w-4 h-4" />
-                  <span className="text-sm font-medium">Contests</span>
-                </button>
-                <button
-                  onClick={() => navigate('/challenges')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${textMuted} hover:bg-orange-500 hover:text-white`}
-                >
-                  <TargetIcon className="w-4 h-4" />
-                  <span className="text-sm font-medium">Challenges</span>
-                </button>
-                <button
-                  onClick={() => navigate('/daily-challenge')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${textMuted} hover:bg-orange-500 hover:text-white`}
-                >
-                  <CalendarIcon className="w-4 h-4" />
-                  <span className="text-sm font-medium">Daily Challenge</span>
-                </button>
-                <button
-                  onClick={() => navigate('/leaderboard')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${textMuted} hover:bg-orange-500 hover:text-white`}
-                >
-                  <AcademicCapIcon className="w-4 h-4" />
-                  <span className="text-sm font-medium">Leaderboard</span>
-                </button>
-                <button
-                  onClick={() => navigate('/submissions')}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${textMuted} hover:bg-orange-500 hover:text-white`}
-                >
-                  <CodeBracketIcon className="w-4 h-4" />
-                  <span className="text-sm font-medium">Submissions</span>
-                </button>
+                {[
+                  { icon: BarChart3, label: 'Dashboard', route: '/dashboard' },
+                  { icon: Swords, label: 'Matchmaking', route: '/matchmaking' },
+                  { icon: BookOpen, label: 'Problems', route: '/problems' },
+                  { icon: Trophy, label: 'Contests', route: '/contests' },
+                  { icon: Target, label: 'Challenges', route: '/challenges' },
+                  { icon: Calendar, label: 'Daily Challenge', route: '/daily-challenge' },
+                  { icon: Award, label: 'Leaderboard', route: '/leaderboard' },
+                  { icon: Code2, label: 'Submissions', route: '/submissions' }
+                ].map(({ icon: Icon, label, route }) => (
+                  <button
+                    key={route}
+                    onClick={() => navigate(route)}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${textMuted} hover:bg-orange-500/10 hover:text-orange-500 dark:hover:text-orange-400`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="text-sm font-medium">{label}</span>
+                  </button>
+                ))}
               </nav>
             </div>
 
@@ -335,8 +278,12 @@ export default function Dashboard() {
                   <span className={`text-sm font-bold ${textColor}`}>{winRate}%</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className={`text-xs ${textMuted}`}>Peak Rating</span>
-                  <span className="text-sm font-bold text-orange-500">{user?.highestRating || user?.rating || 1200}</span>
+                  <span className={`text-xs ${textMuted}`}>Peak Battle</span>
+                  <span className="text-sm font-bold text-orange-500">{user?.highestRating || user?.rating || 0}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className={`text-xs ${textMuted}`}>Peak Contest</span>
+                  <span className="text-sm font-bold text-blue-500">{user?.contestHighestRating || user?.contestRating || 0}</span>
                 </div>
               </div>
             </div>
@@ -370,12 +317,14 @@ export default function Dashboard() {
                   borderWidth: '1px'
                 }}
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`p-3 rounded-lg ${isDark ? 'bg-dark-800' : 'bg-gray-50'}`}>
-                    <Icon className="w-6 h-6 text-orange-500" />
-                  </div>
-                  <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${isDark ? 'bg-dark-800 text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
-                    <ArrowTrendingUpIcon className="w-3 h-3" />
+                <div className="flex items-start justify-end mb-4">
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                    stat.color === 'blue' ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300' :
+                    stat.color === 'green' ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300' :
+                    stat.color === 'indigo' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300' :
+                    'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300'
+                  }`}>
+                    <TrendingUp className="w-3 h-3" />
                     {stat.change}
                   </div>
                 </div>
@@ -388,12 +337,12 @@ export default function Dashboard() {
           })}
         </div>
 
-        {/* Pending Challenges - TensorFlow Style */}
+        {/* Pending Challenges */}
         {pendingChallenges.length > 0 && (
           <div className="mb-12">
             <div className="flex items-center gap-3 mb-6">
               <h3 className={`text-2xl font-bold ${textColor}`}>Pending Challenges</h3>
-              <span className="px-3 py-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-full text-xs font-semibold text-white shadow-lg">
+              <span className="px-3 py-1 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-full text-xs font-semibold text-white shadow-lg">
                 {pendingChallenges.length} New
               </span>
             </div>
@@ -401,13 +350,7 @@ export default function Dashboard() {
               {pendingChallenges.map((challenge) => (
                 <div
                   key={challenge._id}
-                  className={`${cardBg} rounded-xl p-6 border-l-4 border-orange-500 shadow-lg transition-all duration-300 hover:shadow-2xl`}
-                  style={{ 
-                    borderTopWidth: '1px',
-                    borderRightWidth: '1px',
-                    borderBottomWidth: '1px',
-                    borderColor: isDark ? '#2a2a2a' : '#e5e7eb'
-                  }}
+                  className={`${cardBg} rounded-xl p-6 border-l-4 border-orange-500 shadow-lg transition-all duration-300 hover:shadow-2xl border ${borderColor}`}
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div>
@@ -419,7 +362,7 @@ export default function Dashboard() {
                     </span>
                   </div>
 
-                  <div className={`mb-4 p-4 rounded-lg border ${isDark ? 'bg-dark-800 border-dark-700' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className={`mb-4 p-4 rounded-lg border ${borderColor} ${accentBg}`}>
                     <p className={`text-xs ${textMuted} mb-1`}>Problem</p>
                     <p className={`font-semibold ${textColor} mb-2`}>{challenge.problem?.title}</p>
                     <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
@@ -435,17 +378,17 @@ export default function Dashboard() {
                     <button
                       onClick={() => handleAcceptChallenge(challenge._id, challenge)}
                       disabled={challengeLoading[challenge._id]}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm shadow-lg"
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm shadow-lg"
                     >
-                      <CheckIcon className="w-4 h-4" />
+                      <Check className="w-4 h-4" />
                       {challengeLoading[challenge._id] ? 'Accepting...' : 'Accept'}
                     </button>
                     <button
                       onClick={() => handleRejectChallenge(challenge._id, challenge)}
                       disabled={challengeLoading[challenge._id]}
-                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm border ${isDark ? 'bg-dark-800 hover:bg-dark-700 border-dark-700 text-white' : 'bg-gray-100 hover:bg-gray-200 border-gray-200 text-gray-900'}`}
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm border ${borderColor} ${accentBg} ${textColor} hover:border-red-400 hover:text-red-600`}
                     >
-                      <XMarkIcon className="w-4 h-4" />
+                      <X className="w-4 h-4" />
                       {challengeLoading[challenge._id] ? 'Rejecting...' : 'Reject'}
                     </button>
                   </div>
@@ -455,23 +398,19 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Quick Action Banners - TensorFlow Style */}
+        {/* Quick Action Banners */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           {/* Daily Challenge Banner */}
           <div
             onClick={() => navigate('/daily-challenge')}
             onMouseEnter={() => setHoveredCard('daily')}
             onMouseLeave={() => setHoveredCard(null)}
-            className={`${cardBg} rounded-xl p-6 cursor-pointer transition-all duration-300 border ${
-              hoveredCard === 'daily' ? 'transform scale-105 shadow-2xl' : 'shadow-lg'
+            className={`${cardBg} rounded-xl p-6 cursor-pointer transition-all duration-300 border ${borderColor} ${
+              hoveredCard === 'daily' ? 'transform scale-105 shadow-2xl border-orange-500' : 'shadow-lg'
             }`}
-            style={{ borderColor: isDark ? '#2a2a2a' : '#e5e7eb', borderWidth: '1px' }}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg shadow-lg">
-                <CalendarIcon className="w-6 h-6 text-white" />
-              </div>
-              <ArrowRightIcon className="w-5 h-5 text-orange-500" />
+            <div className="flex items-center justify-end mb-4">
+              <ArrowRight className={`w-5 h-5 ${hoveredCard === 'daily' ? 'text-orange-600' : textMuted}`} />
             </div>
             <h3 className={`text-lg font-bold ${textColor} mb-2`}>Daily Challenge</h3>
             <p className={`text-sm ${textMuted}`}>
@@ -484,16 +423,12 @@ export default function Dashboard() {
             onClick={() => navigate('/challenges')}
             onMouseEnter={() => setHoveredCard('challenges')}
             onMouseLeave={() => setHoveredCard(null)}
-            className={`${cardBg} rounded-xl p-6 cursor-pointer transition-all duration-300 border ${
-              hoveredCard === 'challenges' ? 'transform scale-105 shadow-2xl' : 'shadow-lg'
+            className={`${cardBg} rounded-xl p-6 cursor-pointer transition-all duration-300 border ${borderColor} ${
+              hoveredCard === 'challenges' ? 'transform scale-105 shadow-2xl border-yellow-500' : 'shadow-lg'
             }`}
-            style={{ borderColor: isDark ? '#2a2a2a' : '#e5e7eb', borderWidth: '1px' }}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg shadow-lg">
-                <TargetIcon className="w-6 h-6 text-white" />
-              </div>
-              <ArrowRightIcon className="w-5 h-5 text-purple-500" />
+            <div className="flex items-center justify-end mb-4">
+              <ArrowRight className={`w-5 h-5 ${hoveredCard === 'challenges' ? 'text-yellow-600' : textMuted}`} />
             </div>
             <h3 className={`text-lg font-bold ${textColor} mb-2`}>Challenges</h3>
             <p className={`text-sm ${textMuted}`}>
@@ -506,16 +441,12 @@ export default function Dashboard() {
             onClick={() => navigate('/contests')}
             onMouseEnter={() => setHoveredCard('contests')}
             onMouseLeave={() => setHoveredCard(null)}
-            className={`${cardBg} rounded-xl p-6 cursor-pointer transition-all duration-300 border ${
-              hoveredCard === 'contests' ? 'transform scale-105 shadow-2xl' : 'shadow-lg'
+            className={`${cardBg} rounded-xl p-6 cursor-pointer transition-all duration-300 border ${borderColor} ${
+              hoveredCard === 'contests' ? 'transform scale-105 shadow-2xl border-orange-600' : 'shadow-lg'
             }`}
-            style={{ borderColor: isDark ? '#2a2a2a' : '#e5e7eb', borderWidth: '1px' }}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg shadow-lg">
-                <TrophyIcon className="w-6 h-6 text-white" />
-              </div>
-              <ArrowRightIcon className="w-5 h-5 text-blue-500" />
+            <div className="flex items-center justify-end mb-4">
+              <ArrowRight className={`w-5 h-5 ${hoveredCard === 'contests' ? 'text-orange-700' : textMuted}`} />
             </div>
             <h3 className={`text-lg font-bold ${textColor} mb-2`}>Contests</h3>
             <p className={`text-sm ${textMuted}`}>
@@ -531,7 +462,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Game Modes - TensorFlow Style */}
+        {/* Game Modes */}
         <div className="mb-12">
           <h3 className={`text-2xl font-bold ${textColor} mb-6`}>Choose Your Mode</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -540,19 +471,17 @@ export default function Dashboard() {
               onClick={() => navigate('/matchmaking')}
               onMouseEnter={() => setHoveredCard('matchmaking')}
               onMouseLeave={() => setHoveredCard(null)}
-              className={`${cardBg} rounded-xl p-8 border cursor-pointer transition-all duration-300 ${
+              className={`${cardBg} rounded-xl p-8 border ${borderColor} cursor-pointer transition-all duration-300 ${
                 hoveredCard === 'matchmaking' ? 'transform scale-105 shadow-2xl' : 'shadow-lg'
               }`}
-              style={{ borderColor: isDark ? '#2a2a2a' : '#e5e7eb', borderWidth: '1px' }}
             >
-              <div className="text-5xl mb-4">⚡</div>
               <h4 className={`text-xl font-bold ${textColor} mb-3`}>Matchmaking</h4>
               <p className={`text-sm ${textMuted} mb-6`}>
                 Get matched with players of similar skill level and compete in real-time battles.
               </p>
-              <div className="flex items-center gap-2 text-orange-500 font-semibold text-sm">
+              <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400 font-semibold text-sm hover:text-orange-700 transition">
                 Start Matching
-                <ArrowRightIcon className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4" />
               </div>
             </div>
 
@@ -561,19 +490,17 @@ export default function Dashboard() {
               onClick={() => navigate('/friend-challenge')}
               onMouseEnter={() => setHoveredCard('friend')}
               onMouseLeave={() => setHoveredCard(null)}
-              className={`${cardBg} rounded-xl p-8 border cursor-pointer transition-all duration-300 ${
+              className={`${cardBg} rounded-xl p-8 border ${borderColor} cursor-pointer transition-all duration-300 ${
                 hoveredCard === 'friend' ? 'transform scale-105 shadow-2xl' : 'shadow-lg'
               }`}
-              style={{ borderColor: isDark ? '#2a2a2a' : '#e5e7eb', borderWidth: '1px' }}
             >
-              <div className="text-5xl mb-4">👥</div>
               <h4 className={`text-xl font-bold ${textColor} mb-3`}>Challenge Friend</h4>
               <p className={`text-sm ${textMuted} mb-6`}>
-                PaperAirplaneIcon an invitation link to your friend and compete head-to-head in custom matches.
+                Send an invitation link to your friend and compete head-to-head in custom matches.
               </p>
-              <div className="flex items-center gap-2 text-orange-500 font-semibold text-sm">
+              <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400 font-semibold text-sm hover:text-yellow-700 transition">
                 Challenge Now
-                <ArrowRightIcon className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4" />
               </div>
             </div>
 
@@ -582,19 +509,17 @@ export default function Dashboard() {
               onClick={() => navigate('/match/solo')}
               onMouseEnter={() => setHoveredCard('solo')}
               onMouseLeave={() => setHoveredCard(null)}
-              className={`${cardBg} rounded-xl p-8 border cursor-pointer transition-all duration-300 ${
+              className={`${cardBg} rounded-xl p-8 border ${borderColor} cursor-pointer transition-all duration-300 ${
                 hoveredCard === 'solo' ? 'transform scale-105 shadow-2xl' : 'shadow-lg'
               }`}
-              style={{ borderColor: isDark ? '#2a2a2a' : '#e5e7eb', borderWidth: '1px' }}
             >
-              <div className="text-5xl mb-4">🎯</div>
               <h4 className={`text-xl font-bold ${textColor} mb-3`}>Solo Practice</h4>
               <p className={`text-sm ${textMuted} mb-6`}>
                 Practice DSA problems at your own pace without time pressure or competition.
               </p>
               <div className="flex items-center gap-2 text-orange-500 font-semibold text-sm">
                 Start Practice
-                <ArrowRightIcon className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4" />
               </div>
             </div>
           </div>
@@ -613,10 +538,7 @@ export default function Dashboard() {
               }`}
               style={{ borderColor: isDark ? '#2a2a2a' : '#e5e7eb', borderWidth: '1px' }}
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="text-4xl">📚</div>
-                <BookOpenIcon className="w-5 h-5 text-orange-500" />
-              </div>
+
               <h4 className={`text-lg font-bold ${textColor} mb-2`}>Practice Problems</h4>
               <p className={`text-sm ${textMuted}`}>Browse problems by category</p>
             </div>
@@ -630,10 +552,7 @@ export default function Dashboard() {
               }`}
               style={{ borderColor: isDark ? '#2a2a2a' : '#e5e7eb', borderWidth: '1px' }}
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="text-4xl">🏆</div>
-                <TrophyIcon className="w-5 h-5 text-orange-500" />
-              </div>
+
               <h4 className={`text-lg font-bold ${textColor} mb-2`}>Leaderboard</h4>
               <p className={`text-sm ${textMuted}`}>See global rankings</p>
             </div>
@@ -647,10 +566,7 @@ export default function Dashboard() {
               }`}
               style={{ borderColor: isDark ? '#2a2a2a' : '#e5e7eb', borderWidth: '1px' }}
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="text-4xl">📊</div>
-                <BarChartIcon className="w-5 h-5 text-orange-500" />
-              </div>
+
               <h4 className={`text-lg font-bold ${textColor} mb-2`}>Your Profile</h4>
               <p className={`text-sm ${textMuted}`}>View your statistics</p>
             </div>
@@ -664,10 +580,7 @@ export default function Dashboard() {
               }`}
               style={{ borderColor: isDark ? '#2a2a2a' : '#e5e7eb', borderWidth: '1px' }}
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="text-4xl">📝</div>
-                <CodeBracketIcon className="w-5 h-5 text-orange-500" />
-              </div>
+
               <h4 className={`text-lg font-bold ${textColor} mb-2`}>Submissions</h4>
               <p className={`text-sm ${textMuted}`}>View your code history</p>
             </div>

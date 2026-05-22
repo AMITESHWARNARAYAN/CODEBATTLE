@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import axios from 'axios';
-import { ChevronLeftIcon, Search, BarChartIcon, ChevronDownIcon, ChevronUpIcon, BuildingOfficeIcon, CheckIcon, ArrowTrendingUpIcon, CheckCircleIcon, CodeBracketIcon, FunnelIcon, XMarkIcon, SparklesIcon, AcademicCapIcon } from '@heroicons/react/24/solid';
+import { ChevronLeft, Search, ChevronDown, ChevronUp, Building2, ListChecks, CheckCircle2, Code2, X, Award, Circle, Flame, Tag, ChevronRight } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -17,143 +17,93 @@ export default function Problems() {
   const [selectedDifficulty, setSelectedDifficulty] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
   const [selectedList, setSelectedList] = useState('');
-  const [selectedFrequency, setSelectedFrequency] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
-  const [sortBy, setSortBy] = useState('acceptance');
-  
+  const [selectedTag, setSelectedTag] = useState('');
+  const [sortBy, setSortBy] = useState('');
+  const [allTags, setAllTags] = useState([]);
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
+
   // Sidebar collapse states
-  const [companiesExpanded, setCompaniesExpanded] = useState(true);
-  const [listsExpanded, setListsExpanded] = useState(true);
-  const [frequencyExpanded, setFrequencyExpanded] = useState(true);
-  const [statusExpanded, setStatusExpanded] = useState(true);
+  const [topicsExpanded, setTopicsExpanded] = useState(true);
+  const [companiesExpanded, setCompaniesExpanded] = useState(false);
+  const [listsExpanded, setListsExpanded] = useState(false);
+  const [statusExpanded, setStatusExpanded] = useState(false);
   const [difficultyExpanded, setDifficultyExpanded] = useState(true);
 
-  const companies = ['Google', 'Meta', 'Amazon', 'Microsoft', 'Apple', 'Netflix', 'Tesla', 'Adobe', 'Bloomberg', 'Uber', 'LinkedIn', 'Oracle', 'Salesforce', 'Twitter'];
-  const lists = ['Top 100 Liked', 'Blind 75', 'NeetCodeBracketIcon 150', 'Top Interview Questions', 'Beginner Friendly', 'Amazon Top 50', 'Google Top 50', 'Meta Top 50', 'Microsoft Top 50', 'Apple Top 50'];
-  const frequencies = ['6 Months', '1 Year', '2 Years', 'All Time'];
-  const statuses = ['Solved', 'Unsolved'];
+  // Search debounce
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery), 400);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  const companies = ['Google', 'Meta', 'Amazon', 'Microsoft', 'Apple', 'Netflix', 'Adobe', 'Bloomberg', 'Uber'];
+  const lists = ['Top 100 Liked', 'Blind 75', 'NeetCode 150', 'Top Interview Questions', 'Beginner Friendly'];
   const difficulties = ['Easy', 'Medium', 'Hard'];
 
-  useEffect(() => {
-    fetchProblems();
-  }, [selectedDifficulty, selectedCompany, selectedList, selectedFrequency, selectedStatus, searchQuery, sortBy]);
-
-  const fetchProblems = async () => {
+  const fetchProblems = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      
-      // Fetch all problems
-      const problemsResponse = await axios.get(`${API_URL}/problems`, {
+      const params = new URLSearchParams();
+      if (selectedDifficulty) params.set('difficulty', selectedDifficulty);
+      if (selectedTag) params.set('tag', selectedTag);
+      if (selectedCompany) params.set('company', selectedCompany);
+      if (selectedList) params.set('list', selectedList);
+      if (selectedStatus) params.set('status', selectedStatus.toLowerCase());
+      if (debouncedSearch) params.set('search', debouncedSearch);
+      if (sortBy) params.set('sort', sortBy);
+      params.set('page', page);
+      params.set('limit', 50);
+
+      const res = await axios.get(`${API_URL}/problems?${params}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
-      let allProblems = problemsResponse.data;
 
-      // Fetch metadata for each problem and merge
-      const problemsWithMetadata = await Promise.all(
-        allProblems.map(async (problem) => {
-          try {
-            const metadataResponse = await axios.get(`${API_URL}/problem-metadata/${problem._id}`);
-            return { ...problem, metadata: metadataResponse.data };
-          } catch (error) {
-            return { ...problem, metadata: null };
-          }
-        })
-      );
-
-      let filteredProblems = problemsWithMetadata;
-
-      // Apply filters
-      if (searchQuery) {
-        filteredProblems = filteredProblems.filter(p =>
-          p.title.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+      // Handle both old format (array) and new format (object with problems)
+      if (Array.isArray(res.data)) {
+        setProblems(res.data);
+        setPagination({ total: res.data.length, totalPages: 1 });
+        setAllTags([]);
+      } else {
+        setProblems(res.data.problems || []);
+        setPagination(res.data.pagination || { total: 0, totalPages: 1 });
+        if (res.data.allTags?.length) setAllTags(res.data.allTags);
       }
-
-      if (selectedDifficulty) {
-        filteredProblems = filteredProblems.filter(p => p.difficulty === selectedDifficulty);
-      }
-
-      if (selectedCompany) {
-        filteredProblems = filteredProblems.filter(p =>
-          p.metadata?.companies?.some(c => c.name === selectedCompany)
-        );
-      }
-
-      if (selectedList) {
-        filteredProblems = filteredProblems.filter(p =>
-          p.metadata?.lists?.includes(selectedList)
-        );
-      }
-
-      if (selectedFrequency) {
-        filteredProblems = filteredProblems.filter(p => {
-          const freq = getFrequencyValue(p.metadata?.frequencyData);
-          return freq > 0;
-        });
-      }
-
-      if (selectedStatus === 'Solved') {
-        // Mock - in real app would check user's solved problems
-        filteredProblems = filteredProblems.filter((_, idx) => idx % 3 === 0);
-      } else if (selectedStatus === 'Unsolved') {
-        filteredProblems = filteredProblems.filter((_, idx) => idx % 3 !== 0);
-      }
-
-      // Sort problems
-      filteredProblems.sort((a, b) => {
-        if (sortBy === 'acceptance') {
-          return (b.acceptanceRate || 0) - (a.acceptanceRate || 0);
-        } else if (sortBy === 'difficulty') {
-          const diffOrder = { 'Easy': 1, 'Medium': 2, 'Hard': 3 };
-          return diffOrder[a.difficulty] - diffOrder[b.difficulty];
-        } else if (sortBy === 'submissions') {
-          return (b.totalSubmissions || 0) - (a.totalSubmissions || 0);
-        } else if (sortBy === 'frequency') {
-          const freqA = getFrequencyValue(a.metadata?.frequencyData);
-          const freqB = getFrequencyValue(b.metadata?.frequencyData);
-          return freqB - freqA;
-        }
-        return 0;
-      });
-
-      setProblems(filteredProblems);
     } catch (error) {
       console.error('Failed to fetch problems:', error);
       toast.error('Failed to load problems');
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDifficulty, selectedTag, selectedCompany, selectedList, selectedStatus, debouncedSearch, sortBy, page]);
 
-  const getFrequencyValue = (frequencyData) => {
-    if (!frequencyData) return 0;
-    if (selectedFrequency === '6 Months') return frequencyData.sixMonths || 0;
-    if (selectedFrequency === '1 Year') return frequencyData.oneYear || 0;
-    if (selectedFrequency === '2 Years') return frequencyData.twoYears || 0;
-    if (selectedFrequency === 'All Time') return frequencyData.allTime || 0;
-    return frequencyData.allTime || 0;
-  };
+  useEffect(() => { fetchProblems(); }, [fetchProblems]);
+  useEffect(() => { setPage(1); }, [selectedDifficulty, selectedTag, selectedCompany, selectedList, selectedStatus, debouncedSearch, sortBy]);
 
-  const handleProblemClick = (problemId) => {
-    navigate(`/problem/${problemId}`);
-  };
+  const activeFiltersCount = [selectedDifficulty, selectedCompany, selectedList, selectedStatus, selectedTag].filter(Boolean).length;
+  const clearFilters = () => { setSelectedDifficulty(''); setSelectedCompany(''); setSelectedList(''); setSelectedStatus(''); setSelectedTag(''); setSearchQuery(''); };
 
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty) {
-      case 'Easy':
-        return 'text-green-400';
-      case 'Medium':
-        return 'text-yellow-400';
-      case 'Hard':
-        return 'text-red-400';
-      default:
-        return 'text-slate-400';
-    }
-  };
+  const diffColor = (d) => d === 'Easy' ? 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30' : d === 'Medium' ? 'text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30' : 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30';
+  const diffDot = (d) => d === 'Easy' ? 'bg-green-500' : d === 'Medium' ? 'bg-orange-500' : 'bg-red-500';
 
-  const activeFiltersCount = [selectedDifficulty, selectedCompany, selectedList, selectedFrequency, selectedStatus].filter(Boolean).length;
+  // Sidebar filter section component
+  const FilterSection = ({ title, icon: Icon, expanded, setExpanded, children }) => (
+    <div className="mb-3">
+      <button onClick={() => setExpanded(!expanded)} className="flex items-center justify-between w-full text-sm font-medium mb-1.5 text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition">
+        <span className="flex items-center gap-2"><Icon className="w-4 h-4" />{title}</span>
+        {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+      </button>
+      {expanded && children}
+    </div>
+  );
+
+  const FilterButton = ({ label, active, onClick }) => (
+    <button onClick={onClick} className={`w-full text-left px-3 py-1.5 rounded text-sm transition ${active ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium' : 'hover:bg-gray-100 dark:hover:bg-dark-800 text-gray-700 dark:text-gray-300'}`}>{label}</button>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-dark-950">
@@ -161,19 +111,12 @@ export default function Problems() {
       <header className="bg-white dark:bg-dark-900 border-b border-gray-200 dark:border-dark-800 sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-dark-800 rounded-lg transition"
-            >
-              <ChevronLeftIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            <button onClick={() => navigate('/')} className="p-2 hover:bg-gray-100 dark:hover:bg-dark-800 rounded-lg transition">
+              <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             </button>
             <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-gray-900 dark:bg-white rounded-lg">
-                <CodeBracketIcon className="w-5 h-5 text-white dark:text-gray-900" />
-              </div>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Practice Problems
-              </h1>
+              <div className="p-1.5 bg-gray-900 dark:bg-white rounded-lg"><Code2 className="w-5 h-5 text-white dark:text-gray-900" /></div>
+              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Practice Problems</h1>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -185,322 +128,233 @@ export default function Problems() {
         </div>
       </header>
 
-      {/* Main Content with Sidebar */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex gap-6">
-          {/* Sidebar - Filters */}
-          <div className="w-64 flex-shrink-0">
+          {/* ═══ SIDEBAR ═══ */}
+          <div className="w-64 flex-shrink-0 hidden lg:block">
             <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-lg p-5 sticky top-24">
-              <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center justify-between mb-4">
                 <h2 className="text-base font-semibold text-gray-900 dark:text-white">Filters</h2>
                 {activeFiltersCount > 0 && (
-                  <span className="px-2 py-0.5 bg-gray-200 dark:bg-dark-800 border border-gray-300 dark:border-dark-700 rounded-full text-xs font-semibold text-gray-700 dark:text-gray-300">
-                    {activeFiltersCount}
-                  </span>
-                )}
-              </div>
-              
-              {/* Companies FunnelIcon */}
-              <div className="mb-4">
-                <button
-                  onClick={() => setCompaniesExpanded(!companiesExpanded)}
-                  className="flex items-center justify-between w-full text-sm font-medium mb-2 text-gray-900 dark:text-white"
-                >
-                  <span className="flex items-center gap-2">
-                    <BuildingOfficeIcon className="w-4 h-4" />
-                    Companies
-                  </span>
-                  {companiesExpanded ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
-                </button>
-                {companiesExpanded && (
-                  <div className="space-y-1 max-h-48 overflow-y-auto">
-                    {companies.map(company => (
-                      <button
-                        key={company}
-                        onClick={() => setSelectedCompany(selectedCompany === company ? '' : company)}
-                        className={`w-full text-left px-3 py-1.5 rounded text-sm transition ${
-                          selectedCompany === company
-                            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium'
-                            : 'hover:bg-gray-100 dark:hover:bg-dark-800 text-gray-700 dark:text-gray-300'
-                        }`}
-                      >
-                        {company}
-                      </button>
-                    ))}
-                  </div>
+                  <span className="px-2 py-0.5 bg-gray-200 dark:bg-dark-800 border border-gray-300 dark:border-dark-700 rounded-full text-xs font-semibold text-gray-700 dark:text-gray-300">{activeFiltersCount}</span>
                 )}
               </div>
 
-              {/* Lists FunnelIcon */}
-              <div className="mb-4">
-                <button
-                  onClick={() => setListsExpanded(!listsExpanded)}
-                  className="flex items-center justify-between w-full text-sm font-medium mb-2 text-gray-900 dark:text-white"
-                >
-                  <span className="flex items-center gap-2">
-                    <CheckIcon className="w-4 h-4" />
-                    Lists
-                  </span>
-                  {listsExpanded ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
-                </button>
-                {listsExpanded && (
-                  <div className="space-y-1 max-h-48 overflow-y-auto">
-                    {lists.map(list => (
-                      <button
-                        key={list}
-                        onClick={() => setSelectedList(selectedList === list ? '' : list)}
-                        className={`w-full text-left px-3 py-1.5 rounded text-sm transition ${
-                          selectedList === list
-                            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium'
-                            : 'hover:bg-gray-100 dark:hover:bg-dark-800 text-gray-700 dark:text-gray-300'
-                        }`}
-                      >
-                        {list}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              {/* ── TOPICS (Tags) ── */}
+              <FilterSection title="Topics" icon={Tag} expanded={topicsExpanded} setExpanded={setTopicsExpanded}>
+                <div className="space-y-0.5 max-h-56 overflow-y-auto pr-1">
+                  {allTags.length > 0 ? allTags.map(tag => (
+                    <FilterButton key={tag} label={tag} active={selectedTag === tag} onClick={() => setSelectedTag(selectedTag === tag ? '' : tag)} />
+                  )) : (
+                    <p className="text-xs text-gray-500 dark:text-gray-500 px-3 py-2">No topics available</p>
+                  )}
+                </div>
+              </FilterSection>
 
-              {/* Frequency FunnelIcon */}
-              <div className="mb-4">
-                <button
-                  onClick={() => setFrequencyExpanded(!frequencyExpanded)}
-                  className="flex items-center justify-between w-full text-sm font-medium mb-2 text-gray-900 dark:text-white"
-                >
-                  <span className="flex items-center gap-2">
-                    <ArrowTrendingUpIcon className="w-4 h-4" />
-                    Frequency
-                  </span>
-                  {frequencyExpanded ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
-                </button>
-                {frequencyExpanded && (
-                  <div className="space-y-1">
-                    {frequencies.map(freq => (
-                      <button
-                        key={freq}
-                        onClick={() => setSelectedFrequency(selectedFrequency === freq ? '' : freq)}
-                        className={`w-full text-left px-3 py-1.5 rounded text-sm transition ${
-                          selectedFrequency === freq
-                            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium'
-                            : 'hover:bg-gray-100 dark:hover:bg-dark-800 text-gray-700 dark:text-gray-300'
-                        }`}
-                      >
-                        {freq}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              {/* ── DIFFICULTY ── */}
+              <FilterSection title="Difficulty" icon={Award} expanded={difficultyExpanded} setExpanded={setDifficultyExpanded}>
+                <div className="space-y-0.5">
+                  {difficulties.map(d => (
+                    <FilterButton key={d} label={d} active={selectedDifficulty === d} onClick={() => setSelectedDifficulty(selectedDifficulty === d ? '' : d)} />
+                  ))}
+                </div>
+              </FilterSection>
 
-              {/* Status FunnelIcon */}
-              <div className="mb-4">
-                <button
-                  onClick={() => setStatusExpanded(!statusExpanded)}
-                  className="flex items-center justify-between w-full text-sm font-medium mb-2 text-gray-900 dark:text-white"
-                >
-                  <span className="flex items-center gap-2">
-                    <CheckCircleIcon className="w-4 h-4" />
-                    Status
-                  </span>
-                  {statusExpanded ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
-                </button>
-                {statusExpanded && (
-                  <div className="space-y-1">
-                    {statuses.map(status => (
-                      <button
-                        key={status}
-                        onClick={() => setSelectedStatus(selectedStatus === status ? '' : status)}
-                        className={`w-full text-left px-3 py-1.5 rounded text-sm transition ${
-                          selectedStatus === status
-                            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium'
-                            : 'hover:bg-gray-100 dark:hover:bg-dark-800 text-gray-700 dark:text-gray-300'
-                        }`}
-                      >
-                        {status}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              {/* ── STATUS ── */}
+              <FilterSection title="Status" icon={CheckCircle2} expanded={statusExpanded} setExpanded={setStatusExpanded}>
+                <div className="space-y-0.5">
+                  {['Solved', 'Unsolved'].map(s => (
+                    <FilterButton key={s} label={s} active={selectedStatus === s} onClick={() => setSelectedStatus(selectedStatus === s ? '' : s)} />
+                  ))}
+                </div>
+              </FilterSection>
 
-              {/* Difficulty FunnelIcon */}
-              <div className="mb-4">
-                <button
-                  onClick={() => setDifficultyExpanded(!difficultyExpanded)}
-                  className="flex items-center justify-between w-full text-sm font-medium mb-2 text-gray-900 dark:text-white"
-                >
-                  <span className="flex items-center gap-2">
-                    <AcademicCapIcon className="w-4 h-4" />
-                    Difficulty
-                  </span>
-                  {difficultyExpanded ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
-                </button>
-                {difficultyExpanded && (
-                  <div className="space-y-1">
-                    {difficulties.map(diff => (
-                      <button
-                        key={diff}
-                        onClick={() => setSelectedDifficulty(selectedDifficulty === diff ? '' : diff)}
-                        className={`w-full text-left px-3 py-1.5 rounded text-sm transition ${
-                          selectedDifficulty === diff
-                            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium'
-                            : 'hover:bg-gray-100 dark:hover:bg-dark-800 text-gray-700 dark:text-gray-300'
-                        }`}
-                      >
-                        {diff}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              {/* ── COMPANIES ── */}
+              <FilterSection title="Companies" icon={Building2} expanded={companiesExpanded} setExpanded={setCompaniesExpanded}>
+                <div className="space-y-0.5 max-h-48 overflow-y-auto">
+                  {companies.map(c => (
+                    <FilterButton key={c} label={c} active={selectedCompany === c} onClick={() => setSelectedCompany(selectedCompany === c ? '' : c)} />
+                  ))}
+                </div>
+              </FilterSection>
 
-              {/* Clear Filters */}
+              {/* ── LISTS ── */}
+              <FilterSection title="Lists" icon={ListChecks} expanded={listsExpanded} setExpanded={setListsExpanded}>
+                <div className="space-y-0.5 max-h-48 overflow-y-auto">
+                  {lists.map(l => (
+                    <FilterButton key={l} label={l} active={selectedList === l} onClick={() => setSelectedList(selectedList === l ? '' : l)} />
+                  ))}
+                </div>
+              </FilterSection>
+
               {activeFiltersCount > 0 && (
-                <button
-                  onClick={() => {
-                    setSelectedCompany('');
-                    setSelectedList('');
-                    setSelectedFrequency('');
-                    setSelectedStatus('');
-                    setSelectedDifficulty('');
-                    setSearchQuery('');
-                  }}
-                  className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition flex items-center justify-center gap-2"
-                >
-                  <XMarkIcon className="w-4 h-4" />
-                  Clear All
+                <button onClick={clearFilters} className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition flex items-center justify-center gap-2 mt-2">
+                  <X className="w-4 h-4" /> Clear All
                 </button>
               )}
             </div>
           </div>
 
-          {/* Problems List */}
-          <div className="flex-1">
-            {/* Search Bar */}
+          {/* ═══ MAIN CONTENT ═══ */}
+          <div className="flex-1 min-w-0">
+            {/* Active Tag Indicator */}
+            {selectedTag && (
+              <div className="mb-4 flex items-center gap-2 bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-lg px-4 py-3">
+                <Tag className="w-4 h-4 text-orange-500" />
+                <span className="text-sm font-medium text-gray-900 dark:text-white">Topic: <span className="text-orange-600 dark:text-orange-400">{selectedTag}</span></span>
+                <button onClick={() => setSelectedTag('')} className="ml-auto p-1 hover:bg-gray-100 dark:hover:bg-dark-800 rounded transition"><X className="w-3.5 h-3.5 text-gray-500" /></button>
+              </div>
+            )}
+
+            {/* Search */}
             <div className="mb-5">
               <div className="relative">
                 <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search problems..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-gray-400 dark:focus:border-gray-600 transition"
-                />
+                <input type="text" placeholder="Search problems..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-gray-400 dark:focus:border-gray-600 transition" />
               </div>
             </div>
 
-            {/* Stats and Sort Options */}
-            <div className="flex items-center justify-between mb-4">
+            {/* Stats + Sort */}
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                Showing <span className="text-gray-900 dark:text-white font-semibold">{problems.length}</span> problems
+                Showing <span className="text-gray-900 dark:text-white font-semibold">{problems.length}</span> of {pagination.total} problems
               </div>
               <div className="flex gap-2">
-                <button
-                  onClick={() => setSortBy('acceptance')}
-                  className={`px-3 py-1.5 rounded text-sm font-medium transition ${
-                    sortBy === 'acceptance'
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'bg-gray-100 dark:bg-dark-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-700 border border-gray-200 dark:border-dark-700'
-                  }`}
-                >
-                  Acceptance
-                </button>
-                <button
-                  onClick={() => setSortBy('difficulty')}
-                  className={`px-3 py-1.5 rounded text-sm font-medium transition ${
-                    sortBy === 'difficulty'
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'bg-gray-100 dark:bg-dark-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-700 border border-gray-200 dark:border-dark-700'
-                  }`}
-                >
-                  Difficulty
-                </button>
-                <button
-                  onClick={() => setSortBy('frequency')}
-                  className={`px-3 py-1.5 rounded text-sm font-medium transition ${
-                    sortBy === 'frequency'
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'bg-gray-100 dark:bg-dark-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-700 border border-gray-200 dark:border-dark-700'
-                  }`}
-                >
-                  Frequency
-                </button>
+                {['acceptance', 'difficulty', 'frequency'].map(s => (
+                  <button key={s} onClick={() => setSortBy(sortBy === s ? '' : s)} className={`px-3 py-1.5 rounded text-sm font-medium transition ${sortBy === s ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-dark-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-700 border border-gray-200 dark:border-dark-700'}`}>
+                    {s.charAt(0).toUpperCase() + s.slice(1)}
+                  </button>
+                ))}
               </div>
             </div>
 
             {/* Problems Table */}
             {loading ? (
-              <div className="flex items-center justify-center py-20">
-                <div className="text-center">
-                  <div className="w-12 h-12 border-4 border-gray-300 dark:border-dark-700 border-t-gray-900 dark:border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-                  <p className="text-gray-600 dark:text-gray-400">Loading problems...</p>
+              <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-lg overflow-hidden">
+                <div className="hidden sm:grid sm:grid-cols-12 gap-4 px-6 py-3 bg-gray-50 dark:bg-dark-800 border-b border-gray-200 dark:border-dark-700 font-semibold text-sm text-gray-700 dark:text-gray-300">
+                  <div className="col-span-1">Status</div><div className="col-span-1">#</div><div className="col-span-5">Title</div>
+                  <div className="col-span-2">Difficulty</div><div className="col-span-2">Acceptance</div><div className="col-span-1">Popular</div>
                 </div>
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100 dark:border-dark-800 animate-pulse">
+                    <div className="col-span-1"><div className="w-6 h-6 bg-gray-200 dark:bg-dark-700 rounded-full" /></div>
+                    <div className="col-span-1"><div className="w-8 h-5 bg-gray-200 dark:bg-dark-700 rounded" /></div>
+                    <div className="col-span-5"><div className="h-5 bg-gray-200 dark:bg-dark-700 rounded w-3/4" /></div>
+                    <div className="col-span-2"><div className="h-5 bg-gray-200 dark:bg-dark-700 rounded w-16" /></div>
+                    <div className="col-span-2"><div className="h-4 bg-gray-200 dark:bg-dark-700 rounded w-20" /></div>
+                    <div className="col-span-1" />
+                  </div>
+                ))}
               </div>
             ) : problems.length === 0 ? (
               <div className="text-center py-20">
-                <div className="text-6xl mb-4">🔍</div>
+
                 <p className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No problems found</p>
                 <p className="text-gray-600 dark:text-gray-400">Try adjusting your filters</p>
               </div>
             ) : (
-              <div className="space-y-2">
-                {problems.map((problem, idx) => (
-                  <div
-                    key={problem._id}
-                    onClick={() => handleProblemClick(problem._id)}
-                    className="bg-white dark:bg-dark-900 hover:shadow-md border border-gray-200 dark:border-dark-800 rounded-lg p-4 cursor-pointer transition"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className="flex items-center justify-center w-8 h-8 bg-gray-100 dark:bg-dark-800 rounded font-semibold text-gray-600 dark:text-gray-400 text-sm">
-                          {idx + 1}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+              <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-lg overflow-hidden">
+                {/* Table Header */}
+                <div className="hidden sm:grid sm:grid-cols-12 gap-4 px-6 py-3 bg-gray-50 dark:bg-dark-800 border-b border-gray-200 dark:border-dark-700 font-semibold text-sm text-gray-700 dark:text-gray-300">
+                  <div className="col-span-1">Status</div><div className="col-span-1">#</div><div className="col-span-5">Title</div>
+                  <div className="col-span-2">Difficulty</div><div className="col-span-2">Acceptance</div><div className="col-span-1">Popular</div>
+                </div>
+
+                <div className="divide-y divide-gray-200 dark:divide-dark-800">
+                  {problems.map((problem, idx) => (
+                    <div key={problem._id} onClick={() => navigate(`/problem/${problem._id}`)}
+                      className="grid grid-cols-1 sm:grid-cols-12 gap-4 px-6 py-4 hover:bg-orange-50 dark:hover:bg-orange-900/10 cursor-pointer transition duration-150 items-center group">
+                      {/* Status */}
+                      <div className="col-span-1 flex items-center">
+                        {problem.solved ? (
+                          <div className="flex items-center justify-center w-6 h-6 bg-green-500/20 rounded-full" title="Solved">
+                            <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center w-6 h-6 bg-gray-200 dark:bg-dark-700 rounded-full" title="Unsolved">
+                            <Circle className="w-4 h-4 text-gray-400 dark:text-gray-600" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Number */}
+                      <div className="col-span-1">
+                        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-dark-800 px-2.5 py-1 rounded">
+                          {(page - 1) * 50 + idx + 1}
+                        </span>
+                      </div>
+
+                      {/* Title + Tags */}
+                      <div className="col-span-5">
+                        <div className="flex flex-col">
+                          <h3 className="font-semibold text-gray-900 dark:text-white text-sm group-hover:text-orange-600 dark:group-hover:text-orange-400 transition">
                             {problem.title}
                           </h3>
-                          {problem.metadata?.companies && problem.metadata.companies.length > 0 && (
-                            <div className="flex gap-1.5 mt-1.5">
-                              {problem.metadata.companies.slice(0, 3).map(company => (
-                                <span key={company.name} className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-dark-800 rounded text-gray-600 dark:text-gray-400">
-                                  {company.name}
+                          {problem.tags?.length > 0 && (
+                            <div className="flex gap-1 mt-1.5 flex-wrap">
+                              {problem.tags.slice(0, 3).map(tag => (
+                                <span key={tag} onClick={(e) => { e.stopPropagation(); setSelectedTag(tag); }} className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-dark-800 rounded text-gray-600 dark:text-gray-400 hover:bg-orange-100 dark:hover:bg-orange-900/20 hover:text-orange-600 dark:hover:text-orange-400 transition cursor-pointer">
+                                  {tag}
                                 </span>
                               ))}
-                              {problem.metadata.companies.length > 3 && (
-                                <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-dark-800 rounded text-gray-500 dark:text-gray-500">
-                                  +{problem.metadata.companies.length - 3}
-                                </span>
-                              )}
+                              {problem.tags.length > 3 && <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-dark-800 rounded text-gray-500 dark:text-gray-500">+{problem.tags.length - 3}</span>}
                             </div>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-4 ml-4">
-                        <span className={`px-2.5 py-1 rounded text-xs font-semibold ${
-                          problem.difficulty === 'Easy' ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300' :
-                          problem.difficulty === 'Medium' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300' :
-                          'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300'
-                        }`}>
+
+                      {/* Difficulty */}
+                      <div className="col-span-2">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold gap-1 ${diffColor(problem.difficulty)}`}>
+                          <span className={`w-2 h-2 rounded-full ${diffDot(problem.difficulty)}`} />
                           {problem.difficulty}
                         </span>
-                        <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 text-sm bg-gray-100 dark:bg-dark-800 px-2.5 py-1 rounded">
-                          <BarChartIcon className="w-3.5 h-3.5" />
-                          <span className="font-medium">{problem.acceptanceRate || 0}%</span>
+                      </div>
+
+                      {/* Acceptance */}
+                      <div className="col-span-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-12 h-1.5 bg-gray-200 dark:bg-dark-800 rounded-full overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-orange-400 to-orange-500" style={{ width: `${problem.acceptanceRate || 0}%` }} />
+                          </div>
+                          <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 w-10 text-right">{problem.acceptanceRate || 0}%</span>
                         </div>
-                        {selectedFrequency && problem.metadata?.frequencyData && (
-                          <div className="w-20 h-1.5 bg-gray-200 dark:bg-dark-800 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-gray-900 dark:bg-white"
-                              style={{ width: `${Math.min(getFrequencyValue(problem.metadata.frequencyData), 100)}%` }}
-                            />
+                      </div>
+
+                      {/* Frequency/Hot */}
+                      <div className="col-span-1 flex justify-end">
+                        {problem.frequency > 50 && (
+                          <div className="flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 px-2 py-1 rounded" title="Popular">
+                            <Flame className="w-3.5 h-3.5" /><span>Hot</span>
                           </div>
                         )}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-6">
+                <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
+                  className="p-2 rounded-lg border border-gray-200 dark:border-dark-700 hover:bg-gray-100 dark:hover:bg-dark-800 disabled:opacity-30 transition">
+                  <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                </button>
+                {[...Array(Math.min(5, pagination.totalPages))].map((_, i) => {
+                  const p = i + 1;
+                  return (
+                    <button key={p} onClick={() => setPage(p)} className={`w-9 h-9 rounded-lg text-sm font-medium transition ${page === p ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'hover:bg-gray-100 dark:hover:bg-dark-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-dark-700'}`}>
+                      {p}
+                    </button>
+                  );
+                })}
+                <button onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))} disabled={page >= pagination.totalPages}
+                  className="p-2 rounded-lg border border-gray-200 dark:border-dark-700 hover:bg-gray-100 dark:hover:bg-dark-800 disabled:opacity-30 transition">
+                  <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                </button>
               </div>
             )}
           </div>
@@ -509,4 +363,3 @@ export default function Problems() {
     </div>
   );
 }
-

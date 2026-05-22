@@ -6,6 +6,8 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { setIO } from './utils/socketSingleton.js';
+import jwt from 'jsonwebtoken';
 
 // Load environment variables FIRST before importing anything that uses them
 const __filename = fileURLToPath(import.meta.url);
@@ -34,19 +36,35 @@ const app = express();
 const httpServer = createServer(app);
 
 // CORS configuration
-const corsOrigin = process.env.CORS_ORIGIN || '*';
-console.log('CORS Origin:', corsOrigin);
+console.log('CORS Origin: ALL (Accepting requests from anywhere)');
 
 const io = new Server(httpServer, {
   cors: {
-    origin: corsOrigin,
-    methods: ['GET', 'POST'],
+    origin: (origin, callback) => callback(null, true), // Dynamically accept all origins
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true
   }
 });
 
-// Make io globally accessible for notifications
-global.io = io;
+// Store io in singleton module (replaces fragile global.io pattern)
+setIO(io);
+global.io = io; // Kept for backward compatibility during migration
+
+// Socket.io JWT Authentication Middleware
+io.use((socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1];
+    if (!token) {
+      return next(new Error('Authentication error: No token provided'));
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    socket.user = { _id: decoded.id };
+    next();
+  } catch (err) {
+    console.error('Socket authentication error:', err.message);
+    return next(new Error('Authentication error: Invalid token'));
+  }
+});
 
 // Socket.io connection handling for notifications
 io.on('connection', (socket) => {
@@ -54,8 +72,13 @@ io.on('connection', (socket) => {
 
   // Join user to their own room for notifications
   socket.on('join', (userId) => {
-    socket.join(userId);
-    console.log(`User ${userId} joined their notification room`);
+    const authenticatedUserId = socket.user?._id?.toString();
+    if (authenticatedUserId && authenticatedUserId === userId) {
+      socket.join(userId);
+      console.log(`User ${userId} joined their notification room`);
+    } else {
+      console.warn(`Unauthorized join attempt from socket ${socket.id} to room ${userId}`);
+    }
   });
 
   socket.on('disconnect', () => {
@@ -65,7 +88,7 @@ io.on('connection', (socket) => {
 
 // Middleware
 app.use(cors({
-  origin: corsOrigin,
+  origin: (origin, callback) => callback(null, true), // Dynamically accept all origins
   credentials: true
 }));
 app.use(express.json());
@@ -79,10 +102,15 @@ if (!mongoUri) {
   process.exit(1);
 }
 console.log('📡 Connecting to MongoDB...');
-mongoose.connect(mongoUri)
+console.log('🔗 Connection string:', mongoUri.substring(0, 50) + '...');
+mongoose.connect(mongoUri, {
+  serverSelectionTimeoutMS: 5000,
+  connectTimeoutMS: 5000
+})
   .then(() => console.log('✅ MongoDB connected successfully'))
   .catch(err => {
     console.error('❌ MongoDB connection error:', err.message);
+    console.error('📍 Error type:', err.name);
     process.exit(1);
   });
 
@@ -107,6 +135,7 @@ async function setupRoutes() {
   const { default: judgeRoutesModule } = await import('./routes/judge.js');
   const { default: verificationRoutesModule } = await import('./routes/verification.js');
   const { default: testEmailRoutesModule } = await import('./routes/test-email.js');
+  const { default: fairnessRoutesModule } = await import('./routes/fairness.js');
 
   // Setup WebSocket
   setupMatchmakingModule(io);
@@ -114,7 +143,8 @@ async function setupRoutes() {
   // Routes
   app.use('/api/auth', authRoutesModule);
   app.use('/api/verification', verificationRoutesModule);
-  app.use('/api/test-email', testEmailRoutesModule); // Test email endpoint
+  app.use('/api/test-email', testEmailRoutesModule);
+  app.use('/api/fairness', fairnessRoutesModule); // Test email endpoint
   app.use('/api/problems', problemRoutesModule);
   app.use('/api/matches', matchRoutesModule);
   app.use('/api/users', userRoutesModule);
@@ -133,6 +163,15 @@ async function setupRoutes() {
 
   const { default: problemMetadataRoutesModule } = await import('./routes/problemMetadata.js');
   app.use('/api/problem-metadata', problemMetadataRoutesModule);
+
+  const { default: storyRoutesModule } = await import('./routes/stories.js');
+  app.use('/api/stories', storyRoutesModule);
+
+  const { default: draftRoutesModule } = await import('./routes/drafts.js');
+  app.use('/api/drafts', draftRoutesModule);
+
+  const { default: virtualContestRoutesModule } = await import('./routes/virtualContests.js');
+  app.use('/api/virtual-contests', virtualContestRoutesModule);
 }
 
 // Health check
@@ -150,11 +189,26 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 setupRoutes()
-  .then(() => {
-    httpServer.listen(PORT, () => {
+  .then(async () => {
+    httpServer.listen(PORT, async () => {
       console.log(`✅ Server running on port ${PORT}`);
       console.log(`✅ Frontend URL: ${process.env.FRONTEND_URL}`);
       console.log(`✅ All routes registered successfully`);
+
+      // Initialize Docker container pool (runs in background, doesn't block startup)
+      if (process.env.USE_DOCKER === 'true') {
+        import('./utils/dockerExecutor.js').then(({ initContainerPool }) => {
+          initContainerPool().catch(err => console.error('⚠️  Container pool init failed:', err.message));
+        });
+      }
+
+      // Restore match timeouts for any in-progress matches from before restart
+      try {
+        const { restoreActiveTimeouts } = await import('./utils/matchTimeout.js');
+        await restoreActiveTimeouts();
+      } catch (err) {
+        console.error('⚠️  Error restoring match timeouts:', err.message);
+      }
     });
   })
   .catch(err => {
@@ -162,5 +216,50 @@ setupRoutes()
     process.exit(1);
   });
 
-export default app;
+// ═══ Graceful Shutdown ═══
+// Handles SIGTERM (Render/Heroku restart) and SIGINT (Ctrl+C in dev)
+// Ensures in-flight requests complete, DB connections close cleanly,
+// and Socket.io clients are notified before the process exits.
+const gracefulShutdown = async (signal) => {
+  console.log(`\n⚠️  ${signal} received. Starting graceful shutdown...`);
 
+  // 1. Stop accepting new connections
+  httpServer.close(() => {
+    console.log('✅ HTTP server closed (no new connections)');
+  });
+
+  // 2. Close Socket.io (disconnects all clients gracefully)
+  try {
+    io.close();
+    console.log('✅ Socket.io connections closed');
+  } catch (err) {
+    console.error('⚠️  Error closing Socket.io:', err.message);
+  }
+
+  // 3. Cleanup Docker container pool
+  try {
+    if (process.env.USE_DOCKER === 'true') {
+      const { cleanupContainerPool } = await import('./utils/dockerExecutor.js');
+      await cleanupContainerPool();
+      console.log('✅ Docker container pool cleaned up');
+    }
+  } catch (err) {
+    console.error('⚠️  Error cleaning up container pool:', err.message);
+  }
+
+  // 4. Close MongoDB connection pool
+  try {
+    await mongoose.connection.close();
+    console.log('✅ MongoDB connection closed');
+  } catch (err) {
+    console.error('⚠️  Error closing MongoDB:', err.message);
+  }
+
+  console.log('👋 Shutdown complete. Exiting.');
+  process.exit(0);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+export default app;

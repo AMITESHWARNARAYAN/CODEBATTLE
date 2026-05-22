@@ -31,9 +31,10 @@ const userSchema = new mongoose.Schema({
     default: '',
     maxlength: 200
   },
+  // ─── Battle Rating (1v1 Matchmaking & Friend Challenges) ───
   rating: {
     type: Number,
-    default: 1200 // Starting ELO rating like chess
+    default: 0
   },
   wins: {
     type: Number,
@@ -53,11 +54,28 @@ const userSchema = new mongoose.Schema({
   },
   highestRating: {
     type: Number,
-    default: 1200
+    default: 0
   },
   lowestRating: {
     type: Number,
-    default: 1200
+    default: 0
+  },
+  // ─── Contest Rating (Live Rated Contests) ───
+  contestRating: {
+    type: Number,
+    default: 0
+  },
+  contestHighestRating: {
+    type: Number,
+    default: 0
+  },
+  contestLowestRating: {
+    type: Number,
+    default: 0
+  },
+  contestsParticipated: {
+    type: Number,
+    default: 0
   },
   isOnline: {
     type: Boolean,
@@ -119,6 +137,19 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  badges: [{
+    type: String,
+    enum: ['Daily Streak', 'Problem Solver', 'Contest Winner', 'Bug Hunter']
+  }],
+  streak: {
+    current: { type: Number, default: 0 },
+    longest: { type: Number, default: 0 },
+    lastLoginDate: { type: Date }
+  },
+  lastActiveDate: {
+    type: Date,
+    default: Date.now
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -126,11 +157,11 @@ const userSchema = new mongoose.Schema({
 });
 
 // Hash password before saving
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
     return next();
   }
-  
+
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -141,18 +172,32 @@ userSchema.pre('save', async function(next) {
 });
 
 // Method to compare password
-userSchema.methods.comparePassword = async function(candidatePassword) {
+userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
 // Method to update rating
-userSchema.methods.updateRating = function(newRating) {
-  this.rating = newRating;
-  if (newRating > this.highestRating) {
-    this.highestRating = newRating;
-  }
-  if (newRating < this.lowestRating) {
-    this.lowestRating = newRating;
+// type: 'battle' (default, 1v1) or 'contest' (live contests)
+userSchema.methods.updateRating = function (newRating, type = 'battle') {
+  // Enforce rating floor at 0 — never go negative
+  const safeRating = Math.max(0, newRating);
+
+  if (type === 'contest') {
+    this.contestRating = safeRating;
+    if (safeRating > this.contestHighestRating) {
+      this.contestHighestRating = safeRating;
+    }
+    if (safeRating < this.contestLowestRating) {
+      this.contestLowestRating = safeRating;
+    }
+  } else {
+    this.rating = safeRating;
+    if (safeRating > this.highestRating) {
+      this.highestRating = safeRating;
+    }
+    if (safeRating < this.lowestRating) {
+      this.lowestRating = safeRating;
+    }
   }
 };
 

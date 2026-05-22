@@ -70,7 +70,6 @@ router.post('/problems', protect, isAdmin, async (req, res) => {
       successfulSubmissions,
       acceptanceRate
     });
-
     // If category is provided, add problem to category
     if (category) {
       const Category = (await import('../models/Category.js')).default;

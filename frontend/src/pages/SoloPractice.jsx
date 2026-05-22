@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMatchStore } from '../store/matchStore';
 import { toast } from 'react-hot-toast';
@@ -10,8 +10,12 @@ export default function SoloPractice() {
   const [loading, setLoading] = useState(true);
   const problemId = searchParams.get('problemId');
   const isDailyChallenge = searchParams.get('dailyChallenge') === 'true';
+  const hasInitiatedRef = useRef(false);
 
   useEffect(() => {
+    if (hasInitiatedRef.current) return;
+    hasInitiatedRef.current = true;
+
     const initiateSoloMatch = async () => {
       try {
         setLoading(true);
@@ -22,9 +26,8 @@ export default function SoloPractice() {
           sessionStorage.setItem('isDailyChallenge', 'true');
         }
 
-        toast.success('Match started! Loading code editor...');
-        // Navigate to the code editor with the match ID
-        navigate(`/match/${match._id}`);
+        // Navigate to the CodeEditorNew route using the problem ID
+        navigate(`/problem/${match.problem._id || match.problem}`);
       } catch (error) {
         console.error('Failed to start solo match:', error);
         toast.error(error.response?.data?.message || 'Failed to start solo match');

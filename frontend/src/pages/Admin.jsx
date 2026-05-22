@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useAdminStore } from '../store/adminStore';
 import { toast } from 'react-hot-toast';
-import { PlusIcon, TrashIcon, ArrowLeftIcon, Tags, CheckIcon, XMarkIcon, CalendarIcon, TrophyIcon, UserGroupIcon } from '@heroicons/react/24/solid';
+import { Plus, Trash2, ArrowLeft, Tags, Check, X, Calendar, Trophy, Users } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
 
 export default function Admin() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { problems, categories, stats, loading, getProblems, createProblem, deleteProblem, getStats, createCategory, getCategories, deleteCategory, createChallenge, getChallenges, challenges, deleteChallenge, createContest, getContests, contests, deleteContest, users, getUserGroupIcon, deleteUserIcon } = useAdminStore();
+  const { problems, categories, stats, loading, getProblems, createProblem, deleteProblem, getStats, createCategory, getCategories, deleteCategory, createChallenge, getChallenges, challenges, deleteChallenge, createContest, getContests, contests, deleteContest, users, getUsers, deleteUser } = useAdminStore();
   const { token } = useAuthStore();
   const [activeTab, setActiveTab] = useState('users');
   const [showForm, setShowForm] = useState(false);
@@ -59,7 +59,7 @@ export default function Admin() {
   });
   const [selectedProblems, setSelectedProblems] = useState([]);
 
-  // CheckIcon if user is admin
+  // Check if user is admin
   useEffect(() => {
     if (!user?.isAdmin) {
       navigate('/');
@@ -80,10 +80,10 @@ export default function Admin() {
         getContests();
       }
       if (activeTab === 'users') {
-        getUserGroupIcon();
+        getUsers();
       }
     }
-  }, [token, getProblems, getCategories, getStats, activeTab, getChallenges, getContests, getUserGroupIcon]);
+  }, [token, getProblems, getCategories, getStats, activeTab, getChallenges, getContests, getUsers]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -300,12 +300,12 @@ export default function Admin() {
     }
   };
 
-  const handleDeleteUserIcon = async (userId) => {
+  const handleDeleteUser = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       try {
-        await deleteUserIcon(userId);
-        toast.success('UserIcon deleted successfully');
-        getUserGroupIcon();
+        await deleteUser(userId);
+        toast.success('User deleted successfully');
+        getUsers();
       } catch (error) {
         toast.error(error.response?.data?.message || 'Failed to delete user');
       }
@@ -326,19 +326,12 @@ export default function Admin() {
               onClick={() => navigate('/')}
               className="p-2 hover:bg-gray-100 dark:hover:bg-dark-800 rounded-lg transition"
             >
-              <ArrowLeftIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+              <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             </button>
             <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Admin Panel</h1>
           </div>
           <div className="flex items-center gap-4">
             <ThemeToggle />
-            <button
-              onClick={() => navigate('/admin/resources')}
-              className="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition font-medium text-sm"
-            >
-              <Tags className="w-4 h-4" />
-              Manage Resources
-            </button>
             <button
               onClick={() => navigate('/admin/problem-metadata')}
               className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900 rounded-lg transition font-medium text-sm"
@@ -364,7 +357,7 @@ export default function Admin() {
                 : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
-            UserGroupIcon
+            Users
           </button>
           <button
             onClick={() => setActiveTab('categories')}
@@ -411,17 +404,17 @@ export default function Admin() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* UserGroupIcon Section */}
+        {/* Users Section */}
         {activeTab === 'users' && (
           <div>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Registered UserGroupIcon</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Registered Users</h2>
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                Total UserGroupIcon: {users.length}
+                Total Users: {users.length}
               </div>
             </div>
 
-            {/* UserGroupIcon Table */}
+            {/* Users Table */}
             <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-lg overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -475,7 +468,7 @@ export default function Admin() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                              {u.rating || 1200}
+                              {u.rating || 0}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -497,7 +490,7 @@ export default function Admin() {
                                 ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-900/30'
                                 : 'bg-gray-100 dark:bg-dark-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-dark-700'
                             }`}>
-                              {u.isAdmin ? 'Admin' : 'UserIcon'}
+                              {u.isAdmin ? 'Admin' : 'User'}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -507,7 +500,7 @@ export default function Admin() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <button
-                              onClick={() => handleDeleteUserIcon(u._id)}
+                              onClick={() => handleDeleteUser(u._id)}
                               disabled={u._id === user._id}
                               className={`p-2 rounded-lg transition ${
                                 u._id === user._id
@@ -516,7 +509,7 @@ export default function Admin() {
                               }`}
                               title={u._id === user._id ? 'Cannot delete your own account' : 'Delete user'}
                             >
-                              <TrashIcon className="w-4 h-4" />
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </td>
                         </tr>
@@ -538,7 +531,7 @@ export default function Admin() {
                 onClick={() => setShowCategoryForm(!showCategoryForm)}
                 className="btn-primary flex items-center gap-2"
               >
-                <PlusIcon className="w-4 h-4" />
+                <Plus className="w-4 h-4" />
                 Add Category
               </button>
             </div>
@@ -649,7 +642,7 @@ export default function Admin() {
                         onClick={() => handleDeleteCategory(category._id)}
                         className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg transition"
                       >
-                        <TrashIcon className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -668,7 +661,7 @@ export default function Admin() {
                 onClick={() => setShowForm(!showForm)}
                 className="btn-primary flex items-center gap-2"
               >
-                <PlusIcon className="w-4 h-4" />
+                <Plus className="w-4 h-4" />
                 Add Problem
               </button>
             </div>
@@ -850,7 +843,7 @@ export default function Admin() {
                           onClick={() => handleDelete(problem._id)}
                           className="p-2 hover:bg-red-900 text-red-400 rounded-lg transition"
                         >
-                          <TrashIcon className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
@@ -870,7 +863,7 @@ export default function Admin() {
                 onClick={() => setShowChallengeForm(!showChallengeForm)}
                 className="btn-primary flex items-center gap-2"
               >
-                <PlusIcon className="w-4 h-4" />
+                <Plus className="w-4 h-4" />
                 Create Challenge
               </button>
             </div>
@@ -1018,7 +1011,7 @@ export default function Admin() {
                         className="ml-4 p-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
                         title="Delete Challenge"
                       >
-                        <TrashIcon className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -1037,7 +1030,7 @@ export default function Admin() {
                 onClick={() => setShowContestForm(!showContestForm)}
                 className="btn-primary flex items-center gap-2"
               >
-                <PlusIcon className="w-4 h-4" />
+                <Plus className="w-4 h-4" />
                 Create Contest
               </button>
             </div>
@@ -1218,13 +1211,15 @@ export default function Admin() {
                           )}
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleDeleteContest(contest._id)}
-                        className="ml-4 p-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
-                        title="Delete Contest"
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleDeleteContest(contest._id)}
+                          className="p-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition"
+                          title="Delete Contest"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))

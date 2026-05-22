@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useContestStore } from '../store/contestStore';
-import { TrophyIcon, CalendarIcon, ClockIcon, UserGroupIcon, ArrowRightIcon } from '@heroicons/react/24/solid';
+import { Trophy, Calendar, Clock, Users, ArrowRight, ChevronLeft, Bell, ChevronDown, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -12,266 +12,250 @@ export default function Contests() {
   const [upcomingContests, setUpcomingContests] = useState([]);
   const [runningContests, setRunningContests] = useState([]);
   const [pastContests, setPastContests] = useState([]);
+  const [timers, setTimers] = useState({});
 
+  useEffect(() => { loadContests(); }, []);
+
+  // Live countdown timer
   useEffect(() => {
-    loadContests();
-  }, []);
+    const interval = setInterval(() => {
+      const now = new Date();
+      const updated = {};
+      [...upcomingContests, ...runningContests].forEach(c => {
+        const target = c.status === 'running' ? new Date(c.endTime) : new Date(c.startTime);
+        const diff = target - now;
+        if (diff > 0) {
+          const d = Math.floor(diff / 86400000);
+          const h = Math.floor((diff % 86400000) / 3600000);
+          const m = Math.floor((diff % 3600000) / 60000);
+          const s = Math.floor((diff % 60000) / 1000);
+          updated[c._id] = d > 0 ? `${d}d ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        } else {
+          updated[c._id] = 'Started';
+        }
+      });
+      setTimers(updated);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [upcomingContests, runningContests]);
 
   const loadContests = async () => {
     try {
       const [upcoming, running, past] = await Promise.all([
-        getUpcomingContests(),
-        getRunningContests(),
-        getPastContests()
+        getUpcomingContests(), getRunningContests(), getPastContests()
       ]);
-      console.log('Upcoming contests:', upcoming);
-      console.log('Running contests:', running);
-      console.log('Past contests:', past);
-      setUpcomingContests(upcoming);
-      setRunningContests(running);
-      setPastContests(past);
+      setUpcomingContests(upcoming || []);
+      setRunningContests(running || []);
+      setPastContests(past || []);
     } catch (error) {
       console.error('Failed to load contests:', error);
       toast.error('Failed to load contests');
     }
   };
 
-  const getTimeUntilStart = (startTime) => {
-    const now = new Date();
-    const start = new Date(startTime);
-    const diff = start - now;
-    
-    if (diff < 0) return 'Started';
-    
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
-    if (days > 0) return `${days}d ${hours}h`;
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    return `${minutes}m`;
+  const formatDate = (d) => {
+    const date = new Date(d);
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
   };
 
-  const ContestCard = ({ contest, showRegister = false, showEnter = false }) => {
-    console.log('Contest card:', {
-      title: contest.title,
-      isRegistered: contest.isRegistered,
-      showRegister,
-      showEnter,
-      status: contest.status
-    });
+  
+  const FeaturedCard = ({ contest, index, isLive }) => {
+    const isWeekly = contest.type === 'weekly';
+    
+    const gradients = [
+      { bg: 'from-amber-400 via-orange-400 to-amber-500', accent: 'bg-amber-500/90', text: 'text-amber-900' },
+      { bg: 'from-violet-500 via-purple-500 to-indigo-500', accent: 'bg-purple-600/90', text: 'text-purple-100' },
+      { bg: 'from-emerald-400 via-teal-400 to-cyan-500', accent: 'bg-emerald-500/90', text: 'text-emerald-900' },
+      { bg: 'from-rose-400 via-pink-400 to-fuchsia-500', accent: 'bg-rose-500/90', text: 'text-rose-100' },
+    ];
+    const theme = gradients[index % gradients.length];
 
     return (
-    <div className="bg-white dark:bg-dark-900 border border-gray-200 dark:border-dark-800 rounded-lg p-4 sm:p-6 hover:shadow-md transition">
-      <div className="flex flex-col sm:flex-row items-start justify-between mb-4 gap-3">
-        <div className="flex-1 w-full">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-            <TrophyIcon className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 dark:text-yellow-400" />
-            <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{contest.title}</h3>
-            <span className={`px-2 py-1 rounded text-xs font-semibold ${
-              contest.type === 'weekly' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300' :
-              contest.type === 'biweekly' ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300' :
-              'bg-pink-100 dark:bg-pink-900/20 text-pink-700 dark:text-pink-300'
-            }`}>
-              {contest.type}
-            </span>
-            {contest.isRated && (
-              <span className="px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded text-xs font-semibold">
-                RATED
-              </span>
-            )}
-          </div>
-          <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-4">{contest.description}</p>
+      <div
+        className={`relative group cursor-pointer rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl`}
+        onClick={() => navigate(`/contests/${contest._id}`)}
+        style={{ minHeight: 220 }}
+      >
+        {/* Gradient Background */}
+        <div className={`absolute inset-0 bg-gradient-to-br ${theme.bg} opacity-90`} />
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-xs sm:text-sm">
-            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-              <CalendarIcon className="w-4 h-4" />
-              <span>{new Date(contest.startTime).toLocaleDateString()}</span>
+        {/* Decorative circles (LeetCode-style) */}
+        <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-white/10" />
+        <div className="absolute -right-4 top-16 w-24 h-24 rounded-full bg-white/10" />
+        <div className="absolute left-8 -bottom-6 w-20 h-20 rounded-full bg-white/5" />
+
+        {/* Floating 3D cube effect */}
+        <div className="absolute right-8 top-1/2 -translate-y-1/2 opacity-30 group-hover:opacity-50 transition">
+          <div className="w-24 h-24 border-2 border-white/40 rounded-xl rotate-12 group-hover:rotate-6 transition-transform duration-500" />
+          <div className="w-16 h-16 border-2 border-white/30 rounded-lg -rotate-6 absolute top-4 left-4 group-hover:rotate-3 transition-transform duration-500" />
+        </div>
+
+      {/* Content */}
+        <div className="relative z-10 p-6 h-full flex flex-col justify-between">
+          {/* Timer Badge */}
+          <div className="flex justify-end">
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold ${isLive ? 'bg-red-500 text-white animate-pulse' : 'bg-black/20 text-white backdrop-blur-sm'}`}>
+              {isLive && <span className="w-2 h-2 bg-white rounded-full animate-ping" />}
+              <Clock className="w-3.5 h-3.5" />
+              <span>{isLive ? 'Ends in ' : ''}{timers[contest._id] || '...'}</span>
             </div>
-            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-              <ClockIcon className="w-4 h-4" />
-              <span>{contest.duration} min</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-              <TrophyIcon className="w-4 h-4" />
-              <span>{contest.problems?.length || 0} problems</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-              <UserGroupIcon className="w-4 h-4" />
-              <span>{contest.totalParticipants} registered</span>
+          </div>
+
+          {/* Bottom Info */}
+          <div className="mt-auto">
+            <h3 className="text-xl font-bold text-white mb-1 drop-shadow-sm">
+              {contest.title}
+            </h3>
+            <div className="flex items-center justify-between">
+              <p className="text-white/80 text-sm">
+                {formatDate(contest.startTime)}
+              </p>
+              <div className="flex items-center gap-2">
+                {isLive ? (
+                  <button
+                    className="px-4 py-1.5 rounded-full bg-white text-gray-900 text-xs font-bold hover:bg-gray-100 transition shadow-lg"
+                    onClick={(e) => { e.stopPropagation(); navigate(`/contests/${contest._id}/live`); }}
+                  >
+                    Enter Contest →
+                  </button>
+                ) : (
+                  <button className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition backdrop-blur-sm" title="Set reminder" onClick={(e) => { e.stopPropagation(); toast.success('Reminder set!'); }}>
+                    <Bell className="w-4 h-4 text-white" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-dark-800">
-        {contest.status === 'upcoming' && (
-          <div className="text-sm text-gray-900 dark:text-white font-semibold">
-            Starts in {getTimeUntilStart(contest.startTime)}
-          </div>
-        )}
-        {contest.status === 'running' && (
-          <div className="text-sm text-green-600 dark:text-green-400 font-semibold animate-pulse">
-            🔴 LIVE NOW
-          </div>
-        )}
-        {contest.status === 'finished' && (
-          <div className="text-sm text-gray-500 dark:text-gray-500">
-            Ended {new Date(contest.endTime).toLocaleDateString()}
-          </div>
-        )}
-
-        <div className="flex gap-2">
-          {/* Register button for upcoming contests */}
-          {showRegister && !contest.isRegistered && (
-            <button
-              onClick={() => navigate(`/contests/${contest._id}`)}
-              className="btn-primary flex items-center gap-2"
-            >
-              Register
-              <ArrowRightIcon className="w-4 h-4" />
-            </button>
-          )}
-
-          {/* Already registered for upcoming contest */}
-          {showRegister && contest.isRegistered && (
-            <div className="px-4 py-2 bg-green-900 text-green-300 rounded-lg font-semibold">
-              ✓ Registered
-            </div>
-          )}
-
-          {/* Enter button for running contests if registered */}
-          {showEnter && contest.isRegistered && (
-            <button
-              onClick={() => navigate(`/contests/${contest._id}/live`)}
-              className="btn-primary flex items-center gap-2 bg-green-600 hover:bg-green-700"
-            >
-              Enter Contest
-              <ArrowRightIcon className="w-4 h-4" />
-            </button>
-          )}
-
-          {/* Register button for running contests if not registered */}
-          {showEnter && !contest.isRegistered && (
-            <button
-              onClick={() => navigate(`/contests/${contest._id}`)}
-              className="btn-primary flex items-center gap-2"
-            >
-              Register & Enter
-              <ArrowRightIcon className="w-4 h-4" />
-            </button>
-          )}
-
-          {/* View details for past contests */}
-          {!showRegister && !showEnter && (
-            <button
-              onClick={() => navigate(`/contests/${contest._id}`)}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition flex items-center gap-2"
-            >
-              View Details
-              <ArrowRightIcon className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
     );
   };
 
+  // ─── Past Contest Row ───
+  const PastRow = ({ contest, idx }) => (
+    <div
+      onClick={() => navigate(`/contests/${contest._id}`)}
+      className="flex items-center justify-between px-5 py-4 hover:bg-gray-50 dark:hover:bg-dark-800/50 cursor-pointer transition group border-b border-gray-100 dark:border-dark-800 last:border-0"
+    >
+      <div className="flex items-center gap-4 flex-1 min-w-0">
+        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-gray-200 to-gray-300 dark:from-dark-700 dark:to-dark-600 flex items-center justify-center">
+          <Trophy className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+        </div>
+        <div className="min-w-0">
+          <h4 className="font-semibold text-gray-900 dark:text-white text-sm group-hover:text-orange-600 dark:group-hover:text-orange-400 transition truncate">
+            {contest.title}
+          </h4>
+          <p className="text-xs text-gray-500 dark:text-gray-500">
+            {new Date(contest.startTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-6 flex-shrink-0">
+        <div className="text-right hidden sm:block">
+          <div className="text-xs text-gray-500 dark:text-gray-500">Participants</div>
+          <div className="text-sm font-semibold text-gray-900 dark:text-white">{contest.totalParticipants || 0}</div>
+        </div>
+        <div className="text-right hidden md:block">
+          <div className="text-xs text-gray-500 dark:text-gray-500">Problems</div>
+          <div className="text-sm font-semibold text-gray-900 dark:text-white">{contest.problems?.length || 0}</div>
+        </div>
+        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+          contest.type === 'weekly' ? 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300' :
+          contest.type === 'biweekly' ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300' :
+          'bg-pink-100 dark:bg-pink-900/20 text-pink-700 dark:text-pink-300'
+        }`}>
+          {contest.type}
+        </span>
+        <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-orange-500 transition" />
+      </div>
+    </div>
+  );
+
+  const allFeatured = [...runningContests, ...upcomingContests];
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-dark-950">
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-6 flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2 text-gray-900 dark:text-white">
-              Contests
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Compete in timed coding contests and climb the leaderboard
-            </p>
+      {/* Header */}
+      <header className="bg-white dark:bg-dark-900 border-b border-gray-200 dark:border-dark-800 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate('/')} className="p-2 hover:bg-gray-100 dark:hover:bg-dark-800 rounded-lg transition">
+              <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            </button>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Contests</h1>
           </div>
           <ThemeToggle />
         </div>
+      </header>
 
-        {/* Tabs */}
-        <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-dark-800">
-          <button
-            onClick={() => setActiveTab('running')}
-            className={`py-2 px-4 font-medium border-b-2 transition text-sm ${
-              activeTab === 'running'
-                ? 'border-green-600 dark:border-green-400 text-green-600 dark:text-green-400'
-                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-          >
-            Live ({runningContests.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('upcoming')}
-            className={`py-2 px-4 font-medium border-b-2 transition text-sm ${
-              activeTab === 'upcoming'
-                ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white'
-                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-          >
-            Upcoming ({upcomingContests.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('past')}
-            className={`py-2 px-4 font-medium border-b-2 transition text-sm ${
-              activeTab === 'past'
-                ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white'
-                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-            }`}
-          >
-            Past ({pastContests.length})
-          </button>
+      <div className="max-w-5xl mx-auto px-4 py-10">
+        {/* Hero Section — Trophy + Title */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-b from-amber-300 to-amber-500 shadow-lg shadow-amber-300/30 mb-5">
+            <Trophy className="w-10 h-10 text-white drop-shadow-md" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            CodeBattle Contest
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 text-base">
+            Contest every week. Compete and see your ranking!
+          </p>
         </div>
 
-        {/* Content */}
+        {/* Featured Cards (Upcoming + Running) */}
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white mx-auto"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-14">
+            {[0,1].map(i => (
+              <div key={i} className="h-56 rounded-2xl bg-gray-200 dark:bg-dark-800 animate-pulse" />
+            ))}
+          </div>
+        ) : allFeatured.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-14">
+            {allFeatured.map((c, i) => (
+              <FeaturedCard key={c._id} contest={c} index={i} isLive={c.status === 'running'} />
+            ))}
           </div>
         ) : (
-          <div className="space-y-4">
-            {activeTab === 'running' && (
-              runningContests.length === 0 ? (
-                <div className="text-center py-12 text-slate-400">
-                  No contests running right now
-                </div>
-              ) : (
-                runningContests.map((contest) => (
-                  <ContestCard key={contest._id} contest={contest} showEnter />
-                ))
-              )
-            )}
-
-            {activeTab === 'upcoming' && (
-              upcomingContests.length === 0 ? (
-                <div className="text-center py-12 text-slate-400">
-                  No upcoming contests
-                </div>
-              ) : (
-                upcomingContests.map((contest) => (
-                  <ContestCard key={contest._id} contest={contest} showRegister />
-                ))
-              )
-            )}
-
-            {activeTab === 'past' && (
-              pastContests.length === 0 ? (
-                <div className="text-center py-12 text-slate-400">
-                  No past contests
-                </div>
-              ) : (
-                pastContests.map((contest) => (
-                  <ContestCard key={contest._id} contest={contest} />
-                ))
-              )
-            )}
+          <div className="text-center py-16 mb-10 bg-white dark:bg-dark-900 rounded-2xl border border-gray-200 dark:border-dark-800">
+            <p className="text-lg font-semibold text-gray-900 dark:text-white mb-1">No upcoming contests</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Check back later for new contests</p>
           </div>
         )}
+
+        {/* Past Contests Section */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-gray-400" />
+              Past Contests
+            </h3>
+            <span className="text-sm text-gray-500 dark:text-gray-400">{pastContests.length} contests</span>
+          </div>
+
+          {loading ? (
+            <div className="bg-white dark:bg-dark-900 rounded-xl border border-gray-200 dark:border-dark-800 overflow-hidden">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center gap-4 px-5 py-4 border-b border-gray-100 dark:border-dark-800 animate-pulse">
+                  <div className="w-10 h-10 bg-gray-200 dark:bg-dark-700 rounded-xl" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-gray-200 dark:bg-dark-700 rounded w-1/3" />
+                    <div className="h-3 bg-gray-200 dark:bg-dark-700 rounded w-1/5" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : pastContests.length === 0 ? (
+            <div className="text-center py-12 bg-white dark:bg-dark-900 rounded-xl border border-gray-200 dark:border-dark-800">
+              <p className="text-gray-500 dark:text-gray-400">No past contests yet</p>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-dark-900 rounded-xl border border-gray-200 dark:border-dark-800 overflow-hidden">
+              {pastContests.map((c, i) => (
+                <PastRow key={c._id} contest={c} idx={i} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

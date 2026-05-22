@@ -4,10 +4,15 @@ import Match from '../models/Match.js';
 import Problem from '../models/Problem.js';
 import User from '../models/User.js';
 import { protect } from '../middleware/auth.js';
-import { executeCodeWithJudge0, analyzeComplexity } from '../utils/codeExecutor.js';
-import { calculateMatchRatings, determineWinner } from '../utils/eloRating.js';
+import { executeCode as executeCodeWithJudge0, analyzeComplexity } from '../utils/codeExecutor.js';
+import { calculateMatchRatings, determineWinner, getBestSubmission } from '../utils/eloRating.js';
+
 import { createNotification } from './notifications.js';
 import { getOnlineUsers } from '../socket/matchmaking.js';
+import { resolveTestCases } from '../utils/testCaseFetcher.js';
+import { getRandomProblem } from '../utils/randomProblem.js';
+import { getIO } from '../utils/socketSingleton.js';
+import { scheduleMatchTimeout, cancelMatchTimeout } from '../utils/matchTimeout.js';
 
 const router = express.Router();
 
@@ -26,11 +31,8 @@ router.post('/solo', protect, async (req, res) => {
         return res.status(404).json({ message: 'Problem not found' });
       }
     } else {
-      // Get random problem
-      const count = await Problem.countDocuments();
-      const random = Math.floor(Math.random() * count);
-      problem = await Problem.findOne().skip(random);
-
+      // Get random problem (O(1) via $sample aggregation)
+      problem = await getRandomProblem();
       if (!problem) {
         return res.status(404).json({ message: 'No problems available' });
       }
@@ -49,6 +51,7 @@ router.post('/solo', protect, async (req, res) => {
 
     // Return problem without all test cases
     const matchData = match.toObject();
+    await resolveTestCases(matchData.problem);
     matchData.problem.visibleTestCases = matchData.problem.testCases.filter(tc => !tc.isHidden);
     delete matchData.problem.testCases;
 
@@ -64,10 +67,8 @@ router.post('/solo', protect, async (req, res) => {
 // @access  Private
 router.post('/friend/create', protect, async (req, res) => {
   try {
-    // Get a random problem
-    const count = await Problem.countDocuments();
-    const random = Math.floor(Math.random() * count);
-    const problem = await Problem.findOne().skip(random);
+    // Get a random problem (O(1) via $sample aggregation)
+    const problem = await getRandomProblem();
 
     if (!problem) {
       return res.status(404).json({ message: 'No problems available' });
@@ -121,10 +122,8 @@ router.post('/friend/challenge-by-email', protect, async (req, res) => {
       return res.status(400).json({ message: 'Cannot challenge yourself' });
     }
 
-    // Get a random problem
-    const count = await Problem.countDocuments();
-    const random = Math.floor(Math.random() * count);
-    const problem = await Problem.findOne().skip(random);
+    // Get a random problem (O(1) via $sample aggregation)
+    const problem = await getRandomProblem();
 
     if (!problem) {
       return res.status(404).json({ message: 'No problems available' });
@@ -142,6 +141,16 @@ router.post('/friend/challenge-by-email', protect, async (req, res) => {
     });
 
     await match.populate('problem');
+
+    // Create persistent notification for the challenged user
+    await createNotification(
+      friend._id,
+      'challenge_received',
+      'New Friend Challenge!',
+      `${req.user.username} challenged you to a DSA battle!`,
+      null, // We don't link directly since we use the socket/toast or we can just send matchId in data
+      { matchId: match._id.toString(), challenger: req.user.username }
+    );
 
     res.json({
       matchId: match._id,
@@ -204,10 +213,26 @@ router.post('/friend/accept-challenge/:matchId', protect, async (req, res) => {
     match.startTime = new Date();
     await match.save();
 
+    // Schedule 30-minute timeout for auto-resolution
+    scheduleMatchTimeout(match._id);
+
     await match.populate('players');
 
+    // Create persistent notification for the challenger
+    const challenger = await User.findOne({ email: match.challengerEmail });
+    if (challenger) {
+      await createNotification(
+        challenger._id,
+        'challenge_accepted',
+        'Challenge Accepted!',
+        `${req.user.username} accepted your challenge. Get ready!`,
+        `/match/${match._id.toString()}`,
+        { matchId: match._id.toString(), challengedUser: req.user.username }
+      );
+    }
+
     // Emit socket event to notify the challenger that challenge was accepted
-    const io = global.io;
+    const io = getIO();
     if (io && match.challengerEmail) {
       const onlineUsers = getOnlineUsers();
       
@@ -239,6 +264,7 @@ router.post('/friend/accept-challenge/:matchId', protect, async (req, res) => {
       return res.status(500).json({ message: 'Problem data is corrupted' });
     }
 
+    await resolveTestCases(matchData.problem);
     matchData.problem.visibleTestCases = matchData.problem.testCases.filter(tc => !tc.isHidden);
     delete matchData.problem.testCases;
 
@@ -269,6 +295,43 @@ router.post('/friend/reject-challenge/:matchId', protect, async (req, res) => {
     match.challengeStatus = 'rejected';
     match.status = 'cancelled';
     await match.save();
+
+    // Create persistent notification for the challenger
+    const challenger = await User.findOne({ email: match.challengerEmail });
+    if (challenger) {
+      await createNotification(
+        challenger._id,
+        'challenge_rejected',
+        'Challenge Declined',
+        `${req.user.username} declined your challenge.`,
+        null,
+        { matchId: match._id.toString(), challengedUser: req.user.username }
+      );
+    }
+
+    // Emit socket event to notify the challenger that challenge was rejected
+    const io = getIO();
+    if (io && match.challengerEmail) {
+      const onlineUsers = getOnlineUsers();
+      
+      // Find challenger's socket
+      let challengerSocket = null;
+      for (const [userId, userInfo] of onlineUsers.entries()) {
+        if (userInfo.email === match.challengerEmail) {
+          challengerSocket = userInfo.socketId;
+          break;
+        }
+      }
+
+      if (challengerSocket) {
+        io.to(challengerSocket).emit('challenge-rejected', {
+          matchId: match._id.toString(),
+          message: 'Your challenge was rejected',
+          timestamp: Date.now()
+        });
+        console.log(`Notified challenger ${match.challengerEmail} that challenge was rejected`);
+      }
+    }
 
     res.json({ message: 'Challenge rejected' });
   } catch (error) {
@@ -302,6 +365,9 @@ router.post('/friend/join/:inviteCode', protect, async (req, res) => {
     match.startTime = new Date();
     await match.save();
 
+    // Schedule 30-minute timeout for auto-resolution
+    scheduleMatchTimeout(match._id);
+
     await match.populate('players');
 
     // Return match data without all test cases
@@ -311,6 +377,7 @@ router.post('/friend/join/:inviteCode', protect, async (req, res) => {
       return res.status(500).json({ message: 'Problem data is corrupted' });
     }
 
+    await resolveTestCases(matchData.problem);
     matchData.problem.visibleTestCases = matchData.problem.testCases.filter(tc => !tc.isHidden);
     delete matchData.problem.testCases;
 
@@ -352,12 +419,15 @@ router.post('/:matchId/submit', protect, async (req, res) => {
       return res.status(403).json({ message: 'You are not in this match' });
     }
 
+    const problemData = match.problem.toObject();
+    await resolveTestCases(problemData);
+
     // Execute code with all test cases (including hidden ones)
     const executionResult = await executeCodeWithJudge0(
       code,
-      match.problem.testCases,
+      problemData.testCases,
       language,
-      match.problem.timeLimit / 1000 // Convert ms to seconds
+      problemData.timeLimit / 1000 // Convert ms to seconds
     );
     
     // Analyze complexity
@@ -378,19 +448,9 @@ router.post('/:matchId/submit', protect, async (req, res) => {
       spaceComplexity: complexity.spaceComplexity
     };
 
-    match.submissions.push(submission);
-
-    // Update problem stats
-    match.problem.totalSubmissions++;
-    if (executionResult.status === 'Accepted') {
-      match.problem.successfulSubmissions++;
-    }
-    match.problem.acceptanceRate = (match.problem.successfulSubmissions / match.problem.totalSubmissions) * 100;
-    await match.problem.save();
-
-    // Check if match should end
     if (match.matchType === 'solo') {
       // Solo match ends immediately
+      match.submissions.push(submission);
       match.status = 'completed';
       match.endTime = new Date();
       match.duration = Math.floor((match.endTime - match.startTime) / 1000);
@@ -402,102 +462,142 @@ router.post('/:matchId/submit', protect, async (req, res) => {
         user.wins++;
       }
       await user.save();
+      await match.save();
     } else if (match.matchType === 'friend' || match.matchType === 'matchmaking') {
-      // Check if both players have submitted
-      const uniqueSubmitters = new Set(match.submissions.map(s => s.userId.toString()));
       
-      if (uniqueSubmitters.size === match.players.length) {
-        // Both submitted - determine winner
-        match.status = 'completed';
-        match.endTime = new Date();
-        match.duration = Math.floor((match.endTime - match.startTime) / 1000);
+      // Save the submission atomically using findOneAndUpdate to avoid race conditions.
+      const updateDoc = { $push: { submissions: submission } };
 
-        // Get last submission from each player
-        const player1Id = match.players[0].toString();
-        const player2Id = match.players[1].toString();
-        
-        const player1Submission = [...match.submissions].reverse().find(s => s.userId.toString() === player1Id);
-        const player2Submission = [...match.submissions].reverse().find(s => s.userId.toString() === player2Id);
+      const updatedMatch = await Match.findOneAndUpdate(
+        { _id: req.params.matchId, status: 'in-progress' },
+        updateDoc,
+        { new: true }
+      );
 
-        const result = determineWinner(player1Submission, player2Submission);
+      if (!updatedMatch) {
+        // If match is already completed or not in progress, fetch the final state and return it
+        const finalMatch = await Match.findById(req.params.matchId).populate('players winner');
+        return res.json({
+          submission: submission,
+          executionResult: executionResult,
+          match: finalMatch
+        });
+      }
 
-        // Get players
-        const player1 = await User.findById(player1Id);
-        const player2 = await User.findById(player2Id);
+      // Check if both players have submitted
+      const uniqueSubmitters = new Set(updatedMatch.submissions.map(s => s.userId.toString()));
+      
+      if (uniqueSubmitters.size === updatedMatch.players.length) {
+        // Try to atomically acquire a lock by transitioning status to 'completed'
+        const lockedMatch = await Match.findOneAndUpdate(
+          { _id: req.params.matchId, status: 'in-progress' },
+          { $set: { status: 'completed', endTime: new Date() } },
+          { new: true }
+        );
 
-        // Calculate rating changes
-        const ratingChanges = calculateMatchRatings(player1.rating, player2.rating, result);
+        if (lockedMatch) {
+          // Cancel the scheduled timeout since match resolved normally
+          cancelMatchTimeout(lockedMatch._id);
 
-        // Update ratings and stats
-        player1.updateRating(ratingChanges.player1.newRating);
-        player1.totalMatches++;
-        player2.updateRating(ratingChanges.player2.newRating);
-        player2.totalMatches++;
+          // Both submitted and we won the atomic state transition lock - determine winner
+          lockedMatch.duration = Math.floor((lockedMatch.endTime - lockedMatch.startTime) / 1000);
 
-        if (result === 'player1') {
-          match.winner = player1Id;
-          player1.wins++;
-          player2.losses++;
-        } else if (result === 'player2') {
-          match.winner = player2Id;
-          player2.wins++;
-          player1.losses++;
-        } else {
-          player1.draws++;
-          player2.draws++;
-        }
+          // Get BEST submission from each player (not last)
+          const player1Id = lockedMatch.players[0].toString();
+          const player2Id = lockedMatch.players[1].toString();
+          
+          const player1Submission = getBestSubmission(lockedMatch.submissions, player1Id);
+          const player2Submission = getBestSubmission(lockedMatch.submissions, player2Id);
 
-        await player1.save();
-        await player2.save();
+          // Determine winner using real-world submission speed as primary tiebreaker
+          const result = determineWinner(
+            player1Submission,
+            player2Submission,
+            lockedMatch.startTime,
+            lockedMatch.submissions
+          );
 
-        // Store rating changes in match
-        match.ratingChanges = [
-          {
-            userId: player1Id,
-            oldRating: ratingChanges.player1.oldRating,
-            newRating: ratingChanges.player1.newRating,
-            change: ratingChanges.player1.change
-          },
-          {
-            userId: player2Id,
-            oldRating: ratingChanges.player2.oldRating,
-            newRating: ratingChanges.player2.newRating,
-            change: ratingChanges.player2.change
+          // Get players
+          const player1 = await User.findById(player1Id);
+          const player2 = await User.findById(player2Id);
+
+          // Calculate rating changes with dynamic K-factors
+          const ratingChanges = calculateMatchRatings(
+            player1.rating, player1.totalMatches,
+            player2.rating, player2.totalMatches,
+            result
+          );
+
+          // Update ratings and stats
+          player1.updateRating(ratingChanges.player1.newRating);
+          player1.totalMatches++;
+          player2.updateRating(ratingChanges.player2.newRating);
+          player2.totalMatches++;
+
+          if (result === 'player1') {
+            lockedMatch.winner = player1Id;
+            player1.wins++;
+            player2.losses++;
+          } else if (result === 'player2') {
+            lockedMatch.winner = player2Id;
+            player2.wins++;
+            player1.losses++;
+          } else {
+            player1.draws++;
+            player2.draws++;
           }
-        ];
 
-        // Send notifications to both players
-        const winnerName = result === 'player1' ? player1.username : result === 'player2' ? player2.username : null;
+          await player1.save();
+          await player2.save();
 
-        await createNotification(
-          player1Id,
-          'match_result',
-          'Match Completed',
-          result === 'player1' ? `🎉 You won! Rating: ${ratingChanges.player1.change >= 0 ? '+' : ''}${ratingChanges.player1.change}` :
-          result === 'draw' ? `Match ended in a draw. Rating: ${ratingChanges.player1.change >= 0 ? '+' : ''}${ratingChanges.player1.change}` :
-          `You lost to ${player2.username}. Rating: ${ratingChanges.player1.change >= 0 ? '+' : ''}${ratingChanges.player1.change}`,
-          `/results/${match._id}`
-        );
+          // Store rating changes in match
+          lockedMatch.ratingChanges = [
+            {
+              userId: player1Id,
+              oldRating: ratingChanges.player1.oldRating,
+              newRating: ratingChanges.player1.newRating,
+              change: ratingChanges.player1.change
+            },
+            {
+              userId: player2Id,
+              oldRating: ratingChanges.player2.oldRating,
+              newRating: ratingChanges.player2.newRating,
+              change: ratingChanges.player2.change
+            }
+          ];
 
-        await createNotification(
-          player2Id,
-          'match_result',
-          'Match Completed',
-          result === 'player2' ? `🎉 You won! Rating: ${ratingChanges.player2.change >= 0 ? '+' : ''}${ratingChanges.player2.change}` :
-          result === 'draw' ? `Match ended in a draw. Rating: ${ratingChanges.player2.change >= 0 ? '+' : ''}${ratingChanges.player2.change}` :
-          `You lost to ${player1.username}. Rating: ${ratingChanges.player2.change >= 0 ? '+' : ''}${ratingChanges.player2.change}`,
-          `/results/${match._id}`
-        );
+          await lockedMatch.save();
+
+          // Send notifications to both players
+          await createNotification(
+            player1Id,
+            'match_result',
+            'Match Completed',
+            result === 'player1' ? `🎉 You won! Rating: ${ratingChanges.player1.change >= 0 ? '+' : ''}${ratingChanges.player1.change}` :
+            result === 'draw' ? `Match ended in a draw. Rating: ${ratingChanges.player1.change >= 0 ? '+' : ''}${ratingChanges.player1.change}` :
+            `You lost to ${player2.username}. Rating: ${ratingChanges.player1.change >= 0 ? '+' : ''}${ratingChanges.player1.change}`,
+            `/results/${lockedMatch._id}`
+          );
+
+          await createNotification(
+            player2Id,
+            'match_result',
+            'Match Completed',
+            result === 'player2' ? `🎉 You won! Rating: ${ratingChanges.player2.change >= 0 ? '+' : ''}${ratingChanges.player2.change}` :
+            result === 'draw' ? `Match ended in a draw. Rating: ${ratingChanges.player2.change >= 0 ? '+' : ''}${ratingChanges.player2.change}` :
+            `You lost to ${player1.username}. Rating: ${ratingChanges.player2.change >= 0 ? '+' : ''}${ratingChanges.player2.change}`,
+            `/results/${lockedMatch._id}`
+          );
+        }
       }
     }
 
-    await match.save();
-    await match.populate('players winner');
+    const finalMatch = await Match.findById(req.params.matchId).populate('players winner');
 
     res.json({
       submission: submission,
       executionResult: executionResult,
-      match: match
+      match: finalMatch
     });
   } catch (error) {
     console.error('Submit code error:', error);
@@ -517,7 +617,14 @@ router.get('/:matchId', protect, async (req, res) => {
       return res.status(404).json({ message: 'Match not found' });
     }
 
-    res.json(match);
+    const matchData = match.toObject();
+    if (matchData.problem) {
+      await resolveTestCases(matchData.problem);
+      matchData.problem.visibleTestCases = (matchData.problem.testCases || []).filter(tc => !tc.isHidden);
+      delete matchData.problem.testCases;
+    }
+
+    res.json(matchData);
   } catch (error) {
     console.error('Get match error:', error);
     res.status(500).json({ message: 'Server error' });
@@ -529,31 +636,31 @@ router.get('/:matchId', protect, async (req, res) => {
 // @access  Private
 router.post('/:matchId/giveup', protect, async (req, res) => {
   try {
-    const match = await Match.findById(req.params.matchId).populate('players');
+    // Atomically grab the match if it's still in-progress (prevents double-resolution race)
+    const match = await Match.findOneAndUpdate(
+      {
+        _id: req.params.matchId,
+        status: 'in-progress',
+        players: req.user._id,
+        matchType: { $ne: 'solo' }
+      },
+      { $set: { status: 'completed', endTime: new Date() } },
+      { new: true }
+    ).populate('players');
 
     if (!match) {
-      return res.status(404).json({ message: 'Match not found' });
-    }
-
-    // Check if user is in this match
-    if (!match.players.some(p => p._id.toString() === req.user._id.toString())) {
+      // Either not found, already resolved, user not in match, or solo
+      const existing = await Match.findById(req.params.matchId);
+      if (!existing) return res.status(404).json({ message: 'Match not found' });
+      if (existing.matchType === 'solo') return res.status(400).json({ message: 'Cannot give up in solo practice' });
+      if (existing.status !== 'in-progress') return res.status(400).json({ message: 'Match is already resolved' });
       return res.status(403).json({ message: 'You are not in this match' });
     }
 
-    // Check if match is still in progress
-    if (match.status !== 'in-progress') {
-      return res.status(400).json({ message: 'Match is not in progress' });
-    }
-
-    // Check if match type is solo (can't give up in solo)
-    if (match.matchType === 'solo') {
-      return res.status(400).json({ message: 'Cannot give up in solo practice' });
-    }
-
-    // Mark match as completed
-    match.status = 'completed';
-    match.endTime = new Date();
     match.duration = Math.floor((match.endTime - match.startTime) / 1000);
+
+    // Cancel the scheduled timeout since match resolved via give-up
+    cancelMatchTimeout(match._id);
 
     // Determine winner (the other player)
     const givingUpPlayerId = req.user._id.toString();
@@ -566,8 +673,12 @@ router.post('/:matchId/giveup', protect, async (req, res) => {
     const winner = await User.findById(winnerId);
     const loser = await User.findById(loserId);
 
-    // Calculate rating changes
-    const ratingChanges = calculateMatchRatings(winner.rating, loser.rating, 'player1');
+    // Calculate rating changes with dynamic K-factors
+    const ratingChanges = calculateMatchRatings(
+      winner.rating, winner.totalMatches,
+      loser.rating, loser.totalMatches,
+      'player1'
+    );
 
     // Update ratings and stats
     winner.updateRating(ratingChanges.player1.newRating);
@@ -599,6 +710,16 @@ router.post('/:matchId/giveup', protect, async (req, res) => {
 
     await match.save();
     await match.populate('players winner');
+
+    // Notify the other player via socket
+    const io = getIO();
+    if (io) {
+      io.to(`match-${match._id.toString()}`).emit('opponent-gave-up', {
+        matchId: match._id.toString(),
+        userId: req.user._id.toString(),
+        username: req.user.username
+      });
+    }
 
     res.json({
       message: 'You gave up. Opponent wins!',

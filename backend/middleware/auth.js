@@ -8,6 +8,50 @@ export const generateToken = (userId) => {
   });
 };
 
+// ═══ In-Memory User Cache ═══
+// Avoids hitting MongoDB on every single authenticated request.
+// Entries expire after USER_CACHE_TTL_MS so that permission changes (e.g., isAdmin)
+// propagate within a short window. Cache is bounded to prevent memory leaks.
+const USER_CACHE_TTL_MS = 60 * 1000; // 60 seconds
+const USER_CACHE_MAX_SIZE = 500;
+
+// Map<userId, { user: UserDoc, cachedAt: number }>
+const userCache = new Map();
+
+/**
+ * Get a user from cache if the entry is still fresh.
+ * Returns null on cache miss or stale entry.
+ */
+function getCachedUser(userId) {
+  const entry = userCache.get(userId);
+  if (!entry) return null;
+  if (Date.now() - entry.cachedAt > USER_CACHE_TTL_MS) {
+    userCache.delete(userId);
+    return null;
+  }
+  return entry.user;
+}
+
+/**
+ * Store a user in cache, evicting the oldest entry if at capacity.
+ */
+function setCachedUser(userId, user) {
+  // Evict oldest (FIFO — Map iterates in insertion order)
+  if (userCache.size >= USER_CACHE_MAX_SIZE) {
+    const oldestKey = userCache.keys().next().value;
+    userCache.delete(oldestKey);
+  }
+  userCache.set(userId, { user, cachedAt: Date.now() });
+}
+
+/**
+ * Invalidate a specific user's cache entry.
+ * Call this after profile updates, role changes, etc.
+ */
+export function invalidateUserCache(userId) {
+  userCache.delete(userId);
+}
+
 // Protect routes - verify JWT token
 export const protect = async (req, res, next) => {
   let token;
@@ -20,13 +64,26 @@ export const protect = async (req, res, next) => {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Get user from token
-      req.user = await User.findById(decoded.id).select('-password');
+      // Try cache first, fall back to DB
+      let user = getCachedUser(decoded.id);
+      if (!user) {
+        // Only select fields needed for auth checks and common route usage.
+        // Heavy fields like solvedProblems[] and matchHistory[] are excluded
+        // since routes that need them can fetch the full user explicitly.
+        user = await User.findById(decoded.id).select(
+          '-password -solvedProblems -matchHistory'
+        );
 
-      if (!req.user) {
+        if (user) {
+          setCachedUser(decoded.id, user);
+        }
+      }
+
+      if (!user) {
         return res.status(401).json({ message: 'User not found' });
       }
 
+      req.user = user;
       next();
     } catch (error) {
       console.error('Auth middleware error:', error);

@@ -1,4 +1,4 @@
-import { MoonIcon, SunIcon } from '@heroicons/react/24/solid';
+import { Moon, Sun } from 'lucide-react';
 import { useThemeStore } from '../store/themeStore';
 
 export default function ThemeToggle({ className = '' }) {
@@ -14,7 +14,7 @@ export default function ThemeToggle({ className = '' }) {
       } ${className}`}
       aria-label="Toggle theme"
     >
-      {isDark ? <SunIcon className="w-4 h-4" /> : <MoonIcon className="w-4 h-4" />}
+      {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
     </button>
   );
 }

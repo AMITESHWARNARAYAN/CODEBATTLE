@@ -44,7 +44,9 @@ const contestParticipantSchema = new mongoose.Schema({
     default: 0
   },
   rank: Number,
-  ratingChange: Number
+  ratingChange: Number,
+  oldContestRating: Number,
+  newContestRating: Number
 });
 
 const contestSchema = new mongoose.Schema({
@@ -124,6 +126,10 @@ const contestSchema = new mongoose.Schema({
   isVisible: {
     type: Boolean,
     default: true
+  },
+  _ratingsFinalized: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true
@@ -200,16 +206,15 @@ contestSchema.methods.canRegister = function(userId) {
   if (this.status === 'cancelled') return false;
   
   const alreadyRegistered = this.participants.some(
-    p => p.user.toString() === userId.toString()
+    p => (p.user._id || p.user).toString() === userId.toString()
   );
   
   return !alreadyRegistered;
 };
 
-// Method to get user's contest data
 contestSchema.methods.getUserData = function(userId) {
   return this.participants.find(
-    p => p.user.toString() === userId.toString()
+    p => (p.user._id || p.user).toString() === userId.toString()
   );
 };
 

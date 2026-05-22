@@ -1,6 +1,7 @@
 import express from 'express';
 import Notification from '../models/Notification.js';
 import { protect } from '../middleware/auth.js';
+import { getIO } from '../utils/socketSingleton.js';
 
 const router = express.Router();
 
@@ -132,7 +133,7 @@ export const createNotification = async (userId, type, title, message, link = nu
     });
 
     // Emit socket event for real-time notification
-    const io = global.io;
+    const io = getIO();
     if (io) {
       io.to(userId.toString()).emit('notification', notification);
     }

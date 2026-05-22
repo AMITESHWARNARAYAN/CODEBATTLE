@@ -32,14 +32,14 @@ const seedAdmin = async () => {
         username: 'admin',
         email: 'admin@codebattle.com',
         password: 'admin123456', // Will be hashed by pre-save hook
-        rating: 1200,
+        rating: 0,
         isAdmin: true,
         wins: 0,
         losses: 0,
         draws: 0,
         totalMatches: 0,
-        highestRating: 1200,
-        lowestRating: 1200,
+        highestRating: 0,
+        lowestRating: 0,
         isOnline: false
       });
 

@@ -27,38 +27,28 @@ router.post('/', protect, async (req, res) => {
       isDailyChallenge: isDailyChallenge || false
     });
 
-    // Update problem statistics
+    // Update user's solved problems atomically on first Accepted — atomic to prevent race conditions
     const problem = await Problem.findById(problemId);
-    if (problem) {
-      problem.totalSubmissions += 1;
-      if (status === 'Accepted') {
-        problem.successfulSubmissions += 1;
-        
-        // Update user's solved problems if first time solving
-        const user = await User.findById(req.user._id);
-        const alreadySolved = user.solvedProblems.some(
-          sp => sp.problem.toString() === problemId
+    if (status === 'Accepted' && problem) {
+      try {
+        const difficultyInc = {};
+        if (problem.difficulty === 'Easy') difficultyInc.easySolved = 1;
+        else if (problem.difficulty === 'Medium') difficultyInc.mediumSolved = 1;
+        else if (problem.difficulty === 'Hard') difficultyInc.hardSolved = 1;
+
+        await User.updateOne(
+          {
+            _id: req.user._id,
+            'solvedProblems.problem': { $ne: problemId }
+          },
+          {
+            $addToSet: { solvedProblems: { problem: problemId, solvedAt: new Date() } },
+            $inc: { totalSolved: 1, ...difficultyInc }
+          }
         );
-
-        if (!alreadySolved) {
-          user.solvedProblems.push({
-            problem: problemId,
-            solvedAt: new Date()
-          });
-          user.totalSolved += 1;
-
-          // Update difficulty-specific counts
-          if (problem.difficulty === 'Easy') user.easySolved += 1;
-          else if (problem.difficulty === 'Medium') user.mediumSolved += 1;
-          else if (problem.difficulty === 'Hard') user.hardSolved += 1;
-
-          await user.save();
-        }
+      } catch (statsErr) {
+        console.error('Failed to update user solved stats in submissions route:', statsErr);
       }
-      problem.acceptanceRate = problem.totalSubmissions > 0
-        ? Math.round((problem.successfulSubmissions / problem.totalSubmissions) * 100)
-        : 0;
-      await problem.save();
     }
 
     const populatedSubmission = await Submission.findById(submission._id)
@@ -156,32 +146,48 @@ router.get('/problem/:problemId', protect, async (req, res) => {
 // @access  Private
 router.get('/stats/overview', protect, async (req, res) => {
   try {
-    const totalSubmissions = await Submission.countDocuments({ user: req.user._id });
+    let targetUserId = req.user._id;
+    if (req.query.username) {
+      const targetUser = await User.findOne({ username: req.query.username });
+      if (!targetUser) return res.status(404).json({ message: 'User not found' });
+      targetUserId = targetUser._id;
+    }
+
+    const totalSubmissions = await Submission.countDocuments({ user: targetUserId });
     
     const acceptedSubmissions = await Submission.countDocuments({
-      user: req.user._id,
+      user: targetUserId,
       status: 'Accepted'
     });
 
-    const recentSubmissions = await Submission.find({ user: req.user._id })
+    const recentSubmissions = await Submission.find({ user: targetUserId })
       .sort({ submittedAt: -1 })
       .limit(10)
       .populate('problem', 'title difficulty');
 
     // Language distribution
     const languageStats = await Submission.aggregate([
-      { $match: { user: req.user._id } },
+      { $match: { user: targetUserId } },
       { $group: { _id: '$language', count: { $sum: 1 } } }
     ]);
 
     // Status distribution
     const statusStats = await Submission.aggregate([
-      { $match: { user: req.user._id } },
+      { $match: { user: targetUserId } },
       { $group: { _id: '$status', count: { $sum: 1 } } }
     ]);
 
     // Get user's solved problems count
-    const user = await User.findById(req.user._id).select('totalSolved easySolved mediumSolved hardSolved');
+    const user = await User.findById(targetUserId).select('totalSolved easySolved mediumSolved hardSolved');
+
+    // Get system-wide problem totals
+    const totalEasy = await Problem.countDocuments({ difficulty: 'Easy' });
+    const totalMedium = await Problem.countDocuments({ difficulty: 'Medium' });
+    const totalHard = await Problem.countDocuments({ difficulty: 'Hard' });
+    const totalSystemProblems = totalEasy + totalMedium + totalHard;
+
+    // Get total users for global rank
+    const totalUsersCount = await User.countDocuments({});
 
     res.json({
       totalSubmissions,
@@ -197,7 +203,14 @@ router.get('/stats/overview', protect, async (req, res) => {
         easy: user.easySolved,
         medium: user.mediumSolved,
         hard: user.hardSolved
-      }
+      },
+      systemTotals: {
+        total: totalSystemProblems,
+        easy: totalEasy,
+        medium: totalMedium,
+        hard: totalHard
+      },
+      totalUsers: totalUsersCount
     });
   } catch (error) {
     console.error('Get submission stats error:', error);
@@ -210,6 +223,13 @@ router.get('/stats/overview', protect, async (req, res) => {
 // @access  Private
 router.get('/calendar/heatmap', protect, async (req, res) => {
   try {
+    let targetUserId = req.user._id;
+    if (req.query.username) {
+      const targetUser = await User.findOne({ username: req.query.username });
+      if (!targetUser) return res.status(404).json({ message: 'User not found' });
+      targetUserId = targetUser._id;
+    }
+
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
     oneYearAgo.setHours(0, 0, 0, 0);
@@ -217,7 +237,7 @@ router.get('/calendar/heatmap', protect, async (req, res) => {
     const submissions = await Submission.aggregate([
       {
         $match: {
-          user: req.user._id,
+          user: targetUserId,
           submittedAt: { $gte: oneYearAgo }
         }
       },

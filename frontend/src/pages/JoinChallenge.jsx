@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMatchStore } from '../store/matchStore';
 import { toast } from 'react-hot-toast';
-import { ArrowLeftIcon } from '@heroicons/react/24/solid';
+import { ArrowLeft } from 'lucide-react';
 
 export default function JoinChallenge() {
-  const { inviteCodeBracketIcon } = useParams();
+  const { inviteCode } = useParams();
   const navigate = useNavigate();
   const { joinFriendChallenge, loading } = useMatchStore();
   const [joining, setJoining] = useState(false);
@@ -14,7 +14,7 @@ export default function JoinChallenge() {
     const handleJoin = async () => {
       setJoining(true);
       try {
-        const match = await joinFriendChallenge(inviteCodeBracketIcon);
+        const match = await joinFriendChallenge(inviteCode);
         toast.success('Joined challenge! Starting match...');
         setTimeout(() => {
           navigate(`/match/${match._id}`);
@@ -28,7 +28,7 @@ export default function JoinChallenge() {
     };
 
     handleJoin();
-  }, [inviteCodeBracketIcon, joinFriendChallenge, navigate]);
+  }, [inviteCode, joinFriendChallenge, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">
