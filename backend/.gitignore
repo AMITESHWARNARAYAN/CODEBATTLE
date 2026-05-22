@@ -12,3 +12,23 @@ yarn-error.log*
 dist/
 build/
 coverage/
+
+# Database Seeding, Migrations, and Scratch files
+addProblem.js
+addProblemsV2.js
+countCategories.js
+countQuick.js
+listMathTitles.js
+migrate-cpp-class.js
+migrate-metadata.js
+reset-users.js
+runMassivePipeline.js
+seed-topics.js
+seedCategoriesAndLink.js
+test-drafts.js
+test-judge-custom.js
+test-streak.js
+testStack.js
+scratch/
+seeds/
+batches/
