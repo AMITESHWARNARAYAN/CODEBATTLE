@@ -138,6 +138,28 @@ export const createNotification = async (userId, type, title, message, link = nu
       io.to(userId.toString()).emit('notification', notification);
     }
 
+    // Clean up older notifications if they exceed the threshold (e.g., 10 notifications) to save DB storage
+    try {
+      const THRESHOLD = 10;
+      const count = await Notification.countDocuments({ user: userId });
+      if (count > THRESHOLD) {
+        const oldestToKeep = await Notification.find({ user: userId })
+          .sort({ createdAt: -1 })
+          .skip(THRESHOLD - 1)
+          .limit(1)
+          .select('createdAt');
+
+        if (oldestToKeep.length > 0) {
+          await Notification.deleteMany({
+            user: userId,
+            createdAt: { $lt: oldestToKeep[0].createdAt }
+          });
+        }
+      }
+    } catch (cleanupError) {
+      console.error('Error during notification threshold cleanup:', cleanupError);
+    }
+
     return notification;
   } catch (error) {
     console.error('Create notification error:', error);

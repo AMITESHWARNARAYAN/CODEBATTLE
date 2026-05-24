@@ -81,6 +81,81 @@ function AppRoutes() {
   }, [user]);
 
   useEffect(() => {
+    // Listen for incoming challenge and show premium interactive notification toast
+    if (user) {
+      const handleChallengeReceived = (data) => {
+        // Play notification sound
+        try {
+          const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-600.wav');
+          audio.volume = 0.4;
+          audio.play().catch(() => {});
+        } catch (e) {}
+
+        // Custom premium toast
+        toast.custom((t) => (
+          <div
+            className={`${
+              t.visible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
+            } fixed top-0 left-0 right-0 z-[9999] bg-[#7fa64c] text-white shadow-lg flex items-center justify-between px-6 py-3.5 transition-all duration-300 ease-in-out border-b border-[#6c903f]`}
+          >
+            {/* Left Section: Icon & Message */}
+            <div className="flex items-center space-x-3">
+              <span className="text-xl animate-pulse">⚔️</span>
+              <span className="text-sm font-semibold tracking-wide font-sans">
+                <span className="font-bold underline text-yellow-200">@{data.challenger}</span> challenged you to a DSA Coding Battle!
+              </span>
+            </div>
+
+            {/* Right Section: Actions & Close */}
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={async () => {
+                  toast.dismiss(t.id);
+                  try {
+                    await acceptChallenge(data.matchId);
+                    navigate(`/match/${data.matchId}`);
+                  } catch (err) {
+                    toast.error('Failed to accept challenge');
+                  }
+                }}
+                className="bg-white text-[#7fa64c] hover:bg-gray-100 font-bold px-4 py-1.5 rounded-md text-xs uppercase tracking-wider shadow-sm transition-all duration-150"
+              >
+                Accept
+              </button>
+              <button
+                onClick={async () => {
+                  toast.dismiss(t.id);
+                  try {
+                    await rejectChallenge(data.matchId);
+                  } catch (err) {}
+                }}
+                className="bg-transparent border border-white hover:bg-white/10 text-white font-medium px-4 py-1.5 rounded-md text-xs uppercase tracking-wider transition-all duration-150"
+              >
+                Decline
+              </button>
+              <button
+                onClick={() => toast.dismiss(t.id)}
+                className="text-white/80 hover:text-white transition-colors pl-2 text-xl font-bold font-sans focus:outline-none"
+                aria-label="Close"
+              >
+                &times;
+              </button>
+            </div>
+          </div>
+        ), { duration: 15000 });
+      };
+
+      onChallengeReceived(handleChallengeReceived);
+
+      return () => {
+        import('./utils/socket').then(({ removeListener }) => {
+          removeListener('challenge-received', handleChallengeReceived);
+        });
+      };
+    }
+  }, [user, acceptChallenge, rejectChallenge, navigate]);
+
+  useEffect(() => {
     // Listen for challenge acceptance - redirect both players to match
     if (user) {
       const handleChallengeAccepted = (data) => {

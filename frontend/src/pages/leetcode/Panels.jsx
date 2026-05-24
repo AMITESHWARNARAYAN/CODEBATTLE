@@ -385,6 +385,15 @@ export function TestCasePanel({ testCases, activeCase, setActiveCase, runResult,
           <div>
             {!result ? (
               <div className="text-center text-[#eff1f680] text-xs py-8">Run or submit your code to see results</div>
+            ) : (result.status?.toLowerCase() === 'compilation error' || result.status?.toLowerCase() === 'compile error') ? (
+              <div className="space-y-3">
+                <div className="text-lg font-bold text-red-500">
+                  Compile Error
+                </div>
+                <div className="bg-[#ff4b4b0a] border border-[#ff4b4b22] rounded-lg p-4 font-mono text-xs text-[#ff8e8e] whitespace-pre-wrap leading-relaxed select-text max-h-[300px] overflow-y-auto custom-scrollbar">
+                  {result.compile_output || (result.errors && result.errors[0]) || 'Unknown compilation error'}
+                </div>
+              </div>
             ) : (
               <div className="space-y-3">
                 <div>

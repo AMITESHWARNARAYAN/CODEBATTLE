@@ -213,6 +213,7 @@ router.post('/submit', protect, authRunLimiter, async (req, res) => {
       memoryUsed: executionResult.memoryUsed,
       outputs: filteredOutputs,
       errors: executionResult.errors,
+      compile_output: executionResult.compile_output,
       runtimePercentile,
       memoryPercentile,
       message: finalStatus === 'Accepted'
@@ -466,7 +467,8 @@ router.post('/run-batch', protect, authRunLimiter, async (req, res) => {
       executionTime: executionResult.executionTime,
       memoryUsed: executionResult.memoryUsed,
       outputs: executionResult.outputs,
-      errors: executionResult.errors
+      errors: executionResult.errors,
+      compile_output: executionResult.compile_output
     });
   } catch (error) {
     console.error('Batch run error:', error);

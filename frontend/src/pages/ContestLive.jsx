@@ -385,28 +385,50 @@ export default function ContestLive() {
                   </div>
                   <div className="flex-1 overflow-y-auto p-3 lc-scroll text-xs">
                     {submitResult ? (
-                      <div>
-                        <div className={`text-lg font-bold mb-2 ${submitResult.status === 'accepted' ? 'text-[#2cbb5d]' : 'text-[#ef4743]'}`}>
-                          {submitResult.status === 'accepted' ? '✓ Accepted' : `✗ ${submitResult.status}`}
-                        </div>
-                        <div className="text-[#eff1f680]">
-                          Score: <span className="text-[#ffa116] font-bold">{submitResult.totalScore}</span> • Rank: <span className="text-white font-bold">#{submitResult.rank}</span> • Solved: {submitResult.problemsSolved}
-                        </div>
-                      </div>
-                    ) : runResult ? (
-                      <div>
-                        <div className={`text-lg font-bold mb-2 ${runResult.status === 'Accepted' ? 'text-[#2cbb5d]' : 'text-[#ef4743]'}`}>
-                          {runResult.status}
-                        </div>
-                        {runResult.outputs?.map((o, i) => (
-                          <div key={i} className="mb-2 p-2 bg-[#1a1a2e] rounded">
-                            <div className="text-[#eff1f680]">Case {i + 1}: <span className={o.passed ? 'text-[#2cbb5d]' : 'text-[#ef4743]'}>{o.passed ? 'Passed' : 'Failed'}</span></div>
-                            {o.stdout && <div className="text-[#eff1f6aa] mt-1">Output: {o.stdout}</div>}
-                            {o.error && <div className="text-[#ef4743] mt-1">{o.error}</div>}
+                      (submitResult.status?.toLowerCase() === 'compilation error' || submitResult.status?.toLowerCase() === 'compile error') ? (
+                        <div className="space-y-3">
+                          <div className="text-lg font-bold text-red-500">
+                            Compile Error
                           </div>
-                        ))}
-                        {runResult.errors?.map((e, i) => <div key={i} className="text-[#ef4743]">{e}</div>)}
-                      </div>
+                          <div className="bg-[#ff4b4b0a] border border-[#ff4b4b22] rounded-lg p-4 font-mono text-xs text-[#ff8e8e] whitespace-pre-wrap leading-relaxed select-text max-h-[300px] overflow-y-auto custom-scrollbar">
+                            {submitResult.executionResult?.compile_output || submitResult.executionResult?.errors?.[0] || 'Unknown compilation error'}
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className={`text-lg font-bold mb-2 ${submitResult.status === 'accepted' ? 'text-[#2cbb5d]' : 'text-[#ef4743]'}`}>
+                            {submitResult.status === 'accepted' ? '✓ Accepted' : `✗ ${submitResult.status}`}
+                          </div>
+                          <div className="text-[#eff1f680]">
+                            Score: <span className="text-[#ffa116] font-bold">{submitResult.totalScore}</span> • Rank: <span className="text-white font-bold">#{submitResult.rank}</span> • Solved: {submitResult.problemsSolved}
+                          </div>
+                        </div>
+                      )
+                    ) : runResult ? (
+                      (runResult.status?.toLowerCase() === 'compilation error' || runResult.status?.toLowerCase() === 'compile error') ? (
+                        <div className="space-y-3">
+                          <div className="text-lg font-bold text-red-500">
+                            Compile Error
+                          </div>
+                          <div className="bg-[#ff4b4b0a] border border-[#ff4b4b22] rounded-lg p-4 font-mono text-xs text-[#ff8e8e] whitespace-pre-wrap leading-relaxed select-text max-h-[300px] overflow-y-auto custom-scrollbar">
+                            {runResult.compile_output || runResult.errors?.[0] || 'Unknown compilation error'}
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className={`text-lg font-bold mb-2 ${runResult.status === 'Accepted' ? 'text-[#2cbb5d]' : 'text-[#ef4743]'}`}>
+                            {runResult.status}
+                          </div>
+                          {runResult.outputs?.map((o, i) => (
+                            <div key={i} className="mb-2 p-2 bg-[#1a1a2e] rounded">
+                              <div className="text-[#eff1f680]">Case {i + 1}: <span className={o.passed ? 'text-[#2cbb5d]' : 'text-[#ef4743]'}>{o.passed ? 'Passed' : 'Failed'}</span></div>
+                              {o.stdout && <div className="text-[#eff1f6aa] mt-1">Output: {o.stdout}</div>}
+                              {o.error && <div className="text-[#ef4743] mt-1">{o.error}</div>}
+                            </div>
+                          ))}
+                          {runResult.errors?.map((e, i) => <div key={i} className="text-[#ef4743]">{e}</div>)}
+                        </div>
+                      )
                     ) : (
                       <p className="text-[#eff1f650]">Run or submit your code to see results</p>
                     )}

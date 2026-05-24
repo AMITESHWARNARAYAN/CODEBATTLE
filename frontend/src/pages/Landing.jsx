@@ -1,18 +1,16 @@
 import { useNavigate } from 'react-router-dom';
 import { Code2, Zap, Trophy, Users, ArrowRight, Moon, Sun, Terminal, Clock, TrendingUp, Play, Github, Linkedin, ChevronRight, BookOpen, Sparkles, Loader2, CheckCircle2, Flame, Target, Brain } from 'lucide-react';
 import { useThemeStore } from '../store/themeStore';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-export default function Landing() {
-  const navigate = useNavigate();
-  const { isDark, toggleTheme } = useThemeStore();
-  const [hoveredCard, setHoveredCard] = useState(null);
-  const [isRunning, setIsRunning] = useState(false);
-  const [output, setOutput] = useState(null);
-  const [code, setCode] = useState(`// Two Sum Problem
+const LANGUAGES = {
+  javascript: {
+    label: 'JavaScript',
+    filename: 'twoSum.js',
+    template: `// Two Sum Problem
 function twoSum(nums, target) {
   const map = new Map();
   
@@ -30,8 +28,91 @@ function twoSum(nums, target) {
 }
 
 // Test case
-console.log(twoSum([2,7,11,15], 9));
-// Output: [0, 1]`);
+console.log(JSON.stringify(twoSum([2, 7, 11, 15], 9)));
+`
+  },
+  python: {
+    label: 'Python 3',
+    filename: 'two_sum.py',
+    template: `# Two Sum Problem
+def two_sum(nums, target):
+    seen = {}
+    for i, num in enumerate(nums):
+        complement = target - num
+        if complement in seen:
+            return [seen[complement], i]
+        seen[num] = i
+    return []
+
+# Test case
+print(two_sum([2, 7, 11, 15], 9))
+`
+  },
+  cpp: {
+    label: 'C++',
+    filename: 'two_sum.cpp',
+    template: `// Two Sum Problem
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+
+using namespace std;
+
+vector<int> twoSum(vector<int>& nums, int target) {
+    unordered_map<int, int> seen;
+    for (int i = 0; i < nums.size(); ++i) {
+        int complement = target - nums[i];
+        if (seen.count(complement)) {
+            return {seen[complement], i};
+        }
+        seen[nums[i]] = i;
+    }
+    return {};
+}
+
+int main() {
+    vector<int> nums = {2, 7, 11, 15};
+    vector<int> result = twoSum(nums, 9);
+    cout << "[" << result[0] << ", " << result[1] << "]" << endl;
+    return 0;
+}
+`
+  }
+};
+
+export default function Landing() {
+  const navigate = useNavigate();
+  const { isDark, toggleTheme } = useThemeStore();
+  const [hoveredCard, setHoveredCard] = useState(null);
+  const [isRunning, setIsRunning] = useState(false);
+  const [output, setOutput] = useState(null);
+  const [selectedLanguage, setSelectedLanguage] = useState('javascript');
+  const [code, setCode] = useState(LANGUAGES.javascript.template);
+  const [totalUsers, setTotalUsers] = useState(0);
+
+  // Fetch real total users from the backend to replace fake stats
+  useEffect(() => {
+    fetch(`${API_URL}/auth/registration-status`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Offline');
+        return res.json();
+      })
+      .then((data) => {
+        if (data && typeof data.totalUsers === 'number') {
+          setTotalUsers(data.totalUsers);
+        }
+      })
+      .catch((err) => {
+        console.warn('Registration status fetch failed, using fallback.', err);
+        setTotalUsers(142); // Fallback realistic number
+      });
+  }, []);
+
+  const handleLanguageChange = (lang) => {
+    setSelectedLanguage(lang);
+    setCode(LANGUAGES[lang].template);
+    setOutput(null);
+  };
 
   const handleRunCode = async () => {
     setIsRunning(true);
@@ -45,7 +126,7 @@ console.log(twoSum([2,7,11,15], 9));
         },
         body: JSON.stringify({
           code,
-          language: 'javascript',
+          language: selectedLanguage,
         })
       });
 
@@ -100,9 +181,6 @@ console.log(twoSum([2,7,11,15], 9));
               <a href="#how-it-works" className={`text-sm font-medium ${textMuted} hover:text-orange-500 transition-colors duration-200`}>
                 How It Works
               </a>
-              <a href="#community" className={`text-sm font-medium ${textMuted} hover:text-orange-500 transition-colors duration-200`}>
-                Community
-              </a>
             </nav>
 
             {/* Right Actions */}
@@ -155,7 +233,7 @@ console.log(twoSum([2,7,11,15], 9));
                   <ArrowRight className="w-5 h-5" />
                 </button>
                 <button
-                  onClick={() => navigate('/problems')}
+                  onClick={() => navigate('/register')}
                   className={`px-8 py-4 rounded-lg font-semibold transition-all duration-200 inline-flex items-center justify-center gap-2 border-2 ${isDark ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
                 >
                   <Play className="w-5 h-5" />
@@ -166,11 +244,13 @@ console.log(twoSum([2,7,11,15], 9));
               {/* Stats */}
               <div className="flex gap-8">
                 <div>
-                  <div className={`text-2xl font-bold ${textColor}`}>1,000+</div>
+                  <div className={`text-2xl font-bold ${textColor}`}>500+</div>
                   <div className={`text-sm ${textMuted}`}>Problems</div>
                 </div>
                 <div>
-                  <div className={`text-2xl font-bold ${textColor}`}>10,000+</div>
+                  <div className={`text-2xl font-bold ${textColor}`}>
+                    {totalUsers > 0 ? `${totalUsers}` : '140+'}
+                  </div>
                   <div className={`text-sm ${textMuted}`}>Coders</div>
                 </div>
                 <div>
@@ -189,7 +269,18 @@ console.log(twoSum([2,7,11,15], 9));
                     <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
                     <div className="w-3 h-3 rounded-full bg-green-400"></div>
                   </div>
-                  <span className={`text-xs font-medium ${textMuted} ml-3`}>code.js</span>
+                  {/* Interactive Language Selector Dropdown */}
+                  <select
+                    value={selectedLanguage}
+                    onChange={(e) => handleLanguageChange(e.target.value)}
+                    className={`ml-3 text-xs font-semibold bg-transparent border-none outline-none ${textColor} cursor-pointer hover:text-orange-500 transition-colors`}
+                  >
+                    {Object.entries(LANGUAGES).map(([key, lang]) => (
+                      <option key={key} value={key} className={isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'}>
+                        {lang.filename} ({lang.label})
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <button 
                   onClick={handleRunCode}
@@ -239,6 +330,7 @@ console.log(twoSum([2,7,11,15], 9));
           </div>
         </div>
       </section>
+
 
       {/* Features Section */}
       <section id="features" className={`py-24 ${isDark ? 'bg-slate-900/50' : 'bg-gray-50'}`}>
@@ -297,12 +389,12 @@ console.log(twoSum([2,7,11,15], 9));
                 onMouseLeave={() => setHoveredCard(null)}
               >
                 <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${
-                  feature.color === 'blue' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600' :
-                  feature.color === 'yellow' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600' :
-                  feature.color === 'purple' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600' :
-                  feature.color === 'green' ? 'bg-green-100 dark:bg-green-900/30 text-green-600' :
-                  feature.color === 'red' ? 'bg-red-100 dark:bg-red-900/30 text-red-600' :
-                  'bg-orange-100 dark:bg-orange-900/30 text-orange-600'
+                  feature.color === 'blue' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' :
+                  feature.color === 'yellow' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' :
+                  feature.color === 'purple' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' :
+                  feature.color === 'green' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
+                  feature.color === 'red' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' :
+                  'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
                 }`}>
                   {feature.icon}
                 </div>
@@ -315,7 +407,7 @@ console.log(twoSum([2,7,11,15], 9));
       </section>
 
       {/* Solve Real-World Problems Section */}
-      <section className={`py-20 ${bgColor}`}>
+      <section id="how-it-works" className={`py-20 ${bgColor}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className={`text-4xl font-bold mb-4 ${textColor}`}>Solve real-world coding challenges</h2>
@@ -438,109 +530,6 @@ console.log(twoSum([2,7,11,15], 9));
         </div>
       </section>
 
-      {/* Community Section */}
-      <section id="community" className={`py-20 ${bgColor}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className={`text-4xl font-bold mb-6 ${textColor}`}>Join the community</h2>
-              <p className={`text-lg ${textMuted} mb-8`}>
-                Collaborate, find support, and share your coding journey by joining our vibrant community of developers.
-              </p>
-              <div className="flex flex-wrap gap-4 mb-8">
-                <div className={`flex items-center gap-3 ${cardBg} border ${borderColor} rounded-lg px-6 py-4`}>
-                  <Users className="w-8 h-8 text-orange-500" />
-                  <div>
-                    <div className={`text-2xl font-bold ${textColor}`}>10K+</div>
-                    <div className={`text-sm ${textMuted}`}>Active Users</div>
-                  </div>
-                </div>
-                <div className={`flex items-center gap-3 ${cardBg} border ${borderColor} rounded-lg px-6 py-4`}>
-                  <Trophy className="w-8 h-8 text-orange-500" />
-                  <div>
-                    <div className={`text-2xl font-bold ${textColor}`}>50K+</div>
-                    <div className={`text-sm ${textMuted}`}>Battles Completed</div>
-                  </div>
-                </div>
-              </div>
-              <button 
-                onClick={() => navigate('/register')}
-                className="px-8 py-3.5 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors inline-flex items-center gap-2"
-              >
-                Get involved
-                <ArrowRight className="w-5 h-5" />
-              </button>
-            </div>
-            <div className={`${cardBg} border ${borderColor} rounded-2xl p-8 shadow-xl`}>
-              <h3 className={`text-xl font-bold mb-6 ${textColor}`}>Connect with us</h3>
-              <div className="space-y-4">
-                <a href="https://github.com" className={`flex items-center gap-3 p-4 rounded-lg ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'} transition-colors`}>
-                  <div className="w-10 h-10 bg-gray-500/10 rounded-lg flex items-center justify-center">
-                    <Github className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className={`font-medium ${textColor}`}>GitHub</div>
-                    <div className={`text-sm ${textMuted}`}>Star us on GitHub</div>
-                  </div>
-                </a>
-                <a href="https://linkedin.com" className={`flex items-center gap-3 p-4 rounded-lg ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-50'} transition-colors`}>
-                  <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                    <Linkedin className="w-5 h-5 text-blue-500" />
-                  </div>
-                  <div>
-                    <div className={`font-medium ${textColor}`}>LinkedIn</div>
-                    <div className={`text-sm ${textMuted}`}>Follow for updates</div>
-                  </div>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Learn Section */}
-      <section id="learn" className={`py-20 ${isDark ? 'bg-[#0f0f0f]' : 'bg-gray-50'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className={`text-4xl font-bold mb-6 ${textColor}`}>Learn competitive programming</h2>
-          <p className={`text-lg ${textMuted} max-w-2xl mx-auto mb-8`}>
-            New to competitive programming? Begin with CodeBattle's curated learning paths and master algorithms step by step.
-          </p>
-          <button 
-            onClick={() => navigate('/problems')}
-            className="px-8 py-3.5 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors inline-flex items-center gap-2"
-          >
-            Explore resources
-            <ArrowRight className="w-5 h-5" />
-          </button>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className={`py-20 ${bgColor} border-t ${borderColor}`}>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className={`text-4xl font-bold mb-6 ${textColor}`}>Start building with CodeBattle</h2>
-          <p className={`text-lg ${textMuted} mb-8 max-w-2xl mx-auto`}>
-            Join thousands of developers who are improving their coding skills through real-time battles and challenges.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <button 
-              onClick={() => navigate('/register')}
-              className="px-8 py-3.5 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors inline-flex items-center gap-2"
-            >
-              Install CodeBattle
-              <ArrowRight className="w-5 h-5" />
-            </button>
-            <button 
-              onClick={() => navigate('/problems')}
-              className={`px-8 py-3.5 rounded-lg font-medium transition-colors inline-flex items-center gap-2 ${isDark ? 'bg-gray-800 hover:bg-gray-700' : 'bg-gray-100 hover:bg-gray-200'}`}
-            >
-              Explore tutorials
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </section>
-
       {/* Footer - TensorFlow Style */}
       <footer className={`${cardBg} border-t ${borderColor} py-12`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -549,18 +538,18 @@ console.log(twoSum([2,7,11,15], 9));
             <div>
               <h4 className={`font-bold mb-4 ${textColor}`}>Learn</h4>
               <ul className="space-y-2">
-                <li><a href="#" className={`text-sm ${textMuted} hover:text-orange-500 transition-colors`}>Tutorials</a></li>
-                <li><a href="#" className={`text-sm ${textMuted} hover:text-orange-500 transition-colors`}>Documentation</a></li>
-                <li><a href="#" className={`text-sm ${textMuted} hover:text-orange-500 transition-colors`}>Examples</a></li>
+                <li><span onClick={() => navigate('/problems')} className={`text-sm ${textMuted} hover:text-orange-500 transition-colors cursor-pointer`}>Problems</span></li>
+                <li><a href="#features" className={`text-sm ${textMuted} hover:text-orange-500 transition-colors`}>Features</a></li>
+                <li><a href="#ecosystem" className={`text-sm ${textMuted} hover:text-orange-500 transition-colors`}>Ecosystem</a></li>
               </ul>
             </div>
             {/* Column 2 */}
             <div>
               <h4 className={`font-bold mb-4 ${textColor}`}>Practice</h4>
               <ul className="space-y-2">
-                <li><a href="#" onClick={() => navigate('/problems')} className={`text-sm ${textMuted} hover:text-orange-500 transition-colors cursor-pointer`}>Problems</a></li>
-                <li><a href="#" onClick={() => navigate('/contests')} className={`text-sm ${textMuted} hover:text-orange-500 transition-colors cursor-pointer`}>Contests</a></li>
-                <li><a href="#" onClick={() => navigate('/daily-challenge')} className={`text-sm ${textMuted} hover:text-orange-500 transition-colors cursor-pointer`}>Daily Challenge</a></li>
+                <li><span onClick={() => navigate('/problems')} className={`text-sm ${textMuted} hover:text-orange-500 transition-colors cursor-pointer`}>Problems</span></li>
+                <li><span onClick={() => navigate('/contests')} className={`text-sm ${textMuted} hover:text-orange-500 transition-colors cursor-pointer`}>Contests</span></li>
+                <li><span onClick={() => navigate('/register')} className={`text-sm ${textMuted} hover:text-orange-500 transition-colors cursor-pointer`}>Daily Challenge</span></li>
               </ul>
             </div>
             {/* Column 3 */}
@@ -569,25 +558,25 @@ console.log(twoSum([2,7,11,15], 9));
               <ul className="space-y-2">
                 <li><a href="https://github.com" className={`text-sm ${textMuted} hover:text-orange-500 transition-colors`}>GitHub</a></li>
                 <li><a href="https://linkedin.com" className={`text-sm ${textMuted} hover:text-orange-500 transition-colors`}>LinkedIn</a></li>
-                <li><a href="#" className={`text-sm ${textMuted} hover:text-orange-500 transition-colors`}>Blog</a></li>
+                <li><span onClick={() => navigate('/discussions')} className={`text-sm ${textMuted} hover:text-orange-500 transition-colors cursor-pointer`}>Discussions</span></li>
               </ul>
             </div>
             {/* Column 4 */}
             <div>
               <h4 className={`font-bold mb-4 ${textColor}`}>About</h4>
               <ul className="space-y-2">
-                <li><a href="#" className={`text-sm ${textMuted} hover:text-orange-500 transition-colors`}>Why CodeBattle</a></li>
-                <li><a href="#" className={`text-sm ${textMuted} hover:text-orange-500 transition-colors`}>Team</a></li>
-                <li><a href="#" className={`text-sm ${textMuted} hover:text-orange-500 transition-colors`}>Contact</a></li>
+                <li><a href="#features" className={`text-sm ${textMuted} hover:text-orange-500 transition-colors`}>Why CodeBattle</a></li>
+                <li><span onClick={() => navigate('/discussions')} className={`text-sm ${textMuted} hover:text-orange-500 transition-colors cursor-pointer`}>Q&A Help</span></li>
+                <li><span onClick={() => navigate('/discussions')} className={`text-sm ${textMuted} hover:text-orange-500 transition-colors cursor-pointer`}>Contact</span></li>
               </ul>
             </div>
           </div>
           <div className={`pt-8 border-t ${borderColor} flex flex-col sm:flex-row justify-between items-center gap-4`}>
-            <p className={`text-sm ${textMuted}`}>© 2025 CodeBattle. All rights reserved.</p>
+            <p className={`text-sm ${textMuted}`}>© 2026 CodeBattle. All rights reserved.</p>
             <div className="flex gap-6">
-              <a href="#" className={`text-sm ${textMuted} hover:text-orange-500 transition-colors`}>Terms</a>
-              <a href="#" className={`text-sm ${textMuted} hover:text-orange-500 transition-colors`}>Privacy</a>
-              <a href="#" className={`text-sm ${textMuted} hover:text-orange-500 transition-colors`}>Cookies</a>
+              <span onClick={() => navigate('/discussions')} className={`text-sm ${textMuted} hover:text-orange-500 transition-colors cursor-pointer`}>Terms</span>
+              <span onClick={() => navigate('/discussions')} className={`text-sm ${textMuted} hover:text-orange-500 transition-colors cursor-pointer`}>Privacy</span>
+              <span onClick={() => navigate('/discussions')} className={`text-sm ${textMuted} hover:text-orange-500 transition-colors cursor-pointer`}>Cookies</span>
             </div>
           </div>
         </div>

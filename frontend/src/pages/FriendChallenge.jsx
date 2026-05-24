@@ -17,12 +17,19 @@ export default function FriendChallenge() {
 
   // Listen for challenge rejection only (acceptance is handled globally in App.jsx)
   useEffect(() => {
-    onChallengeRejected((data) => {
+    const handleRejection = (data) => {
       toast.error('Your challenge was rejected');
       setChallengeData(null);
       setCurrentMatchId(null);
-    });
-  }, [navigate]);
+    };
+
+    onChallengeRejected(handleRejection);
+    return () => {
+      import('../utils/socket').then(({ removeListener }) => {
+        removeListener('challenge-rejected', handleRejection);
+      });
+    };
+  }, []);
 
   const handleSendChallenge = async (e) => {
     e.preventDefault();

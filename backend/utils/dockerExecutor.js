@@ -97,24 +97,25 @@ function execInPool(code, language, timeLimit) {
     const shell = (language === 'java' || language === 'go' || language === 'rust') ? 'sh' : 'bash';
 
     let cmd;
+    const memPart = `echo -n "${MEM_SEP}"; if [ -f /sys/fs/cgroup/memory.peak ]; then cat /sys/fs/cgroup/memory.peak; else echo -n "0"; fi`;
     switch (language) {
       case 'cpp':
-        cmd = `cat > /tmp/${id}.cpp && g++ -O0 -std=c++17 -o /tmp/${id} /tmp/${id}.cpp && timeout ${timeLimit} /tmp/${id}${memCheck}; _X=$?; rm -f /tmp/${id}.cpp /tmp/${id}; exit $_X`;
+        cmd = `cat > /tmp/${id}.cpp && g++ -O0 -std=c++17 -o /tmp/${id} /tmp/${id}.cpp && { timeout ${timeLimit} /tmp/${id}; _X=$?; } || _X=$?; ${memPart}; rm -f /tmp/${id}.cpp /tmp/${id}; exit $_X`;
         break;
       case 'python':
-        cmd = `cat > /tmp/${id}.py && timeout ${timeLimit} python3 /tmp/${id}.py${memCheck}; _X=$?; rm -f /tmp/${id}.py; exit $_X`;
+        cmd = `{ cat > /tmp/${id}.py && timeout ${timeLimit} python3 /tmp/${id}.py; _X=$?; } || _X=$?; ${memPart}; rm -f /tmp/${id}.py; exit $_X`;
         break;
       case 'java':
-        cmd = `mkdir -p /tmp/${id} && cat > /tmp/${id}/Main.java && javac -d /tmp/${id} /tmp/${id}/Main.java 2>&1 && timeout ${timeLimit} java -cp /tmp/${id} Main${memCheck}; _X=$?; rm -rf /tmp/${id}; exit $_X`;
+        cmd = `mkdir -p /tmp/${id} && cat > /tmp/${id}/Main.java && { javac -d /tmp/${id} /tmp/${id}/Main.java 2>&1 && timeout ${timeLimit} java -cp /tmp/${id} Main; _X=$?; } || _X=$?; ${memPart}; rm -rf /tmp/${id}; exit $_X`;
         break;
       case 'javascript':
-        cmd = `cat > /tmp/${id}.js && timeout ${timeLimit} node /tmp/${id}.js${memCheck}; _X=$?; rm -f /tmp/${id}.js; exit $_X`;
+        cmd = `{ cat > /tmp/${id}.js && timeout ${timeLimit} node /tmp/${id}.js; _X=$?; } || _X=$?; ${memPart}; rm -f /tmp/${id}.js; exit $_X`;
         break;
       case 'go':
-        cmd = `cat > /tmp/${id}.go && timeout ${timeLimit} go run /tmp/${id}.go${memCheck}; _X=$?; rm -f /tmp/${id}.go; exit $_X`;
+        cmd = `{ cat > /tmp/${id}.go && timeout ${timeLimit} go run /tmp/${id}.go; _X=$?; } || _X=$?; ${memPart}; rm -f /tmp/${id}.go; exit $_X`;
         break;
       case 'rust':
-        cmd = `cat > /tmp/${id}.rs && rustc -C opt-level=3 -o /tmp/${id} /tmp/${id}.rs && timeout ${timeLimit} /tmp/${id}${memCheck}; _X=$?; rm -f /tmp/${id}.rs /tmp/${id}; exit $_X`;
+        cmd = `cat > /tmp/${id}.rs && rustc -C opt-level=3 -o /tmp/${id} /tmp/${id}.rs && { timeout ${timeLimit} /tmp/${id}; _X=$?; } || _X=$?; ${memPart}; rm -f /tmp/${id}.rs /tmp/${id}; exit $_X`;
         break;
       default: resolve(null); return;
     }
@@ -606,6 +607,7 @@ using namespace std;
 
 ${DS_HELPERS.cpp}
 
+// ===USER_CODE_START===
 ${userCode}
 
 int main() {
@@ -688,6 +690,7 @@ ${t < testCases.length - 1 ? `print("${TC_SEP}")` : ''}
 
   return `${DS_HELPERS.python}
 
+# ===USER_CODE_START===
 ${userCode}
 
 ${tcBlocks}
@@ -756,7 +759,7 @@ ${t < testCases.length - 1 ? `console.log("${TC_SEP}");` : ''}
 `;
   }
 
-  return `${DS_HELPERS.javascript}\n${userCode}\n${tcBlocks}`;
+  return `${DS_HELPERS.javascript}\n// ===USER_CODE_START===\n${userCode}\n${tcBlocks}`;
 }
 
 function wrapJava(userCode, testCases, metaData) {
@@ -891,6 +894,7 @@ import java.util.*;
 
 ${DS_HELPERS.java}
 
+// ===USER_CODE_START===
 ${userCode}
 
 class Main {
@@ -1061,6 +1065,7 @@ import (
     "encoding/json"
 )
 
+// ===USER_CODE_START===
 ${userCode}
 
 func main() {
@@ -1174,6 +1179,7 @@ fn print_bool(b: &bool) {
 `;
 
   return `
+// ===USER_CODE_START===
 ${userCode}
 
 ${helperFunctions}
@@ -1209,30 +1215,30 @@ function runInDocker(code, language, timeLimit) {
     // Build the compile+run command that executes inside the container
     const memCheck = `; echo -n "${MEM_SEP}"; if [ -f /sys/fs/cgroup/memory.peak ]; then cat /sys/fs/cgroup/memory.peak; else echo -n "0"; fi`;
     let cmd, shell;
+    const memPart = `echo -n "${MEM_SEP}"; if [ -f /sys/fs/cgroup/memory.peak ]; then cat /sys/fs/cgroup/memory.peak; else echo -n "0"; fi`;
     switch (language) {
       case 'cpp':
-        cmd = `cat > /tmp/s.cpp && g++ -O0 -std=c++17 -o /tmp/s /tmp/s.cpp && timeout ${timeLimit} /tmp/s${memCheck}`;
+        cmd = `cat > /tmp/s.cpp && g++ -O0 -std=c++17 -o /tmp/s /tmp/s.cpp && { timeout ${timeLimit} /tmp/s; _X=$?; } || _X=$?; ${memPart}; exit $_X`;
         shell = 'bash';
         break;
       case 'python':
-        cmd = `cat > /tmp/s.py && timeout ${timeLimit} python3 /tmp/s.py${memCheck}`;
+        cmd = `{ cat > /tmp/s.py && timeout ${timeLimit} python3 /tmp/s.py; _X=$?; } || _X=$?; ${memPart}; exit $_X`;
         shell = 'bash';
         break;
       case 'java':
-        // Alpine has BusyBox timeout — use it (exit code 143 on timeout)
-        cmd = `cat > /tmp/Main.java && javac /tmp/Main.java 2>&1 && timeout ${timeLimit} java -cp /tmp Main${memCheck}`;
+        cmd = `{ cat > /tmp/Main.java && javac /tmp/Main.java 2>&1 && timeout ${timeLimit} java -cp /tmp Main; _X=$?; } || _X=$?; ${memPart}; exit $_X`;
         shell = 'sh';
         break;
       case 'javascript':
-        cmd = `cat > /tmp/s.js && timeout ${timeLimit} node /tmp/s.js${memCheck}`;
+        cmd = `{ cat > /tmp/s.js && timeout ${timeLimit} node /tmp/s.js; _X=$?; } || _X=$?; ${memPart}; exit $_X`;
         shell = 'bash';
         break;
       case 'go':
-        cmd = `cat > /tmp/s.go && timeout ${timeLimit} go run /tmp/s.go${memCheck}`;
+        cmd = `{ cat > /tmp/s.go && timeout ${timeLimit} go run /tmp/s.go; _X=$?; } || _X=$?; ${memPart}; exit $_X`;
         shell = 'sh';
         break;
       case 'rust':
-        cmd = `cat > /tmp/s.rs && rustc -C opt-level=3 -o /tmp/s /tmp/s.rs && timeout ${timeLimit} /tmp/s${memCheck}`;
+        cmd = `cat > /tmp/s.rs && rustc -C opt-level=3 -o /tmp/s /tmp/s.rs && { timeout ${timeLimit} /tmp/s; _X=$?; } || _X=$?; ${memPart}; exit $_X`;
         shell = 'sh';
         break;
     }
@@ -1285,6 +1291,57 @@ function runInDocker(code, language, timeLimit) {
     proc.stdin.end();
   });
 }
+function adjustCompileErrorLines(output, language, lineOffset) {
+  if (!lineOffset) return output;
+  const lines = output.split('\n');
+  const adjustedLines = lines.map(line => {
+    let newLine = line;
+    if (language === 'cpp') {
+      // Pattern: /tmp/s.cpp:118:5:
+      newLine = line.replace(/\/tmp\/[a-zA-Z0-9_-]+\.cpp:(\d+):(\d+):/, (match, p1, p2) => {
+        const adjusted = parseInt(p1) - lineOffset;
+        return `Line ${adjusted}: Char ${p2}:`;
+      });
+    } else if (language === 'java') {
+      // Pattern: /tmp/Main.java:5: or /tmp/1234_abc/Main.java:5:
+      newLine = line.replace(/\/tmp\/[a-zA-Z0-9_./]+\/Main\.java:(\d+):/, (match, p1) => {
+        const adjusted = parseInt(p1) - lineOffset;
+        return `Line ${adjusted}:`;
+      }).replace(/\/tmp\/Main\.java:(\d+):/, (match, p1) => {
+        const adjusted = parseInt(p1) - lineOffset;
+        return `Line ${adjusted}:`;
+      });
+    } else if (language === 'python') {
+      // Pattern: File "/tmp/s.py", line 12
+      newLine = line.replace(/File "\/tmp\/[a-zA-Z0-9_-]+\.py", line (\d+)/, (match, p1) => {
+        const adjusted = parseInt(p1) - lineOffset;
+        return `Line ${adjusted}`;
+      });
+    } else if (language === 'javascript') {
+      // Pattern: /tmp/s.js:12
+      newLine = line.replace(/\/tmp\/[a-zA-Z0-9_-]+\.js:(\d+)/, (match, p1) => {
+        const adjusted = parseInt(p1) - lineOffset;
+        return `Line ${adjusted}`;
+      });
+    }
+
+    // Adjust lines in caret traceback snippet blocks, e.g. "  118 |     } // Missing semicolon"
+    newLine = newLine.replace(/^(\s*)(\d+)(\s*\|)/, (match, p1, p2, p3) => {
+      const adjusted = parseInt(p2) - lineOffset;
+      return `${p1}${adjusted}${p3}`;
+    });
+
+    // Replace the random temp path with Solution.cpp for clean aesthetics
+    newLine = newLine.replace(/\/tmp\/[a-zA-Z0-9_-]+\.cpp/g, 'solution.cpp');
+    newLine = newLine.replace(/\/tmp\/[a-zA-Z0-9_-]+\.py/g, 'solution.py');
+    newLine = newLine.replace(/\/tmp\/[a-zA-Z0-9_-]+\.js/g, 'solution.js');
+    newLine = newLine.replace(/\/tmp\/[a-zA-Z0-9_./]+\/Main\.java/g, 'Solution.java');
+    newLine = newLine.replace(/\/tmp\/Main\.java/g, 'Solution.java');
+
+    return newLine;
+  });
+  return adjustedLines.join('\n');
+}
 
 let isDockerAvailable = null;
 let dockerLastChecked = 0;
@@ -1303,21 +1360,50 @@ function parseExecutionResults(stdout, stderr, exitCode, timedOut, elapsed, test
     outputs: [],
   };
 
-  // Handle compilation errors (no stdout, stderr has compilation output)
-  if (exitCode !== 0 && !stdout.trim() && stderr.trim()) {
-    const isCompileError = stderr.includes('error:') && (
-      stderr.includes('.cpp:') || stderr.includes('.java:') ||
-      stderr.includes('SyntaxError') || stderr.includes('cannot find symbol') ||
-      stderr.includes('compilation') || stderr.includes('undefined') ||
-      stderr.includes('cargo') || stderr.includes('go:')
-    );
+  // Clean peak memory tags out of standard output first
+  const cleanStdout = stdout.split(MEM_SEP)[0] || '';
 
-    results.status = isCompileError ? 'Compilation Error' : 'Runtime Error';
-    results.errors.push(stderr.trim().substring(0, 1000));
+  // Handle compilation and initial parsing errors (both stdout and stderr combined due to Java 2>&1 redirection)
+  const combinedOutput = (cleanStdout + '\n' + stderr).trim();
+  const errText = combinedOutput.toLowerCase();
+  const isCompileError = exitCode !== 0 && (
+    errText.includes('error:') || 
+    errText.includes('syntaxerror') ||
+    errText.includes('indentationerror') ||
+    errText.includes('taberror') ||
+    errText.includes('cannot find symbol') ||
+    errText.includes('compilation') ||
+    errText.includes('invalid syntax') ||
+    errText.includes('syntax error') ||
+    errText.includes('javac') ||
+    errText.includes('g++') ||
+    errText.includes('rustc') ||
+    errText.includes('undefined reference') ||
+    (errText.includes('symbol:') && errText.includes('location:')) ||
+    errText.includes('/tmp/main.java:') ||
+    errText.includes('/tmp/s.cpp:') ||
+    errText.includes('class main is public, should be declared')
+  );
+
+  if (isCompileError) {
+    let lineOffset = 0;
+    if (options.wrappedCode) {
+      const index = options.wrappedCode.indexOf('===USER_CODE_START===');
+      if (index !== -1) {
+        const headerPart = options.wrappedCode.substring(0, index);
+        lineOffset = headerPart.split('\n').length - 1;
+      }
+    }
+
+    const adjustedOutput = adjustCompileErrorLines(combinedOutput, options.language || '', lineOffset);
+
+    results.status = 'Compilation Error';
+    results.compile_output = adjustedOutput;
+    results.errors.push(adjustedOutput.substring(0, 1000));
     for (let i = 0; i < testCases.length; i++) {
       results.outputs.push({
         testCase: i + 1, passed: false,
-        error: stderr.trim().substring(0, 500) || results.status,
+        error: adjustedOutput.substring(0, 500) || results.status,
         executionTime: 0,
       });
     }
@@ -1326,10 +1412,8 @@ function parseExecutionResults(stdout, stderr, exitCode, timedOut, elapsed, test
 
   // Parse peak memory usage if MEM_SEP is present
   let peakMemoryBytes = 0;
-  let cleanStdout = stdout;
   if (stdout.includes(MEM_SEP)) {
     const parts = stdout.split(MEM_SEP);
-    cleanStdout = parts[0];
     const memStr = (parts[1] || '').trim();
     const bytes = parseInt(memStr, 10);
     if (!isNaN(bytes) && bytes > 0) {
@@ -1523,6 +1607,7 @@ export async function executeCodeWithDocker(code, testCases, language = 'cpp', t
     return {
       ...results,
       status: 'Compilation Error',
+      compile_output: `Security violation: ${sanitizeResult.reason}`,
       errors: [`Security violation: ${sanitizeResult.reason}`]
     };
   }
@@ -1557,7 +1642,11 @@ export async function executeCodeWithDocker(code, testCases, language = 'cpp', t
     if (stderr) console.log('[Docker Executor] Stderr:', stderr.substring(0, 300));
   }
 
-  return parseExecutionResults(stdout, stderr, exitCode, timedOut, elapsed, testCases, timeLimit, options);
+  return parseExecutionResults(stdout, stderr, exitCode, timedOut, elapsed, testCases, timeLimit, {
+    ...options,
+    wrappedCode,
+    language
+  });
 }
 
 // ─── Syntax-Only Checking (no execution, compile-only) ───

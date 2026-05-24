@@ -6,7 +6,7 @@ import { useMatchStore } from '../store/matchStore';
 import { useThemeStore } from '../store/themeStore';
 import { LogOut, Trophy, Zap, Users, Check, X, Settings, Calendar, Target, Brain, Sparkles, TrendingUp, Award, Code2, Swords, BookOpen, ArrowRight, Play, Clock, BarChart3 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { getSocket, acceptChallenge as emitAcceptChallenge, rejectChallenge as emitRejectChallenge } from '../utils/socket';
+import { getSocket } from '../utils/socket';
 import NotificationBell from '../components/NotificationBell';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -71,11 +71,7 @@ export default function Dashboard() {
   const handleAcceptChallenge = async (matchId, challenge) => {
     setChallengeLoading({ ...challengeLoading, [matchId]: true });
     try {
-      const match = await acceptChallenge(matchId);
-
-      // Notify challenger via socket
-      emitAcceptChallenge(matchId, challenge.challengerEmail);
-
+      await acceptChallenge(matchId);
       navigate(`/match/${matchId}`);
     } catch (error) {
       toast.error('Failed to accept challenge');
@@ -88,10 +84,6 @@ export default function Dashboard() {
     setChallengeLoading({ ...challengeLoading, [matchId]: true });
     try {
       await rejectChallenge(matchId);
-
-      // Notify challenger via socket
-      emitRejectChallenge(matchId, challenge.challengerEmail);
-
       toast.success('Challenge rejected');
       setPendingChallenges(pendingChallenges.filter(c => c._id !== matchId));
     } catch (error) {
@@ -108,37 +100,6 @@ export default function Dashboard() {
   };
 
   const winRate = user?.totalMatches > 0 ? ((user.wins / user.totalMatches) * 100).toFixed(1) : 0;
-
-  const stats = [
-    {
-      label: 'Battle Rating',
-      value: user?.rating || 0,
-      icon: Swords,
-      change: user?.rating > 0 ? `+${user.rating}` : '0',
-      color: 'blue'
-    },
-    {
-      label: 'Contest Rating',
-      value: user?.contestRating || 0,
-      icon: Trophy,
-      change: user?.contestRating > 0 ? `+${user.contestRating}` : '0',
-      color: 'indigo'
-    },
-    {
-      label: 'Total Wins',
-      value: user?.wins || 0,
-      icon: Zap,
-      change: `${winRate}% WR`,
-      color: 'green'
-    },
-    {
-      label: 'Total Matches',
-      value: user?.totalMatches || 0,
-      icon: Users,
-      change: `${user?.losses || 0} losses`,
-      color: 'orange'
-    }
-  ];
 
   return (
     <div className={`min-h-screen ${bgColor} transition-colors duration-200`}>
@@ -298,43 +259,6 @@ export default function Dashboard() {
             Welcome back, <span className="bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">{user?.username}</span>
           </h2>
           <p className={`text-lg ${textMuted}`}>Ready to compete and level up your coding skills?</p>
-        </div>
-
-        {/* Stats Grid - TensorFlow Style */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {stats.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <div
-                key={index}
-                onMouseEnter={() => setHoveredCard(`stat-${index}`)}
-                onMouseLeave={() => setHoveredCard(null)}
-                className={`${cardBg} rounded-xl p-6 border transition-all duration-300 cursor-pointer ${
-                  hoveredCard === `stat-${index}` ? 'transform scale-105 shadow-2xl' : 'shadow-lg'
-                }`}
-                style={{ 
-                  borderColor: isDark ? '#2a2a2a' : '#e5e7eb',
-                  borderWidth: '1px'
-                }}
-              >
-                <div className="flex items-start justify-end mb-4">
-                  <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                    stat.color === 'blue' ? 'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300' :
-                    stat.color === 'green' ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300' :
-                    stat.color === 'indigo' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300' :
-                    'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300'
-                  }`}>
-                    <TrendingUp className="w-3 h-3" />
-                    {stat.change}
-                  </div>
-                </div>
-                <p className={`text-sm ${textMuted} mb-2`}>{stat.label}</p>
-                <p className={`text-4xl font-bold ${textColor}`}>
-                  {stat.value}
-                </p>
-              </div>
-            );
-          })}
         </div>
 
         {/* Pending Challenges */}

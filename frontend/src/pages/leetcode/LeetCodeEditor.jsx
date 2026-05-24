@@ -198,52 +198,7 @@ function LeetCodeEditorInner() {
 
   useEffect(() => { cursorPlacedRef.current = false; }, [problemId]);
 
-  // ═══ Real-Time Syntax Checking (debounced 2s) ═══
-  useEffect(() => {
-    // Clear previous markers
-    const monaco = monacoRef.current;
-    const editor = editorRef.current;
-    if (monaco && editor) {
-      const model = editor.getModel();
-      if (model) monaco.editor.setModelMarkers(model, 'syntax-check', []);
-    }
-    setSyntaxErrors([]);
 
-    // JS is handled client-side by Monaco's built-in checker
-    if (!code || code.trim().length < 10 || language === 'javascript') return;
-
-    const checkId = ++syntaxCheckIdRef.current;
-    const timer = setTimeout(async () => {
-      try {
-        const result = await api.syntaxCheck(code, language, token);
-        // Only apply if this is still the latest check (prevents race conditions)
-        if (checkId !== syntaxCheckIdRef.current) return;
-        const m = monacoRef.current;
-        const ed = editorRef.current;
-        if (!m || !ed) return;
-        const model = ed.getModel();
-        if (!model) return;
-
-        if (result.valid) {
-          m.editor.setModelMarkers(model, 'syntax-check', []);
-          setSyntaxErrors([]);
-        } else {
-          const markers = (result.errors || []).map(err => ({
-            severity: m.MarkerSeverity.Error,
-            message: err.message,
-            startLineNumber: err.line,
-            startColumn: err.column || 1,
-            endLineNumber: err.line,
-            endColumn: err.column ? err.column + 20 : 1000,
-          }));
-          m.editor.setModelMarkers(model, 'syntax-check', markers);
-          setSyntaxErrors(result.errors || []);
-        }
-      } catch (e) { /* silently ignore syntax check failures */ }
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [code, language]);
 
   // Run ALL visible test cases (batch)
   const handleRun = async () => {
@@ -367,12 +322,6 @@ function LeetCodeEditorInner() {
             <div className="flex items-center gap-2">
               <svg className="w-3.5 h-3.5 text-[#2cbb5d]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6" /></svg>
               <span className="text-xs font-medium">Code</span>
-              {syntaxErrors.length > 0 && (
-                <div className="flex items-center gap-1 ml-2 px-2 py-0.5 rounded-full bg-[#ef474315] border border-[#ef474330]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#ef4743] animate-pulse" />
-                  <span className="text-[10px] text-[#ef4743] font-medium">{syntaxErrors.length} error{syntaxErrors.length !== 1 ? 's' : ''}</span>
-                </div>
-              )}
             </div>
             <div className="flex items-center gap-2">
               <select value={language} onChange={e => setLanguage(e.target.value)} className="bg-[#3c3c3c] text-[#eff1f6] text-xs rounded px-2 py-1 border-none outline-none cursor-pointer">
