@@ -1,0 +1,8 @@
+# Ignore all root-level files and folders by default
+/*
+
+# Do not ignore the backend folder
+!/backend/
+
+# Do not ignore the root .gitignore itself
+!/.gitignore
